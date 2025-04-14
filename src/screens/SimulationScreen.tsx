@@ -4,7 +4,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import { TREATMENTS } from '../constants/treatments';
-import { generateTreatmentSimulation } from '../services/imageGenService';
+import { generateTreatmentSimulation } from '../services/deepseekImageService';
 import * as FileSystem from 'expo-file-system';
 
 type SimulationScreenRouteProp = RouteProp<RootStackParamList, 'Simulation'>;
@@ -47,7 +47,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
         });
       }
 
-      // Generate simulation using DALL-E
+      // Generate simulation using DeepSeek AI
       const imageUrl = await generateTreatmentSimulation(base64ImageData, treatmentDescriptions);
       setSimulationImage(imageUrl);
     } catch (error) {

@@ -4,7 +4,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 
-// Import our screens (we'll create these next)
+// Import our screens
+import ApiKeyScreen from './screens/ApiKeyScreen';
 import CameraScreen from './screens/CameraScreen';
 import AnalysisScreen from './screens/AnalysisScreen';
 import TreatmentScreen from './screens/TreatmentScreen';
@@ -13,6 +14,7 @@ import ReportScreen from './screens/ReportScreen';
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
+  ApiKey: undefined;
   Camera: undefined;
   Analysis: { imageUri: string; base64Image: string };
   Treatment: { analysisResult: any; imageUri: string };
@@ -26,7 +28,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Camera">
+        <Stack.Navigator initialRouteName="ApiKey">
+          <Stack.Screen 
+            name="ApiKey" 
+            component={ApiKeyScreen} 
+            options={{ title: 'API Key Setup', headerShown: false }} 
+          />
           <Stack.Screen 
             name="Camera" 
             component={CameraScreen} 

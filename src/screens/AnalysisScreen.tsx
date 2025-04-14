@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Image, ActivityIndicator, ScrollView, Touchable
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { analyzeFacialImage } from '../services/openaiService';
+import { analyzeFacialImage } from '../services/deepseekService';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -14,11 +14,11 @@ type Props = {
 };
 
 type AnalysisResult = {
-  age: number;
+  estimatedAge: number;
   skinType: string;
-  facialFeatures: {
-    feature: string;
+  features: {
     description: string;
+    confidence: number;
   }[];
   recommendations: {
     treatmentId: string;
@@ -83,7 +83,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               <Text style={styles.sectionTitle}>Analysis Results</Text>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Estimated Age:</Text>
-                <Text style={styles.infoValue}>{analysisResult.age} years</Text>
+                <Text style={styles.infoValue}>{analysisResult.estimatedAge} years</Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Skin Type:</Text>
@@ -93,10 +93,14 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <View style={styles.featuresCard}>
               <Text style={styles.sectionTitle}>Facial Features</Text>
-              {analysisResult.facialFeatures.map((feature, index) => (
+              {analysisResult.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
-                  <Text style={styles.featureTitle}>{feature.feature}</Text>
-                  <Text style={styles.featureDescription}>{feature.description}</Text>
+                  <View style={styles.featureHeader}>
+                    <Text style={styles.featureTitle}>{feature.description}</Text>
+                    <Text style={styles.confidenceValue}>
+                      {Math.round(feature.confidence * 100)}%
+                    </Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -204,16 +208,20 @@ const styles = StyleSheet.create({
   featureItem: {
     marginBottom: 15,
   },
+  featureHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   featureTitle: {
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 5,
     color: '#333',
   },
-  featureDescription: {
+  confidenceValue: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 20,
   },
   nextButton: {
     backgroundColor: '#4361ee',

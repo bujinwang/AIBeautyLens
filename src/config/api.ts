@@ -185,14 +185,6 @@ export const IMAGEN_API = 'https://generativelanguage.googleapis.com/v1beta/mode
 export const IMAGEN_GENERATION_API = `${IMAGEN_API}/imagen-3.0-generate-002:predict`;
 export const IMAGEN_INPAINTING_API = 'https://us-central1-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/us-central1/publishers/google/models/imagen-3.0-edit-image-inpainting:predict';
 
-// Google Cloud Project ID - replace with your project ID when using Vertex AI
-// You need to create a project in the Google Cloud Console and enable the Vertex AI API
-// For inpainting to work, this must be configured with a valid project ID
-export const GOOGLE_CLOUD_PROJECT_ID = 'your-project-id';
-
-// Current provider - hardcoded to Gemini
-export const CURRENT_PROVIDER = 'gemini';
-
 // API Models
 export const MODELS = {
   GEMINI_PRO: 'gemini-2.5-pro-exp-03-25',

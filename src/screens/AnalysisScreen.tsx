@@ -35,6 +35,32 @@ type AnalysisResult = {
   }[];
 };
 
+/**
+ * Component to display gender confidence score with a visual indicator
+ */
+const GenderConfidenceDisplayComponent = ({ confidence }: { confidence: number }) => {
+  // Calculate color based on confidence level
+  const getConfidenceColor = (score: number) => {
+    if (score >= 0.9) return COLORS.confidence.high;
+    if (score >= 0.7) return COLORS.confidence.medium;
+    return COLORS.confidence.low;
+  };
+
+  // Format confidence as percentage
+  const confidencePercent = `${Math.round(confidence * 100)}%`;
+  const confidenceColor = getConfidenceColor(confidence);
+
+  return (
+    <View style={styles.confidenceContainer}>
+      <Text style={styles.confidenceLabel}>Confidence:</Text>
+      <View style={[styles.confidenceBadge, { backgroundColor: confidenceColor }]}>
+        <MaterialIcons name="verified" size={10} color="white" style={styles.confidenceIcon} />
+        <Text style={styles.confidenceValue}>{confidencePercent}</Text>
+      </View>
+    </View>
+  );
+};
+
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { imageUri, base64Image } = route.params;
   const [loading, setLoading] = useState(true);
@@ -281,10 +307,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 <Text style={styles.resultLabel}>Gender</Text>
                 <View style={styles.genderRow}>
                   <Text style={styles.genderValue}>{analysisResult.gender}</Text>
-                  <GenderConfidenceDisplay 
-                    gender={analysisResult.gender}
-                    confidence={analysisResult.genderConfidence} 
-                  />
+                  <GenderConfidenceDisplayComponent confidence={analysisResult.genderConfidence} />
                 </View>
               </View>
             </View>
@@ -565,6 +588,32 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  confidenceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  confidenceLabel: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginRight: 4,
+  },
+  confidenceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 12,
+    ...SHADOWS.small,
+  },
+  confidenceIcon: {
+    marginRight: 2,
+  },
+  confidenceValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'white',
   },
 });
 

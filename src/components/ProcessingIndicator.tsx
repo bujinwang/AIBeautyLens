@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Easing, TextStyle } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../constants/theme';
+import CustomIcon from './CustomIcon';
 
 // List of processing steps to display (in sequence)
 const PROCESSING_STEPS = [
@@ -126,10 +126,10 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
               },
             ]}
           >
-            <MaterialIcons name="settings" size={40} color={COLORS.primary.main} />
+            <CustomIcon name="settings" size={40} color={COLORS.primary.main} />
           </Animated.View>
           <View style={styles.iconCore}>
-            <MaterialIcons name="auto-awesome" size={20} color={COLORS.white} />
+            <CustomIcon name="auto-awesome" size={20} color={COLORS.white} />
           </View>
         </View>
 
@@ -137,8 +137,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
 
         {showDetailedSteps && PROCESSING_STEPS[currentStep] && (
           <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
-            <MaterialIcons
-              name={PROCESSING_STEPS[currentStep].icon as any}
+            <CustomIcon
+              name={PROCESSING_STEPS[currentStep].icon}
               size={20}
               color={COLORS.secondary.main}
             />

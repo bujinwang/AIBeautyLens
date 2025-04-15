@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
 import { COLORS } from '../constants/theme';
 
 interface LogoIconProps {
@@ -10,7 +10,7 @@ interface LogoIconProps {
 }
 
 /**
- * LogoIcon component for BeautyLens™ with SkinMatrix™ Analysis
+ * LogoIcon component for BeautyLens™ with DermaGraph™ Analysis
  * Compact icon version of the logo for app icon and small spaces
  */
 const LogoIcon: React.FC<LogoIconProps> = ({ 
@@ -37,13 +37,26 @@ const LogoIcon: React.FC<LogoIconProps> = ({
       <View style={styles.contentContainer}>
         <Text style={[styles.textB, { fontSize, color: textColor }]}>B</Text>
         
-        {/* Lens icon integrated with the logo */}
+        {/* Custom lens icon integrated with the logo */}
         <View style={[styles.iconContainer, { top: fontSize * 0.15 }]}>
-          <MaterialIcons 
-            name="lens" 
-            size={iconSize} 
-            color={accentColor} 
-          />
+          <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24">
+            <Circle
+              cx="12"
+              cy="12"
+              r="8"
+              fill={accentColor}
+              fillOpacity="0.8"
+              stroke={accentColor}
+              strokeWidth="1.5"
+            />
+            <Circle
+              cx="12"
+              cy="12"
+              r="4"
+              fill="white"
+              fillOpacity="0.5"
+            />
+          </Svg>
         </View>
       </View>
     </View>

@@ -5,9 +5,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { MaterialIcons } from '@expo/vector-icons';
+import CustomIcon from '../components/CustomIcon';
 import Logo from '../components/Logo';
 import { COLORS } from '../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -106,7 +107,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   if (hasPermission === null) {
     return (
       <View style={styles.permissionContainer}>
-        <MaterialIcons name="camera" size={50} color={COLORS.primary.main} />
+        <CustomIcon name="camera" size={50} color={COLORS.primary.main} />
         <Text style={styles.permissionText}>Requesting camera permission...</Text>
       </View>
     );
@@ -115,7 +116,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   if (hasPermission === false) {
     return (
       <View style={styles.permissionContainer}>
-        <MaterialIcons name="no-photography" size={50} color={COLORS.error.main} />
+        <CustomIcon name="no-photography" size={50} color={COLORS.error.main} />
         <Text style={styles.permissionText}>No access to camera</Text>
         <TouchableOpacity 
           style={styles.permissionButton}
@@ -130,21 +131,34 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={navigateToHome}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={COLORS.primary.main} />
-        </TouchableOpacity>
-        <Logo size="small" showTagline={false} />
-        <TouchableOpacity 
-          style={styles.settingsButton}
-          onPress={openApiKeySettings}
-        >
-          <MaterialIcons name="settings" size={24} color="#4361ee" />
-        </TouchableOpacity>
-      </View>
+      
+      <LinearGradient
+        colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
+        locations={[0, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={navigateToHome}
+          >
+            <CustomIcon name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          
+          <View style={styles.logoContainer}>
+            <Logo size="medium" showTagline={false} color="white" containerStyle={styles.logo} />
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={openApiKeySettings}
+          >
+            <CustomIcon name="settings" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       <View style={styles.subtitle}>
         <Text style={styles.subtitleText}>Position your face within the frame for best results</Text>
@@ -161,14 +175,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.button, styles.secondaryButton]}
               onPress={retakePicture}
             >
-              <MaterialIcons name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
+              <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
               <Text style={[styles.buttonText, styles.secondaryButtonText]}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.primaryButton]}
               onPress={handleAnalyze}
             >
-              <MaterialIcons name="analytics" size={20} color="white" style={styles.buttonIcon} />
+              <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} />
               <Text style={[styles.buttonText, styles.primaryButtonText]}>Begin Analysis</Text>
             </TouchableOpacity>
           </View>
@@ -202,7 +216,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                   );
                 }}
               >
-                <MaterialIcons name="flip-camera-ios" size={26} color="white" />
+                <CustomIcon name="flip-camera-ios" size={26} color="white" />
               </TouchableOpacity>
             </View>
             
@@ -211,14 +225,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 style={[styles.button, styles.secondaryButton]}
                 onPress={pickImage}
               >
-                <MaterialIcons name="photo-library" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
+                <CustomIcon name="photo-library" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>Gallery</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton]}
                 onPress={takePicture}
               >
-                <MaterialIcons name="camera-alt" size={20} color="white" style={styles.buttonIcon} />
+                <CustomIcon name="camera-alt" size={20} color="white" style={styles.buttonIcon} />
                 <Text style={[styles.buttonText, styles.primaryButtonText]}>Capture</Text>
               </TouchableOpacity>
             </View>
@@ -232,43 +246,38 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f5f5',
+  },
+  headerGradient: {
+    paddingTop: Platform.OS === 'ios' ? 55 : 20,
+    paddingBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+    zIndex: 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 16,
-    backgroundColor: '#f8f9fa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingHorizontal: 16,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  logo: {
+    transform: [{ scale: 1.1 }],
   },
   backButton: {
     padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
   },
   settingsButton: {
     padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.8)',
   },
   cameraContainer: {
     flex: 1,

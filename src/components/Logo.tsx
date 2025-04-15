@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
 import { COLORS } from '../constants/theme';
 
 interface LogoProps {
@@ -11,8 +11,8 @@ interface LogoProps {
 }
 
 /**
- * Logo component for BeautyLens™ with SkinMatrix™ Analysis
- * Modern, clean design with integrated eye/lens icon
+ * Logo component for BeautyLens™ with DermaGraph™ Analysis
+ * Modern, clean design with integrated custom lens icon
  */
 const Logo: React.FC<LogoProps> = ({ 
   size = 'medium', 
@@ -28,29 +28,72 @@ const Logo: React.FC<LogoProps> = ({
   
   // Determine color values
   const textColor = color === 'primary' ? COLORS.primary.main : COLORS.white;
-  const accentColor = COLORS.secondary.main;
+  const accentColor = color === 'primary' ? COLORS.secondary.main : COLORS.secondary.light;
 
   return (
     <View style={[styles.container, containerStyle]}>
       <View style={styles.logoRow}>
-        <Text style={[styles.textBeauty, { fontSize, color: textColor }]}>Beauty</Text>
-        <Text style={[styles.textLens, { fontSize, color: textColor }]}>Lens</Text>
-        <Text style={[styles.trademark, { fontSize: fontSize * 0.4, color: textColor }]}>™</Text>
+        <Text 
+          style={[
+            styles.textBeauty, 
+            { fontSize, color: textColor },
+            color === 'white' && styles.textShadow
+          ]}
+        >
+          Beauty
+        </Text>
+        <Text 
+          style={[
+            styles.textLens, 
+            { fontSize, color: textColor },
+            color === 'white' && styles.textShadow
+          ]}
+        >
+          Lens
+        </Text>
+        <Text 
+          style={[
+            styles.trademark, 
+            { fontSize: fontSize * 0.4, color: textColor },
+            color === 'white' && styles.textShadow
+          ]}
+        >
+          ™
+        </Text>
         
-        {/* Lens icon integrated with the logo */}
+        {/* Custom lens icon integrated with the logo */}
         <View style={[styles.iconContainer, { marginHorizontal: spacing / 2 }]}>
-          <MaterialIcons 
-            name="lens" 
-            size={iconSize} 
-            color={accentColor} 
-          />
+          <Svg width={iconSize} height={iconSize} viewBox="0 0 24 24">
+            <Circle
+              cx="12"
+              cy="12"
+              r="8"
+              fill={accentColor}
+              fillOpacity="0.8"
+              stroke={accentColor}
+              strokeWidth="1.5"
+            />
+            <Circle
+              cx="12"
+              cy="12"
+              r="4"
+              fill="white"
+              fillOpacity="0.5"
+            />
+          </Svg>
         </View>
       </View>
       
       {showTagline && (
         <View style={styles.taglineContainer}>
-          <Text style={[styles.taglineText, { fontSize: taglineSize, color: textColor }]}>
-            with SkinMatrix™ Analysis
+          <Text 
+            style={[
+              styles.taglineText, 
+              { fontSize: taglineSize, color: textColor },
+              color === 'white' && styles.textShadow
+            ]}
+          >
+            with DermaGraph™ Analysis
           </Text>
         </View>
       )}
@@ -90,6 +133,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontStyle: 'italic',
     letterSpacing: 0,
+  },
+  textShadow: {
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   }
 });
 

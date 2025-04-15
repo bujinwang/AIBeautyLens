@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { View, Text, StyleSheet } from 'react-native';
 
 // Import our screens
 import ApiKeyScreen from './screens/ApiKeyScreen';
@@ -28,54 +29,128 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
+// Error boundary component
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log the error to console
+    console.error("App crashed with error:", error);
+    console.error("Component stack:", errorInfo.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // Render fallback UI
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorMessage}>{this.state.error?.toString()}</Text>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export default function App() {
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  useEffect(() => {
+    console.log("App.tsx: Initializing...");
+    
+    // Simulate checking initialization
+    setTimeout(() => {
+      console.log("App.tsx: Initialization complete");
+      setIsInitialized(true);
+    }, 1000);
+    
+    return () => {
+      console.log("App.tsx: Cleanup");
+    };
+  }, []);
+  
+  console.log("App.tsx: Rendering, isInitialized =", isInitialized);
+  
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen} 
-            options={{ headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="ApiKey" 
-            component={ApiKeyScreen} 
-            options={{ title: 'API Key Setup', headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="Camera" 
-            component={CameraScreen} 
-            options={{ title: 'Take Photo', headerShown: false }} 
-          />
-          <Stack.Screen 
-            name="Analysis" 
-            component={AnalysisScreen} 
-            options={{ title: 'Analysis' }} 
-          />
-          <Stack.Screen 
-            name="Treatment" 
-            component={TreatmentScreen} 
-            options={{ title: 'Recommended Treatments' }} 
-          />
-          <Stack.Screen 
-            name="Simulation" 
-            component={SimulationScreen} 
-            options={{ title: 'Treatment Simulation' }} 
-          />
-          <Stack.Screen 
-            name="Report" 
-            component={ReportScreen} 
-            options={{ title: 'Treatment Report' }} 
-          />
-          <Stack.Screen 
-            name="LogoGenerator" 
-            component={LogoGenerator} 
-            options={{ title: 'Logo Generator' }} 
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-      <StatusBar style="auto" />
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Home">
+            <Stack.Screen 
+              name="Home" 
+              component={HomeScreen} 
+              options={{ headerShown: false }} 
+            />
+            <Stack.Screen 
+              name="ApiKey" 
+              component={ApiKeyScreen} 
+              options={{ title: 'API Key Setup', headerShown: false }} 
+            />
+            <Stack.Screen 
+              name="Camera" 
+              component={CameraScreen} 
+              options={{ title: 'Take Photo', headerShown: false }} 
+            />
+            <Stack.Screen 
+              name="Analysis" 
+              component={AnalysisScreen} 
+              options={{ title: 'Analysis' }} 
+            />
+            <Stack.Screen 
+              name="Treatment" 
+              component={TreatmentScreen} 
+              options={{ title: 'Recommended Treatments' }} 
+            />
+            <Stack.Screen 
+              name="Simulation" 
+              component={SimulationScreen} 
+              options={{ title: 'Treatment Simulation' }} 
+            />
+            <Stack.Screen 
+              name="Report" 
+              component={ReportScreen} 
+              options={{ title: 'Treatment Report' }} 
+            />
+            <Stack.Screen 
+              name="LogoGenerator" 
+              component={LogoGenerator} 
+              options={{ title: 'Logo Generator' }} 
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <StatusBar style="auto" />
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f8f9fa'
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#dc3545'
+  },
+  errorMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#343a40'
+  }
+}); 

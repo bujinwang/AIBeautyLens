@@ -11,15 +11,19 @@ import AnalysisScreen from './screens/AnalysisScreen';
 import TreatmentScreen from './screens/TreatmentScreen';
 import SimulationScreen from './screens/SimulationScreen';
 import ReportScreen from './screens/ReportScreen';
+import HomeScreen from './screens/HomeScreen';
+import LogoGenerator from './utils/LogoGenerator';
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
-  ApiKey: undefined;
+  Home: undefined;
+  ApiKey: { forceShow?: boolean } | undefined;
   Camera: undefined;
   Analysis: { imageUri: string; base64Image: string };
   Treatment: { analysisResult: any; imageUri: string; base64Image: string };
   Simulation: { selectedTreatments: string[]; imageUri: string; base64Image: string };
   Report: { treatmentIds: string[]; beforeImage: string; afterImage: string };
+  LogoGenerator: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -28,7 +32,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="ApiKey">
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen} 
+            options={{ headerShown: false }} 
+          />
           <Stack.Screen 
             name="ApiKey" 
             component={ApiKeyScreen} 
@@ -58,6 +67,11 @@ export default function App() {
             name="Report" 
             component={ReportScreen} 
             options={{ title: 'Treatment Report' }} 
+          />
+          <Stack.Screen 
+            name="LogoGenerator" 
+            component={LogoGenerator} 
+            options={{ title: 'Logo Generator' }} 
           />
         </Stack.Navigator>
       </NavigationContainer>

@@ -5,6 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
+import { MaterialIcons } from '@expo/vector-icons';
+import Logo from '../components/Logo';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -67,39 +69,62 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     setPreviewVisible(false);
   };
 
-  const analyzeImage = async () => {
-    if (capturedImage && capturedImage.uri) {
+  const handleAnalyze = async () => {
+    if (!capturedImage || !capturedImage.uri) return;
+
+    try {
       let base64Image = capturedImage.base64;
-      
       if (!base64Image) {
-        // If base64 is not available directly, read the file and convert it
-        const fileContent = await FileSystem.readAsStringAsync(capturedImage.uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        base64Image = fileContent;
+        const fileUri = capturedImage.uri;
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (fileInfo.exists) {
+          const base64Content = await FileSystem.readAsStringAsync(fileUri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          base64Image = base64Content;
+        }
       }
-      
+
       navigation.navigate('Analysis', {
         imageUri: capturedImage.uri,
         base64Image: base64Image,
       });
+    } catch (error) {
+      console.error('Error preparing image for analysis:', error);
     }
   };
 
+  const openApiKeySettings = () => {
+    navigation.navigate('ApiKey', { forceShow: true });
+  };
+
   if (hasPermission === null) {
-    return <View style={styles.container}><Text>Requesting camera permission...</Text></View>;
+    return <View />;
   }
-  
   if (hasPermission === false) {
-    return <View style={styles.container}><Text>No access to camera</Text></View>;
+    return <Text>No access to camera</Text>;
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Logo size="small" showTagline={false} />
+        <TouchableOpacity 
+          style={styles.settingsButton}
+          onPress={openApiKeySettings}
+        >
+          <MaterialIcons name="settings" size={24} color="#4361ee" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.subtitle}>
+        <Text style={styles.subtitleText}>Professional-grade skin analysis in your pocket</Text>
+      </View>
+
       {previewVisible && capturedImage ? (
         <View style={styles.previewContainer}>
-          <Image 
-            source={{ uri: capturedImage.uri }} 
+          <Image
+            source={{ uri: capturedImage.uri }}
             style={styles.cameraPreview}
           />
           <View style={styles.buttonContainer}>
@@ -111,9 +136,9 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.primaryButton]}
-              onPress={analyzeImage}
+              onPress={handleAnalyze}
             >
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>Analyze</Text>
+              <Text style={[styles.buttonText, styles.primaryButtonText]}>Begin DermaGraph™ Analysis</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -139,7 +164,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 style={[styles.button, styles.primaryButton]}
                 onPress={takePicture}
               >
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>Capture</Text>
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>Capture Image</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton]}
@@ -165,6 +190,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 50,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  settingsButton: {
+    padding: 8,
   },
   cameraContainer: {
     flex: 1,
@@ -220,6 +263,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'white',
     borderRadius: 20,
+  },
+  subtitle: {
+    padding: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginBottom: 10,
+  },
+  subtitleText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

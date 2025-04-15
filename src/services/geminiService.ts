@@ -9,6 +9,24 @@ import {
   GOOGLE_CLOUD_PROJECT_ID
 } from '../config/api';
 import { createAcneMask } from '../utils/imageUtils';
+import { Platform } from 'react-native';
+
+// Helper function to determine image type from base64 prefix
+function getImageMimeType(base64Data: string) {
+  if (base64Data.startsWith('iVBORw0KGgo')) {
+    return 'image/png';
+  } else if (base64Data.startsWith('/9j/')) {
+    return 'image/jpeg';
+  } else {
+    // Default to jpeg if unknown
+    return 'image/jpeg';
+  }
+}
+
+// Custom error interface for retry mechanism
+interface RetryError extends Error {
+  name: 'RetryError';
+}
 
 /**
  * Analyzes a facial image and returns recommendations
@@ -16,89 +34,87 @@ import { createAcneMask } from '../utils/imageUtils';
  * @returns Analysis results including age, skin type, and treatment recommendations
  */
 export const analyzeFacialImage = async (base64Image: string) => {
-  try {
-    // Get the API key from storage
-    const apiKey = await getApiKey();
-    
-    // Log API key format (safely)
-    console.log('API key format check:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'No API key');
-    
-    // Make sure the API key is valid
-    if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
-      throw new Error('Invalid or missing API key. Please enter a valid Gemini API key in the settings.');
-    }
-    
-    console.log('Making API request to Gemini...');
-    
-    // First, let's log the key details about the image we're sending
-    console.log('Base64 image length:', base64Image ? base64Image.length : 0);
-    
-    // Validate that image data exists
-    if (!base64Image || base64Image.length < 100) {
-      throw new Error('Invalid or missing image data. Please provide a valid image.');
-    }
-    
-    // Check if the base64 image is too large - common issue with API limits
-    if (base64Image.length > 1000000) {
-      console.log('Warning: Base64 image is quite large (' + Math.round(base64Image.length/1024/1024*100)/100 + ' MB), this may exceed API limits');
-    }
-    
-    // Calculate a hash-like value for the image to detect if same image is being sent repeatedly
-    const imageFingerprint = base64Image.substring(0, 20) + '...' + base64Image.substring(base64Image.length - 20);
-    console.log('Image fingerprint:', imageFingerprint);
-    
-    // Clean the base64 string to remove any potential line breaks or invalid characters
-    base64Image = base64Image.replace(/[\r\n\t]/g, '').trim();
-    
-    // Helper function to determine image type from base64 prefix
-    function getImageMimeType(base64Data: string) {
-      if (base64Data.startsWith('iVBORw0KGgo')) {
-        return 'image/png';
-      } else if (base64Data.startsWith('/9j/')) {
-        return 'image/jpeg';
-      } else {
-        // Default to jpeg if unknown
-        return 'image/jpeg';
+  let retryCount = 0;
+  const MAX_RETRIES = Platform.OS === 'ios' && Platform.isPad ? 2 : 1;
+  const isIPad = Platform.OS === 'ios' && Platform.isPad;
+  
+  // Function for retry logic
+  const executeWithRetry = async () => {
+    try {
+      // Get the API key from storage
+      const apiKey = await getApiKey();
+      
+      // Log API key format (safely)
+      console.log('API key format check:', apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'No API key');
+      
+      // Make sure the API key is valid
+      if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+        throw new Error('Invalid or missing API key. Please enter a valid Gemini API key in the settings.');
       }
-    }
-
-    // Then use it when constructing the URL
-    const mimeType = getImageMimeType(base64Image);
-    console.log('Detected image mime type:', mimeType);
-    
-    // Treatments catalog to provide to the AI
-    const treatmentsList = `
-    Available treatments for recommendation:
-    
-    LASER TREATMENTS:
-    - pico-laser: Picosecond Laser (Face) - Advanced laser technology that delivers energy in ultra-short picosecond pulses to target pigmentation and improve skin texture
-    - fractional-laser: Fractional Laser (Face) - Creates micro-damage zones to stimulate collagen production and skin rejuvenation
-    - laser-hair-removal: Permanent Laser Hair Removal (Various) - Uses laser energy to target hair follicles for permanent hair reduction
-    
-    RADIOFREQUENCY TREATMENTS:
-    - tempsure-rf: Tempsure Gold RF Lifting (Face) - Radiofrequency treatment that heats deep skin layers to stimulate collagen production and tighten skin
-    - thermage: Thermage (Face/Body) - Premium radiofrequency treatment for significant skin tightening and contouring
-    - flexsure: Flexsure Body Contouring (Body) - Targeted radiofrequency treatment for body contouring and fat reduction
-    
-    INJECTION TREATMENTS:
-    - ha-filler: Hyaluronic Acid Filler (Face) - Injectable gel that adds volume, smooths lines, and enhances facial contours
-    - botox: Botulinum Toxin (Face) - Relaxes muscles to reduce the appearance of wrinkles and fine lines
-    - fat-dissolving: Fat Dissolving Injection (Face/Body) - Injectable treatment that breaks down fat cells for localized fat reduction
-    - prp: PRP (Platelet-Rich Plasma) (Face/Scalp) - Uses patient's own blood plasma to stimulate cell regeneration and collagen production
-    
-    SPECIAL TREATMENTS:
-    - hydrofacial: HydroFacial (Face) - Multi-step treatment that cleanses, exfoliates, and hydrates the skin
-    - aqua-needle: Aqua Acupuncture (Face) - Microinjections of hyaluronic acid and nutrients for skin hydration and rejuvenation
-    `;
-    
-    // Prepare the request body for Gemini
-    const requestBody = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `You are an expert aesthetic medical professional specializing in facial analysis. Provide detailed assessments of facial features based on images. Be thorough and try to find facial features even in challenging images.
+      
+      console.log('Making API request to Gemini...');
+      console.log(`Platform: ${Platform.OS}, iPad: ${isIPad}, Retry #${retryCount + 1}`);
+      
+      // First, let's log the key details about the image we're sending
+      console.log('Base64 image length:', base64Image ? base64Image.length : 0);
+      
+      // Validate that image data exists
+      if (!base64Image || base64Image.length < 100) {
+        throw new Error('Invalid or missing image data. Please provide a valid image.');
+      }
+      
+      // Check if the base64 image is too large - common issue with API limits
+      if (base64Image.length > 1000000) {
+        console.log('Warning: Base64 image is quite large (' + Math.round(base64Image.length/1024/1024*100)/100 + ' MB), this may exceed API limits');
+        
+        // For iPad, we'll throw an error immediately if the image is too large
+        if (isIPad && base64Image.length > 2000000) {
+          throw new Error('The image is too large for processing on this device. Please try with a smaller image or resize it first.');
+        }
+      }
+      
+      // Clean the base64 string to remove any potential line breaks or invalid characters
+      base64Image = base64Image.replace(/[\r\n\t]/g, '').trim();
+      
+      // Then use it when constructing the URL
+      const mimeType = getImageMimeType(base64Image);
+      console.log('Detected image mime type:', mimeType);
+      
+      // Treatments catalog to provide to the AI
+      const treatmentsList = `
+      Available treatments for recommendation:
+      
+      LASER TREATMENTS:
+      - pico-laser: Picosecond Laser (Face) - Advanced laser technology that delivers energy in ultra-short picosecond pulses to target pigmentation and improve skin texture
+      - fractional-laser: Fractional Laser (Face) - Creates micro-damage zones to stimulate collagen production and skin rejuvenation
+      - laser-hair-removal: Permanent Laser Hair Removal (Various) - Uses laser energy to target hair follicles for permanent hair reduction
+      
+      RADIOFREQUENCY TREATMENTS:
+      - tempsure-rf: Tempsure Gold RF Lifting (Face) - Radiofrequency treatment that heats deep skin layers to stimulate collagen production and tighten skin
+      - thermage: Thermage (Face/Body) - Premium radiofrequency treatment for significant skin tightening and contouring
+      - flexsure: Flexsure Body Contouring (Body) - Targeted radiofrequency treatment for body contouring and fat reduction
+      
+      INJECTION TREATMENTS:
+      - ha-filler: Hyaluronic Acid Filler (Face) - Injectable gel that adds volume, smooths lines, and enhances facial contours
+      - botox: Botulinum Toxin (Face) - Relaxes muscles to reduce the appearance of wrinkles and fine lines
+      - fat-dissolving: Fat Dissolving Injection (Face/Body) - Injectable treatment that breaks down fat cells for localized fat reduction
+      - prp: PRP (Platelet-Rich Plasma) (Face/Scalp) - Uses patient's own blood plasma to stimulate cell regeneration and collagen production
+      
+      SPECIAL TREATMENTS:
+      - hydrofacial: HydroFacial (Face) - Multi-step treatment that cleanses, exfoliates, and hydrates the skin
+      - aqua-needle: Aqua Acupuncture (Face) - Microinjections of hyaluronic acid and nutrients for skin hydration and rejuvenation
+      - head-spa: Head Spa Machine (Scalp) - Deep cleansing and stimulating treatment for the scalp to promote hair health and relieve tension
+      - acupuncture: Acupuncture (Face/Body) - Traditional therapy using fine needles to stimulate specific points on the body, promoting natural healing and wellness
+      `;
+      
+      // Prepare the request body for Gemini
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `You are an expert aesthetic medical professional specializing in facial analysis. Provide detailed assessments of facial features based on images. Be thorough and try to find facial features even in challenging images.
 
 Analyze this image for facial features and potential cosmetic treatments.
 
@@ -120,143 +136,197 @@ Format your response as a JSON object with these exact fields:
 
 The treatmentId must be one of the IDs from the catalog (e.g., "botox", "fractional-laser").
 The severity should be a number from 1 to 5, where 1 is mild and 5 is severe.`
-            },
-            {
-              inline_data: {
-                mime_type: mimeType,
-                data: base64Image
+              },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: base64Image
+                }
+              }
+            ]
+          }
+        ],
+        generation_config: {
+          temperature: 0.6,
+          max_output_tokens: 4096,
+          response_mime_type: "application/json"
+        }
+      };
+      
+      // Make the API call with API key as query parameter
+      const apiUrl = `${GEMINI_VISION_API}?key=${apiKey}`;
+      
+      // For iPad specifically, we'll use fetch with AbortController for better timeout management
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT + (isIPad ? 5000 : 0)); // Extra time for iPad
+      
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+        
+        // Clear the timeout since the request completed
+        clearTimeout(timeoutId);
+        
+        // Check HTTP response status
+        console.log('Gemini API response status:', response.status);
+        console.log('Gemini API response status text:', response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          
+          // Special iPad-specific handling for 429 errors
+          if (response.status === 429) {
+            if (isIPad && retryCount < MAX_RETRIES) {
+              // If on iPad and we have retries left, throw a retry error
+              const retryError = new Error('RETRY_NEEDED') as RetryError;
+              retryError.name = 'RetryError';
+              throw retryError;
+            } else {
+              // Final quota error with user-friendly message
+              throw new Error('API_QUOTA_EXCEEDED: Our facial analysis service is temporarily unavailable. Please try again later or contact our clinic for assistance.');
+            }
+          }
+          
+          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        }
+        
+        // Parse the response directly as JSON
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error.message || 'Error analyzing image');
+        }
+        
+        // Check if the response has the expected structure from Gemini
+        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+          console.error('Unexpected API response structure:', JSON.stringify(data, null, 2));
+          throw new Error('Invalid response structure from Gemini API');
+        }
+        
+        // Get the text content from the Gemini response
+        const content = data.candidates[0].content.parts[0].text;
+        const finishReason = data.candidates[0].finishReason;
+        
+        // Check if response was truncated
+        if (finishReason === "MAX_TOKENS") {
+          console.warn('Response was truncated due to token limit. Attempting to fix incomplete JSON...');
+        }
+        
+        if (typeof content === 'string') {
+          try {
+            // Try to fix incomplete JSON before parsing
+            let jsonToParseStr = content;
+            
+            // If we have a truncated response, attempt to fix it by adding missing brackets
+            if (finishReason === "MAX_TOKENS") {
+              // Count opening vs closing braces to detect incomplete structure
+              const countChar = (str: string, char: string) => (str.match(new RegExp(char, 'g')) || []).length;
+              
+              const openBraces = countChar(jsonToParseStr, '{');
+              const closeBraces = countChar(jsonToParseStr, '}');
+              const openBrackets = countChar(jsonToParseStr, '\\[');
+              const closeBrackets = countChar(jsonToParseStr, '\\]');
+              
+              // Add missing closing braces/brackets
+              if (openBraces > closeBraces) {
+                jsonToParseStr += '}'.repeat(openBraces - closeBraces);
+              }
+              
+              if (openBrackets > closeBrackets) {
+                jsonToParseStr += ']'.repeat(openBrackets - closeBrackets);
               }
             }
-          ]
-        }
-      ],
-      generation_config: {
-        temperature: 0.6,
-        max_output_tokens: 4096,
-        response_mime_type: "application/json"
-      }
-    };
-    
-    // Log the request structure without the image data
-    const logRequestBody = JSON.parse(JSON.stringify(requestBody));
-    if (logRequestBody.contents && 
-        logRequestBody.contents[0] && 
-        logRequestBody.contents[0].parts && 
-        logRequestBody.contents[0].parts[1] && 
-        logRequestBody.contents[0].parts[1].inline_data) {
-      // Remove the base64 image from logging to avoid overwhelming the console
-      logRequestBody.contents[0].parts[1].inline_data.data = "[BASE64_IMAGE_DATA]";
-    }
-    console.log('Request structure:', JSON.stringify(logRequestBody, null, 2));
-    
-    // Make the API call with API key as query parameter
-    const apiUrl = `${GEMINI_VISION_API}?key=${apiKey}`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-    
-    // Check HTTP response status
-    console.log('Gemini API response status:', response.status);
-    console.log('Gemini API response status text:', response.statusText);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error Response:', errorText);
-      
-      // Handle quota limit error (429) with a more customer-friendly message
-      if (response.status === 429) {
-        throw new Error('API_QUOTA_EXCEEDED: Our facial analysis service is temporarily unavailable. Please try again later or contact our clinic for assistance.');
-      }
-      
-      throw new Error(`API request failed with status ${response.status}: ${errorText}`);
-    }
-    
-    // Parse the response directly as JSON
-    const data = await response.json();
-    
-    // Add debug logging
-    console.log('API response structure:', JSON.stringify(data, null, 2));
-    
-    if (data.error) {
-      throw new Error(data.error.message || 'Error analyzing image');
-    }
-    
-    // Check if the response has the expected structure from Gemini
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      console.error('Unexpected API response structure:', JSON.stringify(data, null, 2));
-      throw new Error('Invalid response structure from Gemini API');
-    }
-    
-    // Get the text content from the Gemini response
-    const content = data.candidates[0].content.parts[0].text;
-    const finishReason = data.candidates[0].finishReason;
-    
-    // Check if response was truncated
-    if (finishReason === "MAX_TOKENS") {
-      console.warn('Response was truncated due to token limit. Attempting to fix incomplete JSON...');
-    }
-    
-    if (typeof content === 'string') {
-      try {
-        // Try to fix incomplete JSON before parsing
-        let jsonToParseStr = content;
-        
-        // If we have a truncated response, attempt to fix it by adding missing brackets
-        if (finishReason === "MAX_TOKENS") {
-          // Count opening vs closing braces to detect incomplete structure
-          const countChar = (str: string, char: string) => (str.match(new RegExp(char, 'g')) || []).length;
-          
-          const openBraces = countChar(jsonToParseStr, '{');
-          const closeBraces = countChar(jsonToParseStr, '}');
-          const openBrackets = countChar(jsonToParseStr, '\\[');
-          const closeBrackets = countChar(jsonToParseStr, '\\]');
-          
-          // Add missing closing braces/brackets
-          if (openBraces > closeBraces) {
-            jsonToParseStr += '}'.repeat(openBraces - closeBraces);
+            
+            // Parse the content string into a JSON object
+            const parsedContent = JSON.parse(jsonToParseStr);
+            
+            // Check if the parsed content contains an error message about not being a face
+            if (parsedContent.error === true) {
+              throw new Error(parsedContent.message || 'The uploaded image does not contain a human face');
+            }
+            
+            return parsedContent;
+          } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            console.error('Content that failed to parse:', content.substring(0, 200));
+            
+            if (isIPad && retryCount < MAX_RETRIES) {
+              // If on iPad and we have retries left, throw a retry error
+              const retryError = new Error('RETRY_NEEDED') as RetryError;
+              retryError.name = 'RetryError';
+              throw retryError;
+            } else {
+              throw new Error('Failed to parse API response content as JSON');
+            }
           }
-          
-          if (openBrackets > closeBrackets) {
-            jsonToParseStr += ']'.repeat(openBrackets - closeBrackets);
+        } else if (typeof content === 'object' && content !== null) {
+          // If content is already an object (rare case), check for error
+          if (content.error === true) {
+            throw new Error(content.message || 'The uploaded image does not contain a human face');
           }
-          
-          console.log('Attempted to fix truncated JSON:', jsonToParseStr.substring(0, 100) + '...');
+          return content;
         }
         
-        // Parse the content string into a JSON object
-        const parsedContent = JSON.parse(jsonToParseStr);
-        console.log('Successfully parsed content as JSON:', JSON.stringify(parsedContent, null, 2));
+        throw new Error('Unexpected response format from Gemini API');
+      } catch (fetchError: any) {
+        // Clear the timeout to prevent any lingering issues
+        clearTimeout(timeoutId);
         
-        // Check if the parsed content contains an error message about not being a face
-        if (parsedContent.error === true) {
-          throw new Error(parsedContent.message || 'The uploaded image does not contain a human face');
+        // Handle AbortController timeout
+        if (fetchError.name === 'AbortError') {
+          console.error('Request timed out');
+          throw new Error('The request to the Gemini API timed out. Please try again later.');
         }
         
-        return parsedContent;
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Content that failed to parse:', content.substring(0, 200));
-        throw new Error('Failed to parse API response content as JSON');
+        // If it's a retry error on iPad, propagate it
+        if (fetchError.name === 'RetryError') {
+          throw fetchError;
+        }
+        
+        // Otherwise, propagate other errors
+        throw fetchError;
       }
-    } else if (typeof content === 'object' && content !== null) {
-      // If content is already an object (rare case), check for error
-      if (content.error === true) {
-        throw new Error(content.message || 'The uploaded image does not contain a human face');
+    } catch (error: any) {
+      // Check if this is a retry error and we should retry
+      if (error.name === 'RetryError' && retryCount < MAX_RETRIES) {
+        throw error; // Re-throw to trigger retry in outer catch
       }
-      return content;
+      throw error; // Otherwise re-throw the error to be handled by caller
+    }
+  };
+  
+  // Main try/catch block with retries for iPad
+  try {
+    return await executeWithRetry();
+  } catch (error: any) {
+    if (error.name === 'RetryError' && retryCount < MAX_RETRIES) {
+      console.log(`Retrying API request for iPad... Attempt ${retryCount + 2} of ${MAX_RETRIES + 1}`);
+      retryCount++;
+      
+      // Wait for a short delay before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Retry the request
+      return await executeWithRetry();
     }
     
-    throw new Error('Unexpected response format from Gemini API');
-  } catch (error) {
     console.error('Error analyzing image:', error);
     
     // Check if error is quota related and format it for UI presentation
     if (error instanceof Error && error.message.includes('API_QUOTA_EXCEEDED')) {
-      throw error; // Preserve the special error format
+      throw new Error('API_QUOTA_EXCEEDED: Our facial analysis service is temporarily unavailable. Please try again later or use a different device if possible.');
+    }
+    
+    // Special iPad-specific error message
+    if (isIPad) {
+      throw new Error('We encountered an issue processing your request on iPad. Try reducing image size or using a different device if available.');
     }
     
     throw error;
@@ -409,20 +479,6 @@ REPEAT: THIS MUST BE THE SAME PERSON IN THE PHOTOGRAPH, with only skin blemishes
     throw error;
   }
 };
-
-/**
- * Helper function to determine image type from base64 prefix
- */
-function getImageMimeType(base64Data: string) {
-  if (base64Data.startsWith('iVBORw0KGgo')) {
-    return 'image/png';
-  } else if (base64Data.startsWith('/9j/')) {
-    return 'image/jpeg';
-  } else {
-    // Default to jpeg if unknown
-    return 'image/jpeg';
-  }
-}
 
 /**
  * Generates an image using Imagen 3.0 based on a text prompt

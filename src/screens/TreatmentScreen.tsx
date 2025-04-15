@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -54,26 +54,39 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         elevation: 0,
       },
       headerTintColor: COLORS.white,
-      headerTitle: `Treatment Recommendations (${analysisResult.gender} · ${analysisResult.estimatedAge} yrs)`,
+      headerTitle: `RejuvenationRx™ Recommendations`,
       headerTitleStyle: {
         fontWeight: '600',
       },
-      // Note: headerSubtitle is removed as it's not a valid property
     });
   }, []);
 
   const handleTreatmentSelect = (treatmentId: string) => {
+    console.log('Treatment selected:', treatmentId);
     setSelectedTreatment(treatmentId);
   };
 
   const handleNext = () => {
+    console.log('Handle next clicked, selected treatment:', selectedTreatment);
     if (selectedTreatment) {
-      navigation.navigate('Simulation', {
-        analysisResult,
-        selectedTreatments: [selectedTreatment],
-        imageUri,
-        base64Image,
-      } as SimulationParams);
+      try {
+        // Add visual feedback before navigation
+        // We'll use a simple timeout to ensure the button press is visible
+        setTimeout(() => {
+          navigation.navigate('Simulation', {
+            analysisResult,
+            selectedTreatments: [selectedTreatment],
+            imageUri,
+            base64Image,
+          } as SimulationParams);
+        }, 150);
+      } catch (error) {
+        console.error('Navigation error:', error);
+        Alert.alert('Error', 'Unable to generate simulation. Please try again.');
+      }
+    } else {
+      console.log('No treatment selected, navigation prevented');
+      Alert.alert('Select a Treatment', 'Please select a treatment first to generate a simulation.');
     }
   };
 
@@ -137,21 +150,43 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         'Improves overall skin appearance'
       ]
     },
+    'head-spa': {
+      title: 'Head Spa Machine',
+      description: 'Deep cleansing and stimulating treatment for the scalp to promote hair health and relieve tension.',
+      icon: 'spa',
+      benefits: [
+        'Improves scalp circulation and hair growth',
+        'Relieves tension and stress',
+        'Removes buildup of products and oils',
+        'Enhances effectiveness of hair treatments'
+      ]
+    },
+    'acupuncture': {
+      title: 'Facial Acupuncture',
+      description: 'Traditional therapy using fine needles to stimulate specific points on the face, promoting natural healing and wellness.',
+      icon: 'touch-app',
+      benefits: [
+        'Stimulates collagen production naturally',
+        'Improves facial muscle tone',
+        'Reduces fine lines and wrinkles',
+        'Promotes overall skin health and circulation'
+      ]
+    },
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headingContainer}>
-          <Text style={styles.heading}>Recommended Treatments</Text>
+          <Text style={styles.heading}>BeautyBlueprint™ Recommendations</Text>
           <Text style={styles.subheading}>
-            Based on your {analysisResult.gender.toLowerCase()} facial analysis, age {analysisResult.estimatedAge}, {analysisResult.skinType.toLowerCase()} skin
+            Personalized treatment plan based on your DermaGraph™ Analysis
           </Text>
         </View>
 
         <Card
           variant="elevated"
-          title="Your Analysis Summary"
+          title="SkinMatrix™ Analysis Summary"
           icon="face-retouching-natural"
           style={styles.summaryCard}
         >
@@ -187,6 +222,18 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         </Card>
 
         <Text style={styles.sectionTitle}>Select a Treatment</Text>
+        
+        {selectedTreatment ? (
+          <View style={styles.selectionIndicator}>
+            <MaterialIcons name="check-circle" size={18} color={COLORS.success.main} />
+            <Text style={styles.selectionText}>Treatment selected! You can now generate a simulation.</Text>
+          </View>
+        ) : (
+          <View style={styles.selectionIndicator}>
+            <MaterialIcons name="info" size={18} color={COLORS.warning.main} />
+            <Text style={styles.selectionText}>Please select a treatment to enable simulation.</Text>
+          </View>
+        )}
         
         {uniqueTreatmentIds.map((treatmentId) => {
           const treatment = treatmentData[treatmentId as keyof typeof treatmentData] || {
@@ -252,16 +299,19 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
           );
         })}
         
-        <Button
-          title="Generate Before/After Simulation"
-          variant="primary"
-          size="large"
-          icon="auto-fix-high"
-          disabled={!selectedTreatment}
-          onPress={handleNext}
-          style={styles.nextButton}
-          fullWidth={true}
-        />
+        <View style={styles.actionContainer}>
+          <Button
+            title="Generate TreatmentVision™ Simulation"
+            icon="auto-fix-high"
+            variant="primary"
+            onPress={handleNext}
+            disabled={!selectedTreatment}
+            style={styles.simulateButton}
+          />
+          <Text style={styles.disclaimer}>
+            Simulations are for visualization purposes only. Consult with a professional for personalized advice.
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -390,8 +440,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.primary.dark,
   },
-  nextButton: {
+  simulateButton: {
     marginVertical: SPACING.xl,
+  },
+  selectionIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  selectionText: {
+    marginLeft: SPACING.xs,
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  disclaimer: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
   },
 });
 

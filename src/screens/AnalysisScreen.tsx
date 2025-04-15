@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking, Platform, ImageBackground } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import ProcessingIndicator from '../components/ProcessingIndicator';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import { COLORS, SPACING, SHADOWS, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -39,7 +40,9 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isQuotaError, setIsQuotaError] = useState(false);
+  const [isIpadError, setIsIpadError] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const isIPad = Platform.OS === 'ios' && Platform.isPad;
 
   useEffect(() => {
     // Set up navigation options
@@ -50,7 +53,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         elevation: 0,
       },
       headerTintColor: COLORS.white,
-      headerTitle: 'Advanced Facial Analysis',
+      headerTitle: 'ClinicalLens™ Analysis',
       headerTitleStyle: {
         fontWeight: '600',
       },
@@ -64,6 +67,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setLoading(true);
       setError(null);
       setIsQuotaError(false);
+      setIsIpadError(false);
       const result = await analyzeFacialImage(base64Image);
       setAnalysisResult(result);
     } catch (error) {
@@ -72,6 +76,12 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         if (error.message.includes('API_QUOTA_EXCEEDED')) {
           setIsQuotaError(true);
           setError('You have reached your API quota limit.');
+        } else if (isIPad && (
+          error.message.includes('iPad') || 
+          error.message.includes('timeout') || 
+          error.message.includes('large'))) {
+          setIsIpadError(true);
+          setError(error.message);
         } else {
           setError('Failed to analyze image. Please try again.');
         }
@@ -135,6 +145,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.errorTitle}>Analysis Temporarily Unavailable</Text>
             <Text style={styles.errorText}>
               Our facial analysis service is currently unavailable due to high demand. 
+              {isIPad ? " iPad devices may experience additional limitations with this service." : ""}
               Your skin health is important to us, and we apologize for the inconvenience.
             </Text>
             <View style={styles.quotaErrorActions}>
@@ -145,10 +156,50 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 variant="outline"
                 style={styles.actionButton}
               />
+              {isIPad ? (
+                <Button 
+                  title="Try Different Device" 
+                  icon="devices"
+                  onPress={() => navigation.goBack()} 
+                  variant="primary"
+                  style={styles.actionButton}
+                />
+              ) : (
+                <Button 
+                  title="Contact Clinic" 
+                  icon="call"
+                  onPress={() => Linking.openURL('tel:+15551234567')}
+                  variant="primary"
+                  style={styles.actionButton}
+                />
+              )}
+            </View>
+          </View>
+        </Card>
+      );
+    }
+    
+    if (isIpadError) {
+      return (
+        <Card variant="elevated" style={styles.errorContainer}>
+          <View style={styles.errorContent}>
+            <MaterialIcons name="tablet-mac" size={40} color={COLORS.warning.main} />
+            <Text style={styles.errorTitle}>iPad Compatibility Issue</Text>
+            <Text style={styles.errorText}>
+              {error || "We've encountered an issue processing your request on iPad. This might be due to image size or API limitations on tablet devices."}
+            </Text>
+            <View style={styles.quotaErrorActions}>
               <Button 
-                title="Contact Clinic" 
-                icon="call"
-                onPress={() => Linking.openURL('tel:+15551234567')}
+                title="Try Again" 
+                icon="refresh"
+                onPress={analyzeImage} 
+                variant="outline"
+                style={styles.actionButton}
+              />
+              <Button 
+                title="Take New Photo" 
+                icon="photo-camera"
+                onPress={() => navigation.navigate('Camera')}
                 variant="primary"
                 style={styles.actionButton}
               />
@@ -176,98 +227,102 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: imageUri }} style={styles.image} />
-          
-          {/* Premium badge overlay */}
-          <View style={styles.badgeContainer}>
-            <View style={styles.premiumBadge}>
-              <MaterialIcons name="verified" size={16} color={COLORS.gold.main} style={styles.badgeIcon} />
-              <Text style={styles.badgeText}>Premium Analysis</Text>
-            </View>
-          </View>
-        </View>
-        
-        {loading ? (
-          <ProcessingIndicator 
-            isAnalyzing={true} 
-            processingText="Advanced Facial Analysis In Progress"
-            showDetailedSteps={true}
-          />
-        ) : error ? (
-          renderErrorContent()
-        ) : analysisResult ? (
-          <View style={styles.resultContainer}>
-            {/* Primary analysis card */}
-            <Card 
-              variant="elevated" 
-              title="Analysis Results"
-              icon="analytics"
-              style={styles.analysisCard}
-            >
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Estimated Age:</Text>
-                <Text style={styles.infoValue}>{analysisResult.estimatedAge} years</Text>
+    <ScrollView style={styles.container}>
+      {loading ? (
+        <ProcessingIndicator 
+          isAnalyzing={true}
+          processingText="Your scan is being processed by our DermaGraph™ Analysis technology..."
+          showDetailedSteps={true}
+        />
+      ) : error ? (
+        renderErrorContent()
+      ) : analysisResult ? (
+        <>
+          <Card variant="elevated" style={styles.imageContainer}>
+            <View style={styles.imageWrapper}>
+              <Image 
+                source={{ uri: imageUri }} 
+                style={styles.image} 
+                resizeMode="cover"
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.3)']}
+                style={styles.imageGradient}
+              />
+              <View style={styles.badgeContainer}>
+                <View style={styles.premiumBadge}>
+                  <MaterialIcons name="verified" size={14} color={COLORS.gold.main} style={styles.badgeIcon} />
+                  <Text style={styles.badgeText}>AI-Enhanced</Text>
+                </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Gender:</Text>
-                <View style={styles.infoValueContainer}>
+            </View>
+          </Card>
+
+          <Card
+            variant="elevated"
+            style={styles.resultCard}
+            title="SkinMatrix™ Analysis Results"
+            subtitle="Powered by AesthetiScan™ technology"
+            icon="analytics"
+          >
+            <View style={styles.resultContent}>
+              <View style={styles.resultRow}>
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Estimated Age</Text>
+                  <Text style={styles.resultValue}>{analysisResult.estimatedAge}</Text>
+                </View>
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Skin Type</Text>
+                  <Text style={styles.resultValue}>{analysisResult.skinType}</Text>
+                </View>
+              </View>
+
+              <View style={styles.genderContainer}>
+                <Text style={styles.resultLabel}>Gender</Text>
+                <View style={styles.genderRow}>
+                  <Text style={styles.genderValue}>{analysisResult.gender}</Text>
                   <GenderConfidenceDisplay 
                     gender={analysisResult.gender}
-                    confidence={analysisResult.genderConfidence || 0}
-                    size="medium"
+                    confidence={analysisResult.genderConfidence} 
                   />
                 </View>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Skin Type:</Text>
-                <Text style={styles.infoValue}>{analysisResult.skinType}</Text>
-              </View>
-            </Card>
-
-            {/* Features analysis card */}
-            <Card
-              variant="elevated"
-              title="Facial Features Analysis"
-              icon="face"
-              style={styles.featuresCard}
-            >
-              {analysisResult.features.map((feature, index) => (
-                <View key={index} style={styles.featureItem}>
-                  <View style={styles.featureHeader}>
-                    <Text style={styles.featureTitle}>{feature.description}</Text>
-                    {renderSeverityIndicator(feature.severity)}
-                  </View>
-                </View>
-              ))}
-            </Card>
-
-            {/* AI insights badge */}
-            <View style={styles.insightContainer}>
-              <View style={styles.insightIconContainer}>
-                <MaterialIcons name="psychology" size={20} color={COLORS.white} />
-              </View>
-              <Text style={styles.insightText}>
-                Analysis powered by advanced AI dermatological models
-              </Text>
             </View>
+          </Card>
 
-            <Button 
-              title="View Treatment Recommendations" 
-              icon="arrow-forward"
-              iconPosition="right"
-              variant="primary"
-              size="large"
-              fullWidth={true}
-              onPress={handleNext}
-              style={styles.nextButton}
-            />
+          <Card
+            variant="elevated"
+            style={styles.featuresCard}
+            title="Facial Feature Analysis"
+            subtitle="Professional-grade skin analysis in your pocket"
+            icon="face"
+          >
+            {analysisResult.features.map((feature, index) => (
+              <View key={index} style={styles.featureItem}>
+                <View style={styles.featureInfo}>
+                  <Text style={styles.featureText}>{feature.description}</Text>
+                </View>
+                {renderSeverityIndicator(feature.severity)}
+              </View>
+            ))}
+          </Card>
+
+          <Button
+            title="View Treatment Recommendations"
+            icon="healing"
+            onPress={handleNext}
+            variant="primary"
+            style={styles.nextButton}
+          />
+          
+          <View style={styles.footnoteContainer}>
+            <Text style={styles.footnote}>
+              Analysis performed with DermaPrecision™ Technology, trained on data from thousands of clinical assessments.
+            </Text>
           </View>
-        ) : null}
-      </ScrollView>
-    </View>
+        </>
+      ) : null}
+    </ScrollView>
   );
 };
 
@@ -280,20 +335,47 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   imageContainer: {
-    alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginHorizontal: 20,
+    marginVertical: SPACING.xl,
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+    elevation: 0,
+  },
+  imageWrapper: {
     position: 'relative',
+    borderRadius: BORDER_RADIUS.lg,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   image: {
-    width: 300,
+    width: '100%',
     height: 400,
     borderRadius: BORDER_RADIUS.lg,
-    ...SHADOWS.medium,
+  },
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 80,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
   },
   badgeContainer: {
     position: 'absolute',
     top: SPACING.md,
     left: SPACING.md,
+    zIndex: 2,
   },
   premiumBadge: {
     flexDirection: 'row',
@@ -427,6 +509,62 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginHorizontal: SPACING.xs,
+  },
+  resultCard: {
+    marginBottom: SPACING.md,
+  },
+  resultContent: {
+    padding: SPACING.md,
+  },
+  resultRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  },
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resultLabel: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    marginRight: SPACING.md,
+  },
+  resultValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.text.primary,
+  },
+  genderContainer: {
+    marginBottom: SPACING.md,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  genderValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.text.primary,
+    marginRight: SPACING.md,
+  },
+  featureInfo: {
+    flex: 1,
+  },
+  featureText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.text.primary,
+  },
+  footnoteContainer: {
+    padding: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+  footnote: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

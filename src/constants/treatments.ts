@@ -101,6 +101,22 @@ export const TREATMENTS = [
     area: "Face",
     description: "Microinjections of hyaluronic acid and nutrients for skin hydration and rejuvenation",
     price: 300
+  },
+  {
+    id: "head-spa",
+    name: "Head Spa Machine",
+    category: "Special",
+    area: "Scalp",
+    description: "Deep cleansing and stimulating treatment for the scalp to promote hair health and relieve tension",
+    price: 65
+  },
+  {
+    id: "acupuncture",
+    name: "Acupuncture",
+    category: "Special",
+    area: "Face/Body",
+    description: "Traditional therapy using fine needles to stimulate specific points on the body, promoting natural healing and wellness",
+    price: 85
   }
 ];
 

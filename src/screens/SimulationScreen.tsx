@@ -34,7 +34,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <Text style={styles.headerTitle}>Treatment Simulation</Text>,
+      headerTitle: () => <Text style={styles.headerTitle}>TreatmentVision™ Simulation</Text>,
       headerRight: () => (
         <View style={styles.headerRightContainer}>
           <TouchableOpacity
@@ -90,7 +90,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
             treatmentDescriptions
           );
           setSimulationImage(inpaintedImage);
-          setTreatmentDescription("Skin improvements applied using precise inpainting technology that preserves your exact facial features.");
+          setTreatmentDescription("Skin improvements applied using our DermaPrecision™ Technology that preserves your exact facial features.");
         } catch (err) {
           console.error('Inpainting failed, falling back to same face mode:', err);
           // If inpainting fails, fall back to same face mode
@@ -110,7 +110,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
           treatmentDescriptions
         );
         setSimulationImage(generatedImage);
-        setTreatmentDescription("AI-generated visualization of potential skin improvements. Note that facial features may differ from your actual appearance.");
+        setTreatmentDescription("AestheticVision™ generated visualization of potential skin improvements. Note that facial features may differ from your actual appearance.");
       } else {
         // Use same face mode (default, most accurate for identity)
         console.log('Running same face simulation...');
@@ -142,15 +142,15 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Treatment Simulation</Text>
+        <Text style={styles.title}>TreatmentVision™ Technology</Text>
         <Text style={styles.subtitle}>
-          See the potential results of your selected treatments
+          Transform consultation to transformation with a single photo
         </Text>
       </View>
 
       {/* Mode selection buttons */}
       <View style={styles.simulationModeContainer}>
-        <Text style={styles.sectionTitle}>Simulation Mode:</Text>
+        <Text style={styles.sectionTitle}>Visualization Mode:</Text>
         
         <View style={styles.modeButtons}>
           <TouchableOpacity 
@@ -161,7 +161,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
               setTimeout(() => generateSimulation(), 100);
             }}>
             <MaterialIcons name="face" size={20} color={simulationMode === 'sameFace' ? "#1976d2" : "#666"} />
-            <Text style={[styles.modeButtonText, simulationMode === 'sameFace' && styles.selectedModeText]}>Same Face</Text>
+            <Text style={[styles.modeButtonText, simulationMode === 'sameFace' && styles.selectedModeText]}>Clinical View</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -172,7 +172,7 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
               setTimeout(() => generateSimulation(), 100);
             }}>
             <MaterialIcons name="brush" size={20} color={simulationMode === 'inpainting' ? "#1976d2" : "#666"} />
-            <Text style={[styles.modeButtonText, simulationMode === 'inpainting' && styles.selectedModeText]}>Inpainting</Text>
+            <Text style={[styles.modeButtonText, simulationMode === 'inpainting' && styles.selectedModeText]}>Precision Edit</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -183,14 +183,14 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
               setTimeout(() => generateSimulation(), 100);
             }}>
             <MaterialIcons name="auto-awesome" size={20} color={simulationMode === 'aiGenerated' ? "#1976d2" : "#666"} />
-            <Text style={[styles.modeButtonText, simulationMode === 'aiGenerated' && styles.selectedModeText]}>AI Generated</Text>
+            <Text style={[styles.modeButtonText, simulationMode === 'aiGenerated' && styles.selectedModeText]}>Enhanced View</Text>
           </TouchableOpacity>
         </View>
         
         <Text style={styles.modeDescription}>
-          {simulationMode === 'sameFace' && "Original photo with description of expected improvements."}
-          {simulationMode === 'inpainting' && "Precise skin edits that preserve your facial structure."}
-          {simulationMode === 'aiGenerated' && "AI-generated simulation (less accurate for facial identity)."}
+          {simulationMode === 'sameFace' && "SkinMatrix™ analysis with detailed description of expected improvements."}
+          {simulationMode === 'inpainting' && "DermaPrecision™ Technology applies precise skin edits that preserve your facial structure."}
+          {simulationMode === 'aiGenerated' && "AestheticVision™ AI-generated simulation with enhanced beauty features."}
         </Text>
       </View>
 

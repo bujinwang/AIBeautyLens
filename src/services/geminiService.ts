@@ -106,15 +106,17 @@ IMPORTANT: Make your best effort to identify facial features in the image. Even 
 
 Only return an error if you are 100% certain there is absolutely no human face or facial features in the image. In case of uncertainty, proceed with analysis and note your confidence level.
 
-For any images with human facial features, include estimated age, skin type, visible facial features that could benefit from treatments, and specific recommendations ONLY from our treatment catalog below.
+For any images with human facial features, include estimated age, gender with confidence score, skin type, visible facial features that could benefit from treatments, and specific recommendations ONLY from our treatment catalog below.
 
 ${treatmentsList}
 
 Format your response as a JSON object with these exact fields:
 1. estimatedAge (number)
-2. skinType (string)
-3. features (array of objects with description and severity)
-4. recommendations (array of objects with treatmentId and reason)
+2. gender (string - "male", "female", or "unknown")
+3. genderConfidence (number - from 0.0 to 1.0, with 1.0 being 100% confident)
+4. skinType (string)
+5. features (array of objects with description and severity)
+6. recommendations (array of objects with treatmentId and reason)
 
 The treatmentId must be one of the IDs from the catalog (e.g., "botox", "fractional-laser").
 The severity should be a number from 1 to 5, where 1 is mild and 5 is severe.`
@@ -164,6 +166,12 @@ The severity should be a number from 1 to 5, where 1 is mild and 5 is severe.`
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API Error Response:', errorText);
+      
+      // Handle quota limit error (429) with a more customer-friendly message
+      if (response.status === 429) {
+        throw new Error('API_QUOTA_EXCEEDED: Our facial analysis service is temporarily unavailable. Please try again later or contact our clinic for assistance.');
+      }
+      
       throw new Error(`API request failed with status ${response.status}: ${errorText}`);
     }
     
@@ -245,6 +253,12 @@ The severity should be a number from 1 to 5, where 1 is mild and 5 is severe.`
     throw new Error('Unexpected response format from Gemini API');
   } catch (error) {
     console.error('Error analyzing image:', error);
+    
+    // Check if error is quota related and format it for UI presentation
+    if (error instanceof Error && error.message.includes('API_QUOTA_EXCEEDED')) {
+      throw error; // Preserve the special error format
+    }
+    
     throw error;
   }
 };

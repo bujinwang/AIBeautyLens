@@ -17,7 +17,7 @@ export type RootStackParamList = {
   ApiKey: undefined;
   Camera: undefined;
   Analysis: { imageUri: string; base64Image: string };
-  Treatment: { analysisResult: any; imageUri: string };
+  Treatment: { analysisResult: any; imageUri: string; base64Image: string };
   Simulation: { selectedTreatments: string[]; imageUri: string; base64Image: string };
   Report: { treatmentIds: string[]; beforeImage: string; afterImage: string };
 };

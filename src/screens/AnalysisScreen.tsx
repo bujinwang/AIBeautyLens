@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
 import { analyzeFacialImage } from '../services/geminiService';
+import GenderConfidenceDisplay from '../components/GenderConfidenceDisplay';
+import ProcessingIndicator from '../components/ProcessingIndicator';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import { COLORS, SPACING, SHADOWS, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -15,6 +21,8 @@ type Props = {
 
 type AnalysisResult = {
   estimatedAge: number;
+  gender: string;
+  genderConfidence: number;
   skinType: string;
   features: {
     description: string;
@@ -30,20 +38,46 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { imageUri, base64Image } = route.params;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isQuotaError, setIsQuotaError] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
+    // Set up navigation options
+    navigation.setOptions({
+      headerStyle: {
+        backgroundColor: COLORS.primary.main,
+        shadowColor: 'transparent',
+        elevation: 0,
+      },
+      headerTintColor: COLORS.white,
+      headerTitle: 'Advanced Facial Analysis',
+      headerTitleStyle: {
+        fontWeight: '600',
+      },
+    });
+
     analyzeImage();
   }, []);
 
   const analyzeImage = async () => {
     try {
       setLoading(true);
+      setError(null);
+      setIsQuotaError(false);
       const result = await analyzeFacialImage(base64Image);
       setAnalysisResult(result);
     } catch (error) {
       console.error('Error in analysis:', error);
-      setError('Failed to analyze image. Please try again.');
+      if (error instanceof Error) {
+        if (error.message.includes('API_QUOTA_EXCEEDED')) {
+          setIsQuotaError(true);
+          setError('You have reached your API quota limit.');
+        } else {
+          setError('Failed to analyze image. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -54,8 +88,91 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       navigation.navigate('Treatment', {
         analysisResult,
         imageUri,
+        base64Image,
       });
     }
+  };
+
+  const renderSeverityIndicator = (severity: number) => {
+    const dots = [];
+    const getColor = (index: number) => {
+      if (index <= severity) {
+        if (severity <= 2) return COLORS.success.main;
+        if (severity <= 4) return COLORS.warning.main;
+        return COLORS.error.main;
+      }
+      return COLORS.gray[200];
+    };
+
+    for (let i = 1; i <= 5; i++) {
+      dots.push(
+        <View
+          key={i}
+          style={[
+            styles.severityDot,
+            { backgroundColor: getColor(i) },
+          ]}
+        />
+      );
+    }
+
+    return (
+      <View style={styles.severityContainer}>
+        {dots}
+        <Text style={styles.severityText}>
+          {severity}/5
+        </Text>
+      </View>
+    );
+  };
+
+  const renderErrorContent = () => {
+    if (isQuotaError) {
+      return (
+        <Card variant="elevated" style={styles.errorContainer}>
+          <View style={styles.errorContent}>
+            <MaterialIcons name="error-outline" size={40} color={COLORS.error.main} />
+            <Text style={styles.errorTitle}>Analysis Temporarily Unavailable</Text>
+            <Text style={styles.errorText}>
+              Our facial analysis service is currently unavailable due to high demand. 
+              Your skin health is important to us, and we apologize for the inconvenience.
+            </Text>
+            <View style={styles.quotaErrorActions}>
+              <Button 
+                title="Try Again Later" 
+                icon="schedule"
+                onPress={analyzeImage} 
+                variant="outline"
+                style={styles.actionButton}
+              />
+              <Button 
+                title="Contact Clinic" 
+                icon="call"
+                onPress={() => Linking.openURL('tel:+15551234567')}
+                variant="primary"
+                style={styles.actionButton}
+              />
+            </View>
+          </View>
+        </Card>
+      );
+    }
+    
+    return (
+      <Card variant="elevated" style={styles.errorContainer}>
+        <View style={styles.errorContent}>
+          <MaterialIcons name="error-outline" size={40} color={COLORS.error.main} />
+          <Text style={styles.errorText}>{error}</Text>
+          <Button 
+            title="Retry Analysis" 
+            icon="refresh"
+            onPress={analyzeImage} 
+            variant="primary"
+            style={styles.retryButton}
+          />
+        </View>
+      </Card>
+    );
   };
 
   return (
@@ -63,64 +180,90 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageUri }} style={styles.image} />
+          
+          {/* Premium badge overlay */}
+          <View style={styles.badgeContainer}>
+            <View style={styles.premiumBadge}>
+              <MaterialIcons name="verified" size={16} color={COLORS.gold.main} style={styles.badgeIcon} />
+              <Text style={styles.badgeText}>Premium Analysis</Text>
+            </View>
+          </View>
         </View>
         
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4361ee" />
-            <Text style={styles.loadingText}>Analyzing facial features...</Text>
-          </View>
+          <ProcessingIndicator 
+            isAnalyzing={true} 
+            processingText="Advanced Facial Analysis In Progress"
+            showDetailedSteps={true}
+          />
         ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={analyzeImage}>
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
+          renderErrorContent()
         ) : analysisResult ? (
           <View style={styles.resultContainer}>
-            <View style={styles.infoCard}>
-              <Text style={styles.sectionTitle}>Analysis Results</Text>
+            {/* Primary analysis card */}
+            <Card 
+              variant="elevated" 
+              title="Analysis Results"
+              icon="analytics"
+              style={styles.analysisCard}
+            >
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Estimated Age:</Text>
                 <Text style={styles.infoValue}>{analysisResult.estimatedAge} years</Text>
               </View>
               <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Gender:</Text>
+                <View style={styles.infoValueContainer}>
+                  <GenderConfidenceDisplay 
+                    gender={analysisResult.gender}
+                    confidence={analysisResult.genderConfidence || 0}
+                    size="medium"
+                  />
+                </View>
+              </View>
+              <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Skin Type:</Text>
                 <Text style={styles.infoValue}>{analysisResult.skinType}</Text>
               </View>
-            </View>
+            </Card>
 
-            <View style={styles.featuresCard}>
-              <Text style={styles.sectionTitle}>Facial Features</Text>
+            {/* Features analysis card */}
+            <Card
+              variant="elevated"
+              title="Facial Features Analysis"
+              icon="face"
+              style={styles.featuresCard}
+            >
               {analysisResult.features.map((feature, index) => (
                 <View key={index} style={styles.featureItem}>
                   <View style={styles.featureHeader}>
                     <Text style={styles.featureTitle}>{feature.description}</Text>
-                    <View style={styles.severityContainer}>
-                      {[1, 2, 3, 4, 5].map((dot) => (
-                        <View
-                          key={dot}
-                          style={[
-                            styles.severityDot,
-                            {
-                              backgroundColor: dot <= feature.severity ? '#4361ee' : '#e1e5ee',
-                            },
-                          ]}
-                        />
-                      ))}
-                      <Text style={styles.severityText}>
-                        {feature.severity}/5
-                      </Text>
-                    </View>
+                    {renderSeverityIndicator(feature.severity)}
                   </View>
                 </View>
               ))}
+            </Card>
+
+            {/* AI insights badge */}
+            <View style={styles.insightContainer}>
+              <View style={styles.insightIconContainer}>
+                <MaterialIcons name="psychology" size={20} color={COLORS.white} />
+              </View>
+              <Text style={styles.insightText}>
+                Analysis powered by advanced AI dermatological models
+              </Text>
             </View>
 
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-              <Text style={styles.nextButtonText}>View Treatment Recommendations</Text>
-            </TouchableOpacity>
+            <Button 
+              title="View Treatment Recommendations" 
+              icon="arrow-forward"
+              iconPosition="right"
+              variant="primary"
+              size="large"
+              fullWidth={true}
+              onPress={handleNext}
+              style={styles.nextButton}
+            />
           </View>
         ) : null}
       </ScrollView>
@@ -131,95 +274,95 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: COLORS.background.default,
   },
   scrollContent: {
-    padding: 16,
+    padding: SPACING.md,
   },
   imageContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
+    position: 'relative',
   },
   image: {
     width: 300,
     height: 400,
-    borderRadius: 15,
+    borderRadius: BORDER_RADIUS.lg,
+    ...SHADOWS.medium,
   },
-  loadingContainer: {
-    padding: 20,
+  badgeContainer: {
+    position: 'absolute',
+    top: SPACING.md,
+    left: SPACING.md,
+  },
+  premiumBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER_RADIUS.round,
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#555',
+  badgeIcon: {
+    marginRight: SPACING.xs,
+  },
+  badgeText: {
+    color: COLORS.gold.main,
+    fontSize: 12,
+    fontWeight: '600',
   },
   errorContainer: {
-    padding: 20,
+    marginVertical: SPACING.xl,
+  },
+  errorContent: {
+    padding: SPACING.lg,
     alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.error.main,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   errorText: {
     fontSize: 16,
-    color: '#d00',
-    marginBottom: 15,
+    color: COLORS.error.main,
+    marginVertical: SPACING.md,
+    textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#4361ee',
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
+    marginTop: SPACING.md,
   },
   resultContainer: {
-    marginTop: 10,
+    marginTop: SPACING.md,
   },
-  infoCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#333',
+  analysisCard: {
+    marginBottom: SPACING.md,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: SPACING.sm,
   },
   infoLabel: {
     fontSize: 16,
-    color: '#666',
+    color: COLORS.text.secondary,
+  },
+  infoValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   infoValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text.primary,
   },
   featuresCard: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: SPACING.xl,
   },
   featureItem: {
-    marginBottom: 15,
+    marginBottom: SPACING.md,
   },
   featureHeader: {
     flexDirection: 'row',
@@ -229,8 +372,10 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 5,
-    color: '#333',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+    flex: 1,
+    paddingRight: SPACING.sm,
   },
   severityContainer: {
     flexDirection: 'row',
@@ -243,21 +388,45 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   severityText: {
-    marginLeft: 6,
+    marginLeft: SPACING.xs,
     fontSize: 14,
-    color: '#666',
+    color: COLORS.text.secondary,
+  },
+  insightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary.dark,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  insightIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.round,
+    backgroundColor: COLORS.secondary.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
+  },
+  insightText: {
+    flex: 1,
+    color: COLORS.white,
+    fontSize: 14,
+    fontStyle: 'italic',
   },
   nextButton: {
-    backgroundColor: '#4361ee',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: SPACING.xl,
   },
-  nextButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
+  quotaErrorActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: SPACING.md,
+  },
+  actionButton: {
+    flex: 1,
+    marginHorizontal: SPACING.xs,
   },
 });
 

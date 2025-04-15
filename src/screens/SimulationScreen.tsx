@@ -230,53 +230,57 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
               {simulationMode !== 'sameFace' && (
                 <View>
                   {/* Treatment callouts - specific improvement points */}
-                  <View style={[styles.callout, { top: '25%', left: '20%' }]}>
-                    <View style={styles.calloutLine} />
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText}>
-                        Picosecond Laser
-                      </Text>
-                      <Text style={styles.calloutSubText}>
-                        Reduced visible acne scars
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={[styles.callout, { top: '42%', right: '20%' }]}>
-                    <View style={styles.calloutLine} />
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText}>
-                        Reduces pore size
-                      </Text>
-                      <Text style={styles.calloutSubText}>
-                        Smoother skin texture
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={[styles.callout, { top: '60%', left: '10%' }]}>
-                    <View style={styles.calloutLine} />
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText}>
-                        Fractional laser
-                      </Text>
-                      <Text style={styles.calloutSubText}>
-                        Evens out skin tone and texture
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={[styles.callout, { top: '75%', right: '15%' }]}>
-                    <View style={styles.calloutLine} />
-                    <View style={styles.calloutBubble}>
-                      <Text style={styles.calloutText}>
-                        Refined skin texture
-                      </Text>
-                      <Text style={styles.calloutSubText}>
-                        Reduced inflammation
-                      </Text>
-                    </View>
-                  </View>
+                  {showCallouts && (
+                    <>
+                      <View style={[styles.callout, { top: '25%', left: '20%' }]}>
+                        <View style={styles.calloutLine} />
+                        <View style={styles.calloutBubble}>
+                          <Text style={styles.calloutText}>
+                            Picosecond Laser
+                          </Text>
+                          <Text style={styles.calloutSubText}>
+                            Reduced visible acne scars
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <View style={[styles.callout, { top: '42%', right: '20%' }]}>
+                        <View style={styles.calloutLine} />
+                        <View style={styles.calloutBubble}>
+                          <Text style={styles.calloutText}>
+                            Reduces pore size
+                          </Text>
+                          <Text style={styles.calloutSubText}>
+                            Smoother skin texture
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <View style={[styles.callout, { top: '60%', left: '10%' }]}>
+                        <View style={styles.calloutLine} />
+                        <View style={styles.calloutBubble}>
+                          <Text style={styles.calloutText}>
+                            Fractional laser
+                          </Text>
+                          <Text style={styles.calloutSubText}>
+                            Evens out skin tone and texture
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <View style={[styles.callout, { top: '75%', right: '15%' }]}>
+                        <View style={styles.calloutLine} />
+                        <View style={styles.calloutBubble}>
+                          <Text style={styles.calloutText}>
+                            Refined skin texture
+                          </Text>
+                          <Text style={styles.calloutSubText}>
+                            Reduced inflammation
+                          </Text>
+                        </View>
+                      </View>
+                    </>
+                  )}
                 </View>
               )}
             </>

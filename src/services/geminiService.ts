@@ -684,18 +684,26 @@ export const simulateImprovementsWithDescription = async (
       throw new Error('Invalid or missing API key');
     }
     
+    // Clean base64 image if it has a data URL prefix
+    let cleanBase64 = base64Image;
+    if (cleanBase64.startsWith('data:')) {
+      cleanBase64 = cleanBase64.split('base64,')[1];
+    }
+    
     // Create a prompt to generate a description of skin improvements
     const descriptionPrompt = `
-    This is a photo of a person with some skin issues. They want to get these treatments: ${treatmentDescriptions}.
+    This is a photo of a person seeking skin improvement treatments. They want to get these treatments: ${treatmentDescriptions}.
     
-    Write a brief, detailed description (100-150 words) of how their skin would improve after these treatments.
+    Write a detailed, scientifically accurate description (120-150 words) of how their skin would improve after these treatments.
     Focus on:
-    1. How the acne/scars would be reduced or eliminated
-    2. How their skin texture would improve
-    3. How their overall skin tone would become more even
-    4. The specific benefits of each treatment
+    1. Specific improvements for acne, scars, and blemishes (reduction in inflammation, size, and visibility)
+    2. Changes in skin texture (smoothness, reduced roughness, smaller pores)
+    3. Improvements in skin tone (evenness, reduction in redness or hyperpigmentation)
+    4. Timeline for seeing results (immediate effects vs. gradual improvements)
     
-    Keep it realistic and medical/clinical in tone. Don't exaggerate results.
+    Include brief explanations of how each treatment works. For example, laser treatments target pigmentation, while RF treatments stimulate collagen.
+    
+    Maintain a professional medical tone. Be accurate yet optimistic without overpromising results.
     `;
     
     // Make the API call to get a treatment description
@@ -712,39 +720,48 @@ export const simulateImprovementsWithDescription = async (
               { text: descriptionPrompt },
               {
                 inline_data: {
-                  mime_type: getImageMimeType(base64Image),
-                  data: base64Image
+                  mime_type: getImageMimeType(cleanBase64),
+                  data: cleanBase64
                 }
               }
             ]
           }
         ],
         generation_config: {
-          temperature: 0.2,
-          max_output_tokens: 300,
+          temperature: 0.3,
+          max_output_tokens: 350,
         }
       })
     });
     
-    let description = "This treatment would improve the skin by reducing acne, removing scars, and evening out skin tone. The skin texture would become smoother with significantly reduced blemishes and pore size.";
+    let description = "These treatments would significantly improve your skin by reducing acne, scars, and blemishes. The Picosecond Laser treatment would target pigmentation, breaking down discoloration into smaller particles for your body to remove naturally. Fractional Laser would create micro-damage zones to stimulate collagen production, resulting in smoother skin texture and reduced visibility of scars. Within 2-3 weeks, you'd notice significant improvement in skin texture, evenness, and reduced pore size, with continued improvement over 2-3 months as collagen production increases.";
     
     if (response.ok) {
-      const data = await response.json();
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        description = data.candidates[0].content.parts[0].text;
+      try {
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          description = data.candidates[0].content.parts[0].text.trim();
+          console.log('Successfully generated treatment description');
+        }
+      } catch (parseError) {
+        console.warn('Error parsing API response:', parseError);
+        // Continue with default description
       }
+    } else {
+      console.warn('Error from API:', response.status, response.statusText);
+      // Continue with default description
     }
     
     // Return the original image with the description of improvements
     return {
-      imageUrl: `data:image/jpeg;base64,${base64Image}`,
+      imageUrl: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`,
       description
     };
   } catch (error) {
     console.error('Error generating treatment description:', error);
     return {
-      imageUrl: `data:image/jpeg;base64,${base64Image}`,
-      description: "These treatments would significantly reduce acne, scars, and blemishes while improving overall skin tone and texture."
+      imageUrl: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`,
+      description: "Following these treatments, your skin would show significant improvement in clarity and texture. Acne and blemishes would be reduced, while skin tone would become more even with less visible pigmentation. The treatments work by stimulating collagen production, removing damaged skin cells, and encouraging healthy regeneration. You can expect visible improvement after the first session, with optimal results developing over 3-4 weeks as your skin continues to heal and rejuvenate."
     };
   }
 };

@@ -1,165 +1,160 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Linking } from 'react-native';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  Alert, 
+  Linking, 
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
+} from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
+import { getApiKey, storeApiKey, isValidApiKey, API_KEY_STORAGE_KEY } from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_KEY_STORAGE_KEY, isValidApiKey } from '../config/api';
 
-type ApiKeyScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ApiKey'>;
-
-type Props = {
-  navigation: ApiKeyScreenNavigationProp;
+type ApiKeyScreenProps = {
+  navigation: StackNavigationProp<RootStackParamList, 'ApiKey'>;
 };
 
-const ApiKeyScreen: React.FC<Props> = ({ navigation }) => {
+const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation }) => {
   const [apiKey, setApiKey] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [validationMessage, setValidationMessage] = useState('');
-  const [isValidKey, setIsValidKey] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Check if API key already exists
   useEffect(() => {
-    loadApiKey();
-  }, []);
-
-  // Validate API key format when it changes
-  useEffect(() => {
-    if (apiKey) {
-      const valid = isValidApiKey(apiKey);
-      setIsValidKey(valid);
-      if (valid) {
-        setValidationMessage('API key format looks valid');
-      } else if (apiKey.length > 0) {
-        setValidationMessage('API key format is invalid. Keys should be at least 10 characters.');
-      } else {
-        setValidationMessage('');
+    const checkExistingApiKey = async () => {
+      try {
+        const storedKey = await getApiKey();
+        // If we're here because of an error or returning to reset the key, show the current key
+        if (!isLoading && errorMessage) {
+          setApiKey(storedKey);
+        }
+        
+        if (isValidApiKey(storedKey) && !errorMessage) {
+          // If valid API key exists, navigate to Camera screen
+          navigation.replace('Camera');
+          return;
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking API key:', error);
+        setErrorMessage('There was a problem accessing your stored API key.');
+        setIsLoading(false);
       }
-    } else {
-      setIsValidKey(false);
-      setValidationMessage('');
-    }
-  }, [apiKey]);
-
-  const loadApiKey = async () => {
-    try {
-      const savedKey = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
-      if (savedKey) {
-        setApiKey(savedKey);
-        setIsValidKey(isValidApiKey(savedKey));
-      }
-    } catch (error) {
-      console.error('Error loading API key:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveApiKey = async () => {
+    };
+    
+    checkExistingApiKey();
+  }, [navigation, errorMessage, isLoading]);
+  
+  const handleSaveApiKey = async () => {
     if (!apiKey.trim()) {
       Alert.alert('Error', 'Please enter a valid API key');
       return;
     }
 
-    // If the key doesn't look valid, confirm with the user
-    if (!isValidKey) {
-      Alert.alert(
-        'Warning',
-        'The API key format looks invalid. Are you sure you want to save it?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Save Anyway', onPress: () => saveKeyToStorage() }
-        ]
-      );
-    } else {
-      saveKeyToStorage();
-    }
-  };
-
-  const saveKeyToStorage = async () => {
+    setIsSaving(true);
+    setErrorMessage(null);
+    
     try {
-      setSaving(true);
+      // First try to save directly to AsyncStorage as a fallback
       await AsyncStorage.setItem(API_KEY_STORAGE_KEY, apiKey.trim());
-      Alert.alert('Success', 'API key saved successfully', [
-        { text: 'OK', onPress: () => navigation.navigate('Camera') }
-      ]);
+      
+      // Then attempt to use the full secure method
+      const success = await storeApiKey(apiKey.trim());
+      
+      if (success) {
+        Alert.alert(
+          'Success', 
+          'API key saved successfully!',
+          [{ text: 'OK', onPress: () => navigation.replace('Camera') }]
+        );
+      } else {
+        // Even if the secure storage failed, the AsyncStorage save might have worked
+        Alert.alert(
+          'Partial Success', 
+          'API key saved but secure storage may not be available on this device. The app will still function.',
+          [{ text: 'Continue', onPress: () => navigation.replace('Camera') }]
+        );
+      }
     } catch (error) {
       console.error('Error saving API key:', error);
-      Alert.alert('Error', 'Failed to save API key');
+      setErrorMessage('Failed to save API key securely. Please try again.');
+      Alert.alert('Error', 'An unexpected error occurred while saving your API key');
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
-
-  const openDeepSeekWebsite = () => {
-    Linking.openURL('https://deepseek.com');
+  
+  const handleGetApiKey = () => {
+    Linking.openURL('https://ai.google.dev/tutorials/setup');
   };
-
-  if (loading) {
+  
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4361ee" />
+        <Text style={styles.loadingText}>Checking API key...</Text>
       </View>
     );
   }
-
+  
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>DeepSeek API Key</Text>
-        
-        <Text style={styles.description}>
-          Please enter your DeepSeek API key to use the facial analysis and treatment simulation features.
-        </Text>
-        
-        <View style={styles.inputContainer}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Welcome to AIBeautyLens</Text>
+          
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : (
+            <Text style={styles.description}>
+              To use this app, you need to provide a Gemini API key.
+              This key will be stored securely on your device.
+            </Text>
+          )}
+          
           <TextInput
-            style={[styles.input, isValidKey && styles.validInput]}
+            style={styles.input}
+            placeholder="Enter your Gemini API key"
             value={apiKey}
             onChangeText={setApiKey}
-            placeholder="Enter DeepSeek API Key"
-            placeholderTextColor="#999"
-            secureTextEntry={true}
             autoCapitalize="none"
             autoCorrect={false}
+            secureTextEntry={true}
           />
-          {validationMessage ? (
-            <Text style={[
-              styles.validationMessage, 
-              isValidKey ? styles.validMessage : styles.invalidMessage
-            ]}>
-              {validationMessage}
+          
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={handleSaveApiKey}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Save API Key</Text>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={handleGetApiKey}>
+            <Text style={styles.linkText}>
+              Don't have an API key? Learn how to get one
             </Text>
-          ) : null}
+          </TouchableOpacity>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.saveButton} 
-          onPress={saveApiKey}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save API Key</Text>
-          )}
-        </TouchableOpacity>
-        
-        <Text style={styles.hint}>
-          You can get a DeepSeek API key by signing up at deepseek.com
-        </Text>
-        
-        <TouchableOpacity 
-          style={styles.linkButton}
-          onPress={openDeepSeekWebsite}
-        >
-          <Text style={styles.linkButtonText}>Visit DeepSeek Website</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.debugInfo}>
-          {__DEV__ ? 'Running in development mode' : 'Running in production mode'}
-        </Text>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -168,84 +163,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f8f9fa',
   },
-  content: {
-    padding: 20,
-    marginTop: 40,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 20,
+    color: '#333',
+    textAlign: 'center',
   },
   description: {
     fontSize: 16,
     color: '#666',
     marginBottom: 30,
+    textAlign: 'center',
     lineHeight: 22,
   },
-  inputContainer: {
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 15,
+    borderRadius: 8,
     marginBottom: 30,
+    borderWidth: 1,
+    borderColor: '#ffcdd2',
+  },
+  errorText: {
+    color: '#c62828',
+    fontSize: 16,
+    textAlign: 'center',
   },
   input: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
+    width: '100%',
+    height: 50,
     borderWidth: 1,
     borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    backgroundColor: '#fff',
     fontSize: 16,
   },
-  validInput: {
-    borderColor: '#4CAF50',
-  },
-  validationMessage: {
-    marginTop: 5,
-    fontSize: 14,
-  },
-  validMessage: {
-    color: '#4CAF50',
-  },
-  invalidMessage: {
-    color: '#F44336',
-  },
-  saveButton: {
+  button: {
+    width: '100%',
+    height: 50,
     backgroundColor: '#4361ee',
-    padding: 15,
     borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
-  saveButtonText: {
-    color: 'white',
+  buttonText: {
+    color: '#fff',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  hint: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  linkButton: {
-    marginTop: 10,
-    padding: 10,
-  },
-  linkButtonText: {
+  linkText: {
     color: '#4361ee',
     fontSize: 14,
-    textAlign: 'center',
     textDecorationLine: 'underline',
-  },
-  debugInfo: {
-    fontSize: 10,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 30,
+    marginTop: 10,
   },
 });
 

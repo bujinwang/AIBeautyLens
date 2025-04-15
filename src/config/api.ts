@@ -1,43 +1,105 @@
 // API Configuration
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 
-// Storage key for API key
-export const API_KEY_STORAGE_KEY = 'deepseek_api_key';
+// API key settings
+const KEYCHAIN_SERVICE = 'ai_beauty_lens';
+const KEYCHAIN_ACCOUNT = 'api_key';
+export const API_KEY_STORAGE_KEY = 'gemini_api_key';
 
-// Fallback key (only for development)
-export const FALLBACK_API_KEY = 'YOUR_DEEPSEEK_API_KEY';
-
-// Development flag - using the global __DEV__ variable in React Native
-// or falling back to true if not available (for testing)
-export const IS_DEVELOPMENT = typeof __DEV__ !== 'undefined' ? __DEV__ : true;
+// Environment variable or fallback key (only for development)
+export const FALLBACK_API_KEY = 'YOUR_GEMINI_API_KEY';
 
 // API timeout in milliseconds
 export const API_TIMEOUT = 30000; // 30 seconds
 
 // Validate API key format
 export const isValidApiKey = (key: string): boolean => {
-  // This is a simple check - adjust based on DeepSeek's actual key format
-  return Boolean(key && key.length > 10 && key !== FALLBACK_API_KEY);
+  // This is a simple check - adjust based on Gemini's actual key format
+  return Boolean(key && key.length > 10 && key !== 'YOUR_GEMINI_API_KEY');
 };
 
-// Get API key from storage
+// Check if Keychain is available
+const isKeychainAvailable = async (): Promise<boolean> => {
+  try {
+    if (!Keychain || typeof Keychain.setGenericPassword !== 'function') {
+      return false;
+    }
+    // Try a simple operation to verify it works
+    await Keychain.setGenericPassword('test', 'test', { service: 'test' });
+    await Keychain.resetGenericPassword({ service: 'test' });
+    return true;
+  } catch (error) {
+    console.warn('Keychain is not available, falling back to AsyncStorage only', error);
+    return false;
+  }
+};
+
+// Store API key securely
+export const storeApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    const keychainAvailable = await isKeychainAvailable();
+    
+    // Try to store in keychain if available
+    if (keychainAvailable) {
+      try {
+        await Keychain.setGenericPassword(KEYCHAIN_ACCOUNT, apiKey, {
+          service: KEYCHAIN_SERVICE,
+        });
+      } catch (keychainError) {
+        console.warn('Failed to store in Keychain, using AsyncStorage only', keychainError);
+      }
+    }
+    
+    // Always store in AsyncStorage as a fallback
+    await AsyncStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+    
+    return true;
+  } catch (error) {
+    console.error('Error storing API key:', error);
+    return false;
+  }
+};
+
+// Get API key from secure storage
 export const getApiKey = async (): Promise<string> => {
   try {
+    const keychainAvailable = await isKeychainAvailable();
+    
+    // Try to get from secure keychain if available
+    if (keychainAvailable) {
+      try {
+        const credentials = await Keychain.getGenericPassword({
+          service: KEYCHAIN_SERVICE,
+        });
+        
+        if (credentials && credentials.password && isValidApiKey(credentials.password)) {
+          return credentials.password;
+        }
+      } catch (keychainError) {
+        console.warn('Failed to retrieve from Keychain, using AsyncStorage', keychainError);
+      }
+    }
+    
+    // Always check AsyncStorage as a fallback
     const storedKey = await AsyncStorage.getItem(API_KEY_STORAGE_KEY);
     
-    // In development, print key info
-    if (IS_DEVELOPMENT && storedKey) {
-      console.log('Retrieved API key from storage:', 
-        `${storedKey.substring(0, 4)}...${storedKey.substring(storedKey.length - 4)}`);
+    if (storedKey && isValidApiKey(storedKey)) {
+      // If found in AsyncStorage and keychain is available, try to migrate it
+      if (keychainAvailable) {
+        try {
+          await Keychain.setGenericPassword(KEYCHAIN_ACCOUNT, storedKey, {
+            service: KEYCHAIN_SERVICE,
+          });
+        } catch (migrateError) {
+          console.warn('Failed to migrate key to Keychain', migrateError);
+        }
+      }
+      return storedKey;
     }
     
-    // Validate the key format
-    if (storedKey && isValidApiKey(storedKey)) {
-      return storedKey;
-    } else {
-      console.warn('Invalid API key format or using fallback key');
-      return FALLBACK_API_KEY;
-    }
+    console.warn('No valid API key found, using fallback key');
+    return FALLBACK_API_KEY;
   } catch (error) {
     console.error('Error retrieving API key:', error);
     return FALLBACK_API_KEY;
@@ -45,30 +107,20 @@ export const getApiKey = async (): Promise<string> => {
 };
 
 // API Endpoints
-export const DEEPSEEK_CHAT_API = 'https://api.deepseek.com/v1/chat/completions';
-export const DEEPSEEK_IMAGE_API = 'https://api.deepseek.com/v1/images/generations';
+export const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models';
+export const GEMINI_VISION_API = `${GEMINI_API}/gemini-2.5-pro-exp-03-25:generateContent`;
+export const IMAGEN_API = 'https://generativelanguage.googleapis.com/v1beta/models';
+export const IMAGEN_GENERATION_API = `${IMAGEN_API}/imagen-3.0-generate-002:predict`;
+export const IMAGEN_INPAINTING_API = 'https://us-central1-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/us-central1/publishers/google/models/imagen-3.0-edit-image-inpainting:predict';
+
+// Google Cloud Project ID - replace with your project ID when using Vertex AI
+export const GOOGLE_CLOUD_PROJECT_ID = 'your-project-id';
+
+// Current provider - hardcoded to Gemini
+export const CURRENT_PROVIDER = 'gemini';
 
 // API Models
 export const MODELS = {
-  DEEPSEEK_VISION: 'deepseek-vision',
-  DEEPSEEK_IMAGE: 'deepseek-image',
-};
-
-// Simple development mock responses (for testing without API access)
-export const MOCK_RESPONSES = {
-  ANALYSIS: {
-    estimatedAge: 32,
-    skinType: "Normal to Combination",
-    features: [
-      { description: "Fine lines around eyes", confidence: 0.85 },
-      { description: "Mild sun damage on cheeks", confidence: 0.72 },
-      { description: "Early signs of nasolabial folds", confidence: 0.68 }
-    ],
-    recommendations: [
-      { treatmentId: "botox", reason: "To reduce appearance of fine lines around eyes" },
-      { treatmentId: "ha-filler", reason: "To address early signs of nasolabial folds" },
-      { treatmentId: "fractional-laser", reason: "To improve skin texture and reduce sun damage" }
-    ]
-  },
-  IMAGE_URL: 'https://placehold.co/1024x1024/png?text=Simulated+Treatment'
+  GEMINI_PRO: 'gemini-2.5-pro-exp-03-25',
+  IMAGEN: 'imagen-3.0-generate-002',
 }; 

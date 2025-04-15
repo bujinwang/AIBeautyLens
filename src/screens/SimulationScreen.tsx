@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { StyleSheet, Text, View, Image, ActivityIndicator, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import { TREATMENTS } from '../constants/treatments';
-import { generateTreatmentSimulation } from '../services/deepseekImageService';
+import { generateTreatmentSimulation, simulateImprovementsWithDescription, generateSkinImprovementWithInpainting } from '../services/geminiService';
 import * as FileSystem from 'expo-file-system';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type SimulationScreenRouteProp = RouteProp<RootStackParamList, 'Simulation'>;
 type SimulationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Simulation'>;
@@ -15,43 +16,113 @@ type Props = {
   navigation: SimulationScreenNavigationProp;
 };
 
+type SimulationMode = 'sameFace' | 'aiGenerated' | 'inpainting';
+
 const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
   const { selectedTreatments, imageUri, base64Image } = route.params;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [simulationImage, setSimulationImage] = useState<string | null>(null);
+  const [treatmentDescription, setTreatmentDescription] = useState<string | null>(null);
+  const [showRealisticSimulation, setShowRealisticSimulation] = useState(true);
+  const [simulationMode, setSimulationMode] = useState<SimulationMode>('sameFace');
+  const [showCallouts, setShowCallouts] = useState(true);
   
   useEffect(() => {
     generateSimulation();
   }, []);
 
-  const generateSimulation = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <Text style={styles.headerTitle}>Treatment Simulation</Text>,
+      headerRight: () => (
+        <View style={styles.headerRightContainer}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setShowCallouts(!showCallouts)}
+          >
+            <MaterialIcons
+              name={showCallouts ? "chat-bubble" : "chat-bubble-outline"}
+              size={24}
+              color="#fff"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setShowRealisticSimulation(!showRealisticSimulation)}
+          >
+            <MaterialIcons
+              name={showRealisticSimulation ? "compare" : "face"}
+              size={24}
+              color="#fff"
+            />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation, showRealisticSimulation, showCallouts]);
 
-      // Get descriptions for selected treatments
+  const generateSimulation = async () => {
+    if (!selectedTreatments || selectedTreatments.length === 0) {
+      setError('No treatments selected');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Get treatment descriptions for the prompt
       const treatmentDescriptions = selectedTreatments
-        .map(id => {
-          const treatment = TREATMENTS.find(t => t.id === id);
-          return treatment ? treatment.name : '';
+        .map(treatment => {
+          const treatmentObj = TREATMENTS.find(t => t.id === treatment);
+          return treatmentObj ? treatmentObj.name : '';
         })
-        .filter(Boolean)
         .join(', ');
 
-      // Get base64 image if not provided
-      let base64ImageData = base64Image;
-      if (!base64ImageData && imageUri) {
-        base64ImageData = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+      // Run different simulations based on selected mode
+      if (simulationMode === 'inpainting') {
+        try {
+          // Use inpainting approach (best for preserving identity)
+          console.log('Running inpainting simulation...');
+          const inpaintedImage = await generateSkinImprovementWithInpainting(
+            base64Image,
+            treatmentDescriptions
+          );
+          setSimulationImage(inpaintedImage);
+          setTreatmentDescription("Skin improvements applied using precise inpainting technology that preserves your exact facial features.");
+        } catch (err) {
+          console.error('Inpainting failed, falling back to same face mode:', err);
+          // If inpainting fails, fall back to same face mode
+          setSimulationMode('sameFace');
+          const descriptionResult = await simulateImprovementsWithDescription(
+            base64Image,
+            treatmentDescriptions
+          );
+          setSimulationImage(descriptionResult.imageUrl);
+          setTreatmentDescription(descriptionResult.description);
+        }
+      } else if (simulationMode === 'aiGenerated') {
+        // Use AI image generation (less accurate for identity)
+        console.log('Running AI generation simulation...');
+        const generatedImage = await generateTreatmentSimulation(
+          base64Image,
+          treatmentDescriptions
+        );
+        setSimulationImage(generatedImage);
+        setTreatmentDescription("AI-generated visualization of potential skin improvements. Note that facial features may differ from your actual appearance.");
+      } else {
+        // Use same face mode (default, most accurate for identity)
+        console.log('Running same face simulation...');
+        const descriptionResult = await simulateImprovementsWithDescription(
+          base64Image,
+          treatmentDescriptions
+        );
+        setSimulationImage(descriptionResult.imageUrl);
+        setTreatmentDescription(descriptionResult.description);
       }
-
-      // Generate simulation using DeepSeek AI
-      const imageUrl = await generateTreatmentSimulation(base64ImageData, treatmentDescriptions);
-      setSimulationImage(imageUrl);
-    } catch (error) {
-      console.error('Error in simulation:', error);
+    } catch (err) {
+      console.error('Simulation error:', err);
       setError('Failed to generate simulation. Please try again.');
     } finally {
       setLoading(false);
@@ -77,6 +148,52 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
         </Text>
       </View>
 
+      {/* Mode selection buttons */}
+      <View style={styles.simulationModeContainer}>
+        <Text style={styles.sectionTitle}>Simulation Mode:</Text>
+        
+        <View style={styles.modeButtons}>
+          <TouchableOpacity 
+            style={[styles.modeButton, simulationMode === 'sameFace' && styles.selectedMode]}
+            onPress={() => {
+              setSimulationMode('sameFace');
+              setLoading(true);
+              setTimeout(() => generateSimulation(), 100);
+            }}>
+            <MaterialIcons name="face" size={20} color={simulationMode === 'sameFace' ? "#1976d2" : "#666"} />
+            <Text style={[styles.modeButtonText, simulationMode === 'sameFace' && styles.selectedModeText]}>Same Face</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.modeButton, simulationMode === 'inpainting' && styles.selectedMode]}
+            onPress={() => {
+              setSimulationMode('inpainting');
+              setLoading(true);
+              setTimeout(() => generateSimulation(), 100);
+            }}>
+            <MaterialIcons name="brush" size={20} color={simulationMode === 'inpainting' ? "#1976d2" : "#666"} />
+            <Text style={[styles.modeButtonText, simulationMode === 'inpainting' && styles.selectedModeText]}>Inpainting</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.modeButton, simulationMode === 'aiGenerated' && styles.selectedMode]}
+            onPress={() => {
+              setSimulationMode('aiGenerated');
+              setLoading(true);
+              setTimeout(() => generateSimulation(), 100);
+            }}>
+            <MaterialIcons name="auto-awesome" size={20} color={simulationMode === 'aiGenerated' ? "#1976d2" : "#666"} />
+            <Text style={[styles.modeButtonText, simulationMode === 'aiGenerated' && styles.selectedModeText]}>AI Generated</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.modeDescription}>
+          {simulationMode === 'sameFace' && "Original photo with description of expected improvements."}
+          {simulationMode === 'inpainting' && "Precise skin edits that preserve your facial structure."}
+          {simulationMode === 'aiGenerated' && "AI-generated simulation (less accurate for facial identity)."}
+        </Text>
+      </View>
+
       <View style={styles.comparisonContainer}>
         <View style={styles.imageContainer}>
           <Text style={styles.imageLabel}>Before</Text>
@@ -87,8 +204,8 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
           <Text style={styles.imageLabel}>After (Simulated)</Text>
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4361ee" />
-              <Text style={styles.loadingText}>Generating simulation...</Text>
+              <ActivityIndicator size="large" color="#9932CC" />
+              <Text style={styles.loadingText}>Generating your simulation...</Text>
             </View>
           ) : error ? (
             <View style={styles.errorContainer}>
@@ -98,7 +215,71 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
               </TouchableOpacity>
             </View>
           ) : simulationImage ? (
-            <Image source={{ uri: simulationImage }} style={styles.image} />
+            <>
+              <Image 
+                source={{ uri: simulationMode === 'sameFace' ? imageUri : simulationImage }} 
+                style={styles.image} 
+              />
+              {simulationMode === 'sameFace' && treatmentDescription && (
+                <View style={styles.descriptionOverlay}>
+                  <Text style={styles.descriptionText}>
+                    {treatmentDescription}
+                  </Text>
+                </View>
+              )}
+              {simulationMode !== 'sameFace' && (
+                <View>
+                  {/* Treatment callouts - specific improvement points */}
+                  <View style={[styles.callout, { top: '25%', left: '20%' }]}>
+                    <View style={styles.calloutLine} />
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText}>
+                        Picosecond Laser
+                      </Text>
+                      <Text style={styles.calloutSubText}>
+                        Reduced visible acne scars
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.callout, { top: '42%', right: '20%' }]}>
+                    <View style={styles.calloutLine} />
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText}>
+                        Reduces pore size
+                      </Text>
+                      <Text style={styles.calloutSubText}>
+                        Smoother skin texture
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.callout, { top: '60%', left: '10%' }]}>
+                    <View style={styles.calloutLine} />
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText}>
+                        Fractional laser
+                      </Text>
+                      <Text style={styles.calloutSubText}>
+                        Evens out skin tone and texture
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.callout, { top: '75%', right: '15%' }]}>
+                    <View style={styles.calloutLine} />
+                    <View style={styles.calloutBubble}>
+                      <Text style={styles.calloutText}>
+                        Refined skin texture
+                      </Text>
+                      <Text style={styles.calloutSubText}>
+                        Reduced inflammation
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </>
           ) : null}
         </View>
       </View>
@@ -131,7 +312,8 @@ const SimulationScreen: React.FC<Props> = ({ route, navigation }) => {
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerText}>
           Note: This is a computer-generated simulation for reference only. 
-          Actual results may vary based on individual factors. 
+          Current AI technology has limitations in preserving exact facial features while removing blemishes.
+          The simulation shows potential skin improvements only. Actual results will maintain your facial identity.
           Please consult with a qualified specialist for personalized advice.
         </Text>
       </View>
@@ -308,6 +490,115 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  simulationModeContainer: {
+    marginVertical: 15,
+    width: '100%',
+  },
+  modeButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginHorizontal: 12,
+  },
+  modeButton: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#f5f5f5',
+    flex: 1,
+    marginHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  selectedMode: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#1976d2',
+    borderWidth: 1,
+  },
+  modeButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 6,
+    color: '#666',
+  },
+  selectedModeText: {
+    color: '#1976d2',
+    fontWeight: 'bold',
+  },
+  modeDescription: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 12,
+    marginHorizontal: 20,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  descriptionOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 10,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  descriptionText: {
+    color: 'white',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  callout: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  calloutLine: {
+    width: 30,
+    height: 2,
+    backgroundColor: '#4361ee',
+  },
+  calloutBubble: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 8,
+    borderRadius: 8,
+    maxWidth: 120,
+    borderWidth: 1,
+    borderColor: '#4361ee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  calloutText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#4361ee',
+    marginBottom: 2,
+  },
+  calloutSubText: {
+    fontSize: 10,
+    color: '#666',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    padding: 8,
   },
 });
 

@@ -6,7 +6,7 @@ export interface AnalysisResult {
   skinType: string;
   features: {
     description: string;
-    confidence: number;
+    severity: number;
   }[];
   recommendations: {
     treatmentId: string;

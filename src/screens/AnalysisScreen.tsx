@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Image, ActivityIndicator, ScrollView, Touchable
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { analyzeFacialImage } from '../services/deepseekService';
+import { analyzeFacialImage } from '../services/geminiService';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -18,7 +18,7 @@ type AnalysisResult = {
   skinType: string;
   features: {
     description: string;
-    confidence: number;
+    severity: number;
   }[];
   recommendations: {
     treatmentId: string;
@@ -97,9 +97,22 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 <View key={index} style={styles.featureItem}>
                   <View style={styles.featureHeader}>
                     <Text style={styles.featureTitle}>{feature.description}</Text>
-                    <Text style={styles.confidenceValue}>
-                      {Math.round(feature.confidence * 100)}%
-                    </Text>
+                    <View style={styles.severityContainer}>
+                      {[1, 2, 3, 4, 5].map((dot) => (
+                        <View
+                          key={dot}
+                          style={[
+                            styles.severityDot,
+                            {
+                              backgroundColor: dot <= feature.severity ? '#4361ee' : '#e1e5ee',
+                            },
+                          ]}
+                        />
+                      ))}
+                      <Text style={styles.severityText}>
+                        {feature.severity}/5
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))}
@@ -219,7 +232,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#333',
   },
-  confidenceValue: {
+  severityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  severityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 2,
+  },
+  severityText: {
+    marginLeft: 6,
     fontSize: 14,
     color: '#666',
   },

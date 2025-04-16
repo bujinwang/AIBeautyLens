@@ -271,7 +271,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         {error ? (
           renderErrorContent()
         ) : analysisResult ? (
@@ -381,7 +381,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 <ShowSkincareButton style={styles.reportButton} />
               </View>
               <Button
-                title="View Treatment Recommendations"
+                title="View Treatment Plan"
                 icon="healing"
                 onPress={handleNext}
                 variant="primary"
@@ -416,11 +416,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.default,
   },
   scrollContent: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
   },
   imageContainer: {
     marginHorizontal: 20,
-    marginVertical: SPACING.xl,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     elevation: 0,
@@ -443,7 +446,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 400,
+    height: 300,
     borderRadius: BORDER_RADIUS.lg,
   },
   imageGradient: {
@@ -525,7 +528,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   featuresCard: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   featuresContent: {
     padding: SPACING.md,
@@ -565,7 +568,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[200],
@@ -628,7 +631,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   nextButton: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.sm,
   },
   quotaErrorActions: {
     flexDirection: 'row',
@@ -698,8 +701,8 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
   },
   footnoteContainer: {
-    padding: SPACING.md,
-    marginBottom: SPACING.xl,
+    padding: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   footnote: {
     ...TYPOGRAPHY.caption,
@@ -757,17 +760,17 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
   },
   visitPurposeCard: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   textInputContainer: {
     padding: SPACING.md,
-    minHeight: 120,
+    minHeight: 80,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
     color: COLORS.text.primary,
-    minHeight: 100,
+    minHeight: 60,
     borderWidth: 1,
     borderColor: COLORS.gray[300],
     borderRadius: BORDER_RADIUS.md,
@@ -776,12 +779,12 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   reportButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   reportButton: {
     flex: 1,

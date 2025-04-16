@@ -195,6 +195,10 @@ For any images with human facial features, include estimated age, gender with co
 
 ${treatmentsList}
 
+IMPORTANT TREATMENT RULES:
+1. Products containing acids should not be used 7-10 days before or after undergoing laser or light-based treatments.
+2. Products containing hydroquinone are very effective for treating hyperpigmentation, especially melasma, but they must be used under medical supervision and cannot be used continuously.
+
 Format your response as a JSON object with these exact fields:
 1. estimatedAge (number)
 2. gender (string - "male", "female", or "unknown")
@@ -485,7 +489,7 @@ export const generateTreatmentSimulation = async (
       // Gender detection with abort signal
       const genderDetectionStartTime = Date.now();
       const genderController = new AbortController();
-      
+
       // Link the parent signal to the gender detection controller
       signal?.addEventListener('abort', () => genderController.abort());
 
@@ -522,7 +526,7 @@ export const generateTreatmentSimulation = async (
 
       // Create the image generation controller
       const imageController = new AbortController();
-      
+
       // Link the parent signal to the image generation controller
       signal?.addEventListener('abort', () => imageController.abort());
 
@@ -558,7 +562,7 @@ export const generateTreatmentSimulation = async (
       }
 
       const data = await response.json();
-      
+
       // Final abort check before returning
       if (signal?.aborted) throw new Error('Request was cancelled');
 
@@ -895,6 +899,10 @@ export const simulateImprovementsWithDescription = async (
     4. Timeline for seeing results (immediate effects vs. gradual improvements)
 
     Include brief explanations of how each treatment works. For example, laser treatments target pigmentation, while RF treatments stimulate collagen.
+
+    IMPORTANT TREATMENT RULES TO INCLUDE:
+    1. Products containing acids should not be used 7-10 days before or after undergoing laser or light-based treatments.
+    2. Products containing hydroquinone are very effective for treating hyperpigmentation, especially melasma, but they must be used under medical supervision and cannot be used continuously.
 
     Maintain a professional medical tone. Be accurate yet optimistic without overpromising results.
     `;

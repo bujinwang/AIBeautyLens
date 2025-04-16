@@ -244,15 +244,11 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
 
             <View style={styles.techItemWrapper}>
               <Animated.View style={[styles.techItemContainer, { opacity: techFadeValue }]}>
-                <View style={styles.techMainContainer}>
-                  <View style={styles.techIconContainer}>
-                    <AILogoIcon size="small" />
-                  </View>
-                  <View style={styles.techTextContainer}>
-                    <Text style={styles.techName}>{TECH_STACK[currentTech].name}</Text>
-                    <Text style={styles.techDescription}>{TECH_STACK[currentTech].description}</Text>
-                  </View>
+                <View style={styles.techIconContainer}>
+                  <AILogoIcon size="small" />
                 </View>
+                <Text style={styles.techName}>{TECH_STACK[currentTech].name}</Text>
+                <Text style={styles.techDescription}>{TECH_STACK[currentTech].description}</Text>
               </Animated.View>
             </View>
           </View>
@@ -373,17 +369,20 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: SPACING.md,
   },
   techItemContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 80,
+    height: 100,
+    width: '100%',
   },
   techMainContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    maxWidth: '80%',
+    width: '90%',
     alignSelf: 'center',
+    justifyContent: 'center',
   },
   techIconContainer: {
     width: 40,
@@ -392,7 +391,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(144, 97, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.md,
+    marginBottom: SPACING.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -401,29 +400,33 @@ const styles = StyleSheet.create({
   },
   techTextContainer: {
     flex: 1,
+    alignItems: 'center',
   },
   techName: {
     fontSize: 16,
     fontWeight: '700',
     color: COLORS.primary.main,
     marginBottom: 4,
+    textAlign: 'center',
   },
   techDescription: {
     fontSize: 12,
     color: COLORS.text.secondary,
-    textAlign: 'left',
+    textAlign: 'center',
   },
   techGridContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     marginBottom: SPACING.lg,
     flexWrap: 'wrap',
     paddingHorizontal: SPACING.sm,
+    width: '100%',
   },
   techGridItem: {
     alignItems: 'center',
     width: '45%',
     marginBottom: SPACING.md,
+    marginHorizontal: '2.5%',
   },
   techGridIconContainer: {
     width: 32,

@@ -68,12 +68,14 @@ const Card: React.FC<CardProps> = ({
         baseStyle.borderColor = COLORS.gray[200];
         break;
       case 'premium':
-        baseStyle.backgroundColor = COLORS.gray[900];
+        baseStyle.backgroundColor = '#E8EFFF'; // Very light blue background
         Object.assign(baseStyle, SHADOWS.large);
         if (gradientBorder) {
           baseStyle.borderWidth = 1;
           baseStyle.borderColor = COLORS.gold.main;
         }
+        baseStyle.borderWidth = 2;
+        baseStyle.borderColor = COLORS.primary.main;
         break;
       default: // default
         baseStyle.backgroundColor = COLORS.background.paper;
@@ -94,24 +96,24 @@ const Card: React.FC<CardProps> = ({
       {(title || icon) && (
         <View style={styles.cardHeader}>
           {icon && (
-            <View 
+            <View
               style={[
-                styles.iconContainer, 
+                styles.iconContainer,
                 variant === 'premium' && styles.premiumIconContainer
               ]}
             >
-              <MaterialIcons 
-                name={icon as any} 
-                size={24} 
-                color={variant === 'premium' ? COLORS.gold.main : COLORS.primary.main} 
+              <MaterialIcons
+                name={icon as any}
+                size={24}
+                color={variant === 'premium' ? COLORS.gold.main : COLORS.primary.main}
               />
             </View>
           )}
           <View style={styles.titleContainer}>
             {title && (
-              <Text 
+              <Text
                 style={[
-                  styles.title, 
+                  styles.title,
                   variant === 'premium' && styles.premiumTitle
                 ]}
               >
@@ -119,9 +121,9 @@ const Card: React.FC<CardProps> = ({
               </Text>
             )}
             {subtitle && (
-              <Text 
+              <Text
                 style={[
-                  styles.subtitle, 
+                  styles.subtitle,
                   variant === 'premium' && styles.premiumSubtitle
                 ]}
               >
@@ -140,24 +142,24 @@ const Card: React.FC<CardProps> = ({
       {/* Footer section with action button if provided */}
       {(actionLabel || actionIcon) && (
         <View style={styles.cardFooter}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.actionButton, 
+              styles.actionButton,
               variant === 'premium' && styles.premiumActionButton
-            ]} 
+            ]}
             onPress={onAction}
           >
             {actionIcon && (
-              <MaterialIcons 
-                name={actionIcon as any} 
-                size={18} 
-                color={variant === 'premium' ? COLORS.gold.main : COLORS.primary.main} 
-                style={styles.actionIcon} 
+              <MaterialIcons
+                name={actionIcon as any}
+                size={18}
+                color={variant === 'premium' ? COLORS.gold.main : COLORS.primary.main}
+                style={styles.actionIcon}
               />
             )}
-            <Text 
+            <Text
               style={[
-                styles.actionText, 
+                styles.actionText,
                 variant === 'premium' && styles.premiumActionText
               ]}
             >
@@ -172,9 +174,9 @@ const Card: React.FC<CardProps> = ({
   // Render as touchable if onPress is provided, otherwise as regular View
   if (onPress) {
     return (
-      <TouchableOpacity 
-        style={[getCardStyle(), style]} 
-        onPress={onPress} 
+      <TouchableOpacity
+        style={[getCardStyle(), style]}
+        onPress={onPress}
         activeOpacity={0.8}
         {...props}
       >
@@ -225,14 +227,16 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   premiumTitle: {
-    color: COLORS.white,
+    color: COLORS.text.primary,
+    fontWeight: '700',
   },
   subtitle: {
     fontSize: 14,
     color: COLORS.text.secondary,
   },
   premiumSubtitle: {
-    color: COLORS.gray[400],
+    color: COLORS.text.secondary,
+    fontWeight: '500',
   },
   content: {
     marginVertical: SPACING.xs,
@@ -267,4 +271,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Card; 
+export default Card;

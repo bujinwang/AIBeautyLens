@@ -12,15 +12,28 @@ import {
   Platform,
   ScrollView,
   Modal,
-  Share
+  Share,
+  Switch
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
-import { getApiKey, storeApiKey, isValidApiKey, API_KEY_STORAGE_KEY } from '../config/api';
+import { 
+  getApiKey, 
+  storeApiKey, 
+  isValidApiKey, 
+  API_KEY_STORAGE_KEY, 
+  getProjectId, 
+  storeProjectId, 
+  getRegion, 
+  storeRegion, 
+  DEFAULT_VERTEX_REGION 
+} from '../config/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { obscureApiKey, encrypt, decrypt } from '../utils/encryption';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import { checkRuntimeSettings } from '../services/geminiService';
 
 type ApiKeyScreenRouteProp = RouteProp<RootStackParamList, 'ApiKey'>;
 
@@ -32,6 +45,8 @@ type ApiKeyScreenProps = {
 const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
   const [apiKey, setApiKey] = useState('');
   const [displayApiKey, setDisplayApiKey] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [region, setRegion] = useState(DEFAULT_VERTEX_REGION);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -40,15 +55,23 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
   const [importedKey, setImportedKey] = useState('');
   const [encryptedKeyToShare, setEncryptedKeyToShare] = useState('');
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [useOAuth, setUseOAuth] = useState(false);
+  const [oauthClientId, setOAuthClientId] = useState('');
   
   // Check if the screen is opened in "force" mode (e.g. for changing API key)
   const forceShowScreen = route.params?.forceShow === true;
   
   // Check if API key already exists
   useEffect(() => {
-    const checkExistingApiKey = async () => {
+    const checkExistingSettings = async () => {
       try {
         const storedKey = await getApiKey();
+        const storedProjectId = await getProjectId();
+        const storedRegion = await getRegion();
+        
+        // Load project ID and region
+        setProjectId(storedProjectId);
+        setRegion(storedRegion);
         
         // If we're here because of an error or returning to reset the key, show the stored key
         if (!isLoading && errorMessage) {
@@ -79,8 +102,30 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
       }
     };
     
-    checkExistingApiKey();
+    checkExistingSettings();
   }, [navigation, errorMessage, isLoading, isObscured, forceShowScreen]);
+  
+  // Check for existing OAuth settings
+  useEffect(() => {
+    const checkOAuthSettings = async () => {
+      try {
+        const savedUseOAuth = await AsyncStorage.getItem('useOAuth');
+        const savedClientId = await AsyncStorage.getItem('oauthClientId');
+        
+        if (savedUseOAuth) {
+          setUseOAuth(savedUseOAuth === 'true');
+        }
+        
+        if (savedClientId) {
+          setOAuthClientId(savedClientId);
+        }
+      } catch (error) {
+        console.error('Error retrieving OAuth settings:', error);
+      }
+    };
+    
+    checkOAuthSettings();
+  }, []);
   
   // Update display value when input changes
   const handleKeyChange = (text: string) => {
@@ -107,23 +152,38 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
       // Use the proper store function which now encrypts the key
       const success = await storeApiKey(apiKey.trim());
       
+      // Also store the Vertex AI Project ID and Region
+      if (projectId.trim()) {
+        await storeProjectId(projectId.trim());
+      }
+      
+      if (region.trim()) {
+        await storeRegion(region.trim());
+      }
+      
+      // Save OAuth settings
+      await AsyncStorage.setItem('useOAuth', useOAuth.toString());
+      if (useOAuth && oauthClientId) {
+        await AsyncStorage.setItem('oauthClientId', oauthClientId);
+      }
+      
       if (success) {
         Alert.alert(
           'Success', 
-          'API key saved securely and encrypted on your device!',
+          'API key and Vertex AI settings saved securely!',
           [{ text: 'OK', onPress: () => navigation.replace('Camera') }]
         );
       } else {
         Alert.alert(
           'Error', 
-          'Failed to save API key securely. Please try again.',
+          'Failed to save settings securely. Please try again.',
           [{ text: 'Try Again' }]
         );
       }
     } catch (error) {
-      console.error('Error saving API key:', error);
-      setErrorMessage('Failed to save API key securely. Please try again.');
-      Alert.alert('Error', 'An unexpected error occurred while saving your API key');
+      console.error('Error saving settings:', error);
+      setErrorMessage('Failed to save settings securely. Please try again.');
+      Alert.alert('Error', 'An unexpected error occurred while saving your settings');
     } finally {
       setIsSaving(false);
     }
@@ -137,6 +197,10 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
       // Reset the UI state
       setApiKey('');
       setDisplayApiKey('');
+      
+      // Clear OAuth settings
+      await AsyncStorage.removeItem('useOAuth');
+      await AsyncStorage.removeItem('oauthClientId');
       
       Alert.alert('Success', 'API key cleared successfully');
     } catch (error) {
@@ -223,6 +287,11 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
     Linking.openURL('https://ai.google.dev/tutorials/setup');
   };
   
+  // Toggle OAuth usage
+  const toggleOAuth = () => {
+    setUseOAuth(!useOAuth);
+  };
+  
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -240,7 +309,7 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>
-            {forceShowScreen ? 'Edit API Key' : 'Welcome to AIBeautyLens'}
+            {forceShowScreen ? 'Edit API Settings' : 'Welcome to AIBeautyLens'}
           </Text>
           
           {errorMessage ? (
@@ -250,169 +319,215 @@ const ApiKeyScreen: React.FC<ApiKeyScreenProps> = ({ navigation, route }) => {
           ) : (
             <Text style={styles.description}>
               {forceShowScreen 
-                ? 'You can update or change your Gemini API key below. Your key will be encrypted and stored securely.'
-                : 'To use this app, you need to provide a Gemini API key. Your key will be encrypted and stored securely on your device.'}
+                ? 'Update your API key and Vertex AI settings.'
+                : 'To use this app, you need a Gemini API key.'}
             </Text>
           )}
           
-          <View style={styles.inputContainer}>
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Gemini API Key</Text>
+            <Text style={styles.sectionDescription}>
+              Required for facial analysis and image generation.
+            </Text>
+          
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your Gemini API key"
+                value={displayApiKey}
+                onChangeText={handleKeyChange}
+                autoCapitalize="none"
+                secureTextEntry={isObscured}
+              />
+              <TouchableOpacity style={styles.visibilityButton} onPress={toggleVisibility}>
+                <MaterialIcons name={isObscured ? 'visibility' : 'visibility-off'} size={24} color="#4361ee" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>Vertex AI Settings</Text>
+            <Text style={styles.sectionDescription}>
+              Required for using the Imagen API endpoints on Vertex AI.
+            </Text>
+            
+            <Text style={styles.inputLabel}>Google Cloud Project ID</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your Gemini API key"
-              value={displayApiKey}
-              onChangeText={handleKeyChange}
+              placeholder="Enter your Google Cloud Project ID"
+              value={projectId}
+              onChangeText={setProjectId}
               autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry={isObscured}
             />
-            <TouchableOpacity 
-              style={styles.visibilityToggle}
-              onPress={toggleVisibility}
-            >
-              <Text style={styles.visibilityText}>
-                {isObscured ? 'SHOW' : 'HIDE'}
-              </Text>
-            </TouchableOpacity>
+            
+            <Text style={styles.inputLabel}>Region</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter region (e.g. us-central1)"
+              value={region}
+              onChangeText={setRegion}
+              autoCapitalize="none"
+            />
           </View>
           
-          <Text style={styles.securityNote}>
-            Your API key will be encrypted before storage to enhance security.
-          </Text>
-          
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={handleSaveApiKey}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {forceShowScreen ? 'Update API Key' : 'Save API Key'}
-              </Text>
+          <View style={styles.formSection}>
+            <Text style={styles.sectionTitle}>OAuth Configuration</Text>
+            <Text style={styles.sectionDescription}>
+              Use OAuth for authentication instead of API key
+            </Text>
+            
+            <View style={styles.oauthSwitchContainer}>
+              <Text style={styles.inputLabel}>Use OAuth</Text>
+              <Switch
+                value={useOAuth}
+                onValueChange={toggleOAuth}
+                trackColor={{ false: "#ddd", true: "#bbd0ff" }}
+                thumbColor={useOAuth ? "#4361ee" : "#f4f3f4"}
+              />
+            </View>
+            
+            {useOAuth && (
+              <>
+                <Text style={styles.inputLabel}>OAuth Client ID</Text>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    value={oauthClientId}
+                    onChangeText={setOAuthClientId}
+                    placeholder="Enter your OAuth Client ID"
+                    placeholderTextColor="#aaa"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </>
             )}
+          </View>
+          
+          <TouchableOpacity style={styles.getKeyButton} onPress={handleGetApiKey}>
+            <Text style={styles.getKeyButtonText}>How to Get an API Key</Text>
           </TouchableOpacity>
           
-          {forceShowScreen && (
-            <TouchableOpacity 
-              style={[styles.button, styles.clearButton]} 
-              onPress={handleClearApiKey}
-            >
-              <Text style={styles.clearButtonText}>Clear API Key</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveApiKey} disabled={isSaving}>
+              {isSaving ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Settings</Text>
+              )}
             </TouchableOpacity>
+            
+            {forceShowScreen && (
+              <TouchableOpacity style={styles.clearButton} onPress={handleClearApiKey}>
+                <Text style={styles.clearButtonText}>Clear API Key</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* Only show key sharing options if in force/edit mode */}
+          {forceShowScreen && (
+            <View style={styles.advancedContainer}>
+              <Text style={styles.advancedTitle}>Advanced Options</Text>
+              <View style={styles.advancedButtons}>
+                <TouchableOpacity style={styles.advancedButton} onPress={() => setImportModalVisible(true)}>
+                  <MaterialIcons name="file-download" size={20} color="#4361ee" />
+                  <Text style={styles.advancedButtonText}>Import Key</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity style={styles.advancedButton} onPress={prepareKeyForSharing}>
+                  <MaterialIcons name="share" size={20} color="#4361ee" />
+                  <Text style={styles.advancedButtonText}>Share Key</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
           
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity 
-              style={styles.optionButton} 
-              onPress={() => setImportModalVisible(true)}
-            >
-              <MaterialIcons name="file-download" size={18} color="#4361ee" />
-              <Text style={styles.optionText}>Import Encrypted Key</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.optionButton} 
-              onPress={prepareKeyForSharing}
-            >
-              <MaterialIcons name="share" size={18} color="#4361ee" />
-              <Text style={styles.optionText}>Share My Key</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Import Key Modal */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={importModalVisible}
+            onRequestClose={() => setImportModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Import Encrypted API Key</Text>
+                <Text style={styles.modalDescription}>
+                  Paste the encrypted API key shared with you:
+                </Text>
+                
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Paste encrypted key here"
+                  value={importedKey}
+                  onChangeText={setImportedKey}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  multiline={true}
+                  numberOfLines={3}
+                />
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.cancelButton]} 
+                    onPress={() => setImportModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.importButton]} 
+                    onPress={handleImportKey}
+                  >
+                    <Text style={styles.importButtonText}>Import</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
           
-          <TouchableOpacity onPress={handleGetApiKey}>
-            <Text style={styles.linkText}>
-              Don't have an API key? Learn how to get one
-            </Text>
-          </TouchableOpacity>
+          {/* Share Key Modal */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={shareModalVisible}
+            onRequestClose={() => setShareModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Share Encrypted API Key</Text>
+                <Text style={styles.modalDescription}>
+                  This is your encrypted API key that you can share with friends for testing:
+                </Text>
+                
+                <View style={styles.encryptedKeyContainer}>
+                  <Text style={styles.encryptedKeyText}>{encryptedKeyToShare}</Text>
+                </View>
+                
+                <Text style={styles.shareNote}>
+                  Note: This encrypted key can only be used in the AIBeautyLens app.
+                </Text>
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.cancelButton]} 
+                    onPress={() => setShareModalVisible(false)}
+                  >
+                    <Text style={styles.cancelButtonText}>Close</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.modalButton, styles.importButton]} 
+                    onPress={shareEncryptedKey}
+                  >
+                    <MaterialIcons name="share" size={18} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.importButtonText}>Share</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </ScrollView>
-      
-      {/* Import Key Modal */}
-      <Modal
-        visible={importModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setImportModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Import Encrypted API Key</Text>
-            <Text style={styles.modalDescription}>
-              Paste the encrypted API key shared with you:
-            </Text>
-            
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Paste encrypted key here"
-              value={importedKey}
-              onChangeText={setImportedKey}
-              autoCapitalize="none"
-              autoCorrect={false}
-              multiline={true}
-              numberOfLines={3}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
-                onPress={() => setImportModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.importButton]} 
-                onPress={handleImportKey}
-              >
-                <Text style={styles.importButtonText}>Import</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Share Key Modal */}
-      <Modal
-        visible={shareModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShareModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Share Encrypted API Key</Text>
-            <Text style={styles.modalDescription}>
-              This is your encrypted API key that you can share with friends for testing:
-            </Text>
-            
-            <View style={styles.encryptedKeyContainer}>
-              <Text style={styles.encryptedKeyText}>{encryptedKeyToShare}</Text>
-            </View>
-            
-            <Text style={styles.shareNote}>
-              Note: This encrypted key can only be used in the AIBeautyLens app.
-            </Text>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
-                onPress={() => setShareModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Close</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.importButton]} 
-                onPress={shareEncryptedKey}
-              >
-                <MaterialIcons name="share" size={18} color="#fff" style={styles.buttonIcon} />
-                <Text style={styles.importButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -486,7 +601,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     fontSize: 16,
   },
-  visibilityToggle: {
+  visibilityButton: {
     position: 'absolute',
     right: 0,
     top: 0,
@@ -500,19 +615,84 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: '#ddd',
   },
-  visibilityText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#666',
-  },
-  securityNote: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
+  formSection: {
     marginBottom: 20,
-    textAlign: 'center',
+    width: '100%',
   },
-  button: {
+  
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  
+  sectionDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+  },
+  
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 5,
+    marginTop: 10,
+  },
+  buttonContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  saveButton: {
+    width: '48%',
+    height: 50,
+    backgroundColor: '#4361ee',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  clearButton: {
+    backgroundColor: '#f44336',
+    marginLeft: 5,
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  advancedContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  advancedTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  advancedButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  advancedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  advancedButtonText: {
+    color: '#4361ee',
+    marginLeft: 5,
+    fontSize: 14,
+  },
+  getKeyButton: {
     width: '100%',
     height: 50,
     backgroundColor: '#4361ee',
@@ -521,32 +701,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  buttonText: {
+  getKeyButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  linkText: {
-    color: '#4361ee',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-    marginTop: 10,
-  },
-  optionsContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-  },
-  optionText: {
-    color: '#4361ee',
-    marginLeft: 5,
-    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
@@ -643,14 +801,11 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 5,
   },
-  clearButton: {
-    backgroundColor: '#f44336',
-    marginTop: 10,
-  },
-  clearButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  oauthSwitchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
   },
 });
 

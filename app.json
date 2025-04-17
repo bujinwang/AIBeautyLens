@@ -2,7 +2,7 @@
   "expo": {
     "name": "AIBeautyLens",
     "slug": "AIBeautyLens",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,17 +19,45 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.aibeautylens"
+      "bundleIdentifier": "com.autobebesys.aibeautylens",
+      "buildNumber": "2",
+      "infoPlist": {
+        "NSCameraUsageDescription": "AIBeautyLens uses your camera to capture facial images for personalized skincare analysis. The app will analyze your skin condition, identify areas for improvement, and generate customized treatment recommendations to help improve your skin health.",
+        "NSPhotoLibraryUsageDescription": "AIBeautyLens needs access to your photos to analyze existing facial images for skincare assessment. You can select photos to receive personalized skin analysis and treatment simulations showing potential improvements.",
+        "NSPhotoLibraryAddUsageDescription": "AIBeautyLens saves your analysis results and treatment simulations to your photo library, allowing you to track your skin's progress over time and share results with skincare professionals."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E3A8A"
       },
-      "package": "com.yourcompany.aibeautylens"
+      "package": "com.autobebesys.aibeautylens",
+      "versionCode": 2,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6232a81c-eb54-4d1d-8db0-6adc3f8de40d"
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AIBeautyLens to access your camera."
+        }
+      ]
+    ],
+    "owner": "bujinwang"
   }
-} 
+}

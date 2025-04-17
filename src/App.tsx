@@ -17,6 +17,7 @@ import ReportScreen from './screens/ReportScreen';
 import HomeScreen from './screens/HomeScreen';
 import LogoGenerator from './utils/LogoGenerator';
 import OAuthSetupScreen from './screens/OAuthSetupScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   Report: { treatmentIds: string[]; beforeImage: string; afterImage: string };
   LogoGenerator: undefined;
   OAuthSetup: undefined;
+  PrivacyPolicy: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -98,12 +100,17 @@ export default function App() {
     };
   }, []);
 
+  // Add debug logging for navigation
+  const onNavigationStateChange = (state: any) => {
+    console.log('Navigation state changed:', state);
+  };
+
   console.log("App.tsx: Rendering, isInitialized =", isInitialized);
 
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
           <Stack.Navigator initialRouteName="Home">
             <Stack.Screen
               name="Home"
@@ -154,6 +161,14 @@ export default function App() {
               name="OAuthSetup"
               component={OAuthSetupScreen}
               options={{ title: 'OAuth Setup' }}
+            />
+            <Stack.Screen
+              name="PrivacyPolicy"
+              component={PrivacyPolicyScreen}
+              options={{
+                title: 'Privacy Policy',
+                headerShown: false
+              }}
             />
           </Stack.Navigator>
         </NavigationContainer>

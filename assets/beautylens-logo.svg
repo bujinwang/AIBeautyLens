@@ -1,0 +1,48 @@
+<svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="400" cy="400" r="350" fill="#f0f9ff" />
+  
+  <!-- Outer Ring - Healthcare Blue -->
+  <circle cx="400" cy="400" r="340" fill="none" stroke="#3b82f6" stroke-width="10" />
+  
+  <!-- Central Lens -->
+  <ellipse cx="400" cy="400" rx="200" ry="220" fill="#bfdbfe" fill-opacity="0.7" />
+  <ellipse cx="400" cy="400" rx="180" ry="200" fill="none" stroke="#1e40af" stroke-width="8" />
+  
+  <!-- Lens Reflection -->
+  <ellipse cx="335" cy="320" rx="55" ry="35" fill="white" transform="rotate(-15 335 320)" />
+  
+  <!-- AI Circuit Pattern -->
+  <g stroke="#1e40af" stroke-width="3" fill="none">
+    <path d="M400,180 L400,140" />
+    <path d="M400,140 L480,110" />
+    <path d="M400,140 L320,110" />
+    <circle cx="480" cy="110" r="8" fill="#3b82f6" />
+    <circle cx="320" cy="110" r="8" fill="#3b82f6" />
+    
+    <path d="M500,400 L570,400" />
+    <path d="M570,400 L610,360" />
+    <path d="M570,400 L610,440" />
+    <circle cx="610" cy="360" r="8" fill="#3b82f6" />
+    <circle cx="610" cy="440" r="8" fill="#3b82f6" />
+    
+    <path d="M300,400 L230,400" />
+    <path d="M230,400 L190,360" />
+    <path d="M230,400 L190,440" />
+    <circle cx="190" cy="360" r="8" fill="#3b82f6" />
+    <circle cx="190" cy="440" r="8" fill="#3b82f6" />
+    
+    <path d="M400,620 L400,660" />
+    <path d="M400,660 L480,690" />
+    <path d="M400,660 L320,690" />
+    <circle cx="480" cy="690" r="8" fill="#3b82f6" />
+    <circle cx="320" cy="690" r="8" fill="#3b82f6" />
+  </g>
+  
+  <!-- Beauty Element -->
+  <path d="M350,500 Q400,550 450,500" stroke="#d946ef" stroke-width="5" fill="none" />
+  
+  <!-- App Name -->
+  <text x="400" y="500" font-family="Arial, sans-serif" font-size="50" font-weight="bold" text-anchor="middle" fill="#1e3a8a">BeautyLens</text>
+  <text x="400" y="540" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#3b82f6">AI-Powered Beauty Solutions</text>
+</svg>

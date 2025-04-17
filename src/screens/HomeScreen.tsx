@@ -17,7 +17,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   // Add debug logging for component lifecycle
   useEffect(() => {
     console.log("HomeScreen: Component mounted");
-    
+
     return () => {
       console.log("HomeScreen: Component unmounted");
     };
@@ -32,18 +32,18 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     console.log("HomeScreen: Navigating to API Key settings");
     navigation.navigate('ApiKey', { forceShow: true });
   };
-  
+
   const navigateToLogoGenerator = () => {
     console.log("HomeScreen: Navigating to Logo Generator");
     navigation.navigate('LogoGenerator');
   };
 
   console.log("HomeScreen: Rendering");
-  
+
   try {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
           <LinearGradient
             colors={[COLORS.primary.main, COLORS.primary.light, 'rgba(255,255,255,0.9)']}
             locations={[0, 0.7, 1]}
@@ -53,15 +53,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           >
             <View style={styles.header}>
               <View style={styles.logoWrapper}>
-                <TouchableOpacity 
-                  onLongPress={navigateToLogoGenerator} 
-                  delayLongPress={800}
-                  style={styles.logoTouchable}
-                >
-                  <View style={styles.logoContainer}>
-                    <Logo size="medium" showTagline={true} color="white" />
-                  </View>
-                </TouchableOpacity>
+                <View style={styles.logoContainer}>
+                  <Logo size="medium" showTagline={true} color="white" />
+                </View>
               </View>
               <TouchableOpacity onPress={navigateToSettings} style={styles.settingsButton}>
                 <MaterialIcons name="settings" size={24} color="white" />
@@ -70,8 +64,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </LinearGradient>
 
           <View style={styles.heroContainer}>
-            <ImageBackground 
-              source={require('../../src/assets/images/beauty_hero.jpg')} 
+            <ImageBackground
+              source={require('../../src/assets/images/beauty_hero.jpg')}
               style={styles.heroImage}
               resizeMode="cover"
               imageStyle={{ borderRadius: 16, opacity: 0.9 }}
@@ -86,8 +80,8 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <View style={styles.actionContainer}>
-            <TouchableOpacity 
-              style={[styles.actionButton, styles.primaryButton]} 
+            <TouchableOpacity
+              style={[styles.actionButton, styles.primaryButton]}
               onPress={navigateToCamera}
             >
               <MaterialIcons name="photo-camera" size={24} color="white" />
@@ -96,7 +90,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.featuresContainer}>
               <Text style={styles.sectionTitle}>Elite Analysis Features</Text>
-              
+
               <View style={styles.featureCard}>
                 <MaterialIcons name="face" size={24} color={COLORS.primary.main} />
                 <View style={styles.featureTextContainer}>
@@ -106,7 +100,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.featureCard}>
                 <MaterialIcons name="healing" size={24} color={COLORS.primary.main} />
                 <View style={styles.featureTextContainer}>
@@ -116,7 +110,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                   </Text>
                 </View>
               </View>
-              
+
               <View style={styles.featureCard}>
                 <MaterialIcons name="auto-fix-high" size={24} color={COLORS.primary.main} />
                 <View style={styles.featureTextContainer}>
@@ -149,6 +143,17 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.footerText}>
               Privacy-First Design: All processing happens on-device or via secure API calls
             </Text>
+            <TouchableOpacity
+              onPress={() => {
+                console.log('HomeScreen: Navigating to Privacy Policy');
+                navigation.navigate('PrivacyPolicy');
+              }}
+              style={styles.privacyLink}
+            >
+              <Text style={styles.privacyLinkText}>
+                View Privacy Policy →
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -168,6 +173,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+    paddingBottom: 20, // Add padding to ensure footer is visible
   },
   headerGradient: {
     paddingTop: 55,
@@ -182,10 +188,6 @@ const styles = StyleSheet.create({
   logoWrapper: {
     position: 'relative',
     zIndex: 5,
-  },
-  logoTouchable: {
-    position: 'relative',
-    paddingVertical: 10,
   },
   logoContainer: {
     position: 'relative',
@@ -306,13 +308,34 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#ddd',
     padding: 20,
+    marginTop: 20,
+    backgroundColor: '#f8f9fa',
   },
   footerText: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 15,
+    color: '#666',
     textAlign: 'center',
+    fontWeight: '500',
+  },
+  privacyLink: {
+    marginTop: 16,
+    backgroundColor: '#1E3A8A',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  privacyLinkText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   errorContainer: {
     flex: 1,
@@ -334,4 +357,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;

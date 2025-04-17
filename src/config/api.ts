@@ -44,10 +44,16 @@ const isKeychainAvailable = async (): Promise<boolean> => {
   }
 
   try {
-    // First verify that Keychain object exists
-    if (!Keychain || typeof Keychain.setGenericPassword !== 'function') {
-      console.log('Keychain API not available');
+    // First verify that Keychain object exists and has the required methods
+    if (!Keychain || typeof Keychain.setGenericPassword !== 'function' || typeof Keychain.getGenericPassword !== 'function') {
+      console.log('Keychain API not available or incomplete');
       return false;
+    }
+
+    // In development, we'll skip the actual test operation to avoid the warning
+    if (__DEV__) {
+      console.log('Development environment detected, skipping keychain test');
+      return true;
     }
 
     // Try a simple operation with error handling

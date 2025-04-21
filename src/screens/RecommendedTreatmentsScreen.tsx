@@ -41,9 +41,6 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     appointmentLength
   } = route.params as TreatmentParams;
 
-  console.log('RecommendedTreatments Screen - Received treatments:', recommendedTreatments);
-  console.log('RecommendedTreatments Screen - Received reasons:', reasons);
-
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
 

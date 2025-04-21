@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Modal, StyleSheet, TouchableOpacity, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Modal, StyleSheet, TouchableOpacity, Text, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { AnalysisResult } from '../types';
 import SkinMatrixHeader from './SkinMatrixHeader';
+import { getProductsForConcerns, SkincareProduct } from '../constants/skincareProducts';
+import { getGeminiProductRecommendations, getSingleProductRecommendations } from '../services/geminiService';
 
 interface SkincareAdviceModalProps {
   visible: boolean;
@@ -16,6 +18,248 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
   onClose,
   analysisResult
 }) => {
+  // Extract concerns from features using useMemo to prevent recreation on every render
+  const concerns = useMemo(() =>
+    analysisResult.features.map(feature => feature.description.toLowerCase()),
+    [analysisResult.features]
+  );
+
+  // State to store recommended products by category
+  const [productsByCategory, setProductsByCategory] = useState<{[key: string]: SkincareProduct[]}>({});
+
+  // Add state for Gemini recommendations
+  const [geminiProducts, setGeminiProducts] = useState<SkincareProduct[]>([]);
+  const [isLoadingGemini, setIsLoadingGemini] = useState(false);
+
+  // Memoize the skin type to prevent unnecessary renders
+  const skinType = useMemo(() => analysisResult.skinType, [analysisResult.skinType]);
+
+  // Use useMemo for the product recommendations to avoid recalculations
+  const recommendedProducts = useMemo(() =>
+    getProductsForConcerns(concerns, skinType),
+    [concerns, skinType]
+  );
+
+  // Only run this effect when the recommendedProducts change
+  useEffect(() => {
+    if (!visible) return; // Don't process if modal isn't visible
+
+    // Group products by category
+    const groupedProducts: {[key: string]: SkincareProduct[]} = {};
+    recommendedProducts.forEach(product => {
+      if (!groupedProducts[product.category]) {
+        groupedProducts[product.category] = [];
+      }
+      groupedProducts[product.category].push(product);
+    });
+
+    setProductsByCategory(groupedProducts);
+  }, [recommendedProducts, visible]);
+
+  // Add effect to fetch Gemini recommendations when visible
+  useEffect(() => {
+    if (!visible) return;
+
+    const fetchGeminiRecommendations = async () => {
+      setIsLoadingGemini(true);
+      try {
+        console.log("Fetching product recommendations for:", {
+          skinType,
+          concerns,
+          recommendationsCount: analysisResult.skincareRecommendations?.length || 0
+        });
+
+        // Use the new function to get one product per category
+        const products = await getSingleProductRecommendations({
+          skinType,
+          concerns,
+          existingRecommendations: analysisResult.skincareRecommendations
+        });
+
+        console.log("Received products:", products.length, products);
+        setGeminiProducts(products);
+
+        // Also organize products by category for consistency
+        const groupedGeminiProducts: {[key: string]: SkincareProduct[]} = {};
+        products.forEach(product => {
+          if (!groupedGeminiProducts[product.category]) {
+            groupedGeminiProducts[product.category] = [];
+          }
+          groupedGeminiProducts[product.category].push(product);
+        });
+
+        console.log("Grouped Gemini products by category:", Object.keys(groupedGeminiProducts));
+
+        // Always update with Gemini recommendations
+        setProductsByCategory(groupedGeminiProducts);
+      } catch (error) {
+        console.error('Error fetching Gemini recommendations:', error);
+      } finally {
+        setIsLoadingGemini(false);
+      }
+    };
+
+    fetchGeminiRecommendations();
+  }, [visible, skinType, concerns]);
+
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'cleanser':
+      case 'gentle cleanser':
+        return 'wash';
+      case 'toner':
+        return 'opacity';
+      case 'hydrator':
+      case 'moisturizer':
+      case 'lightweight moisturizer':
+        return 'water';
+      case 'sunscreen':
+        return 'wb-sunny';
+      case 'serum':
+      case 'hydrating & calming serum':
+      case 'targeted treatment':
+      case 'targeted acne treatment':
+        return 'science';
+      case 'exfoliator':
+        return 'spa';
+      case 'masks':
+        return 'face';
+      case 'eye care':
+        return 'visibility';
+      default:
+        return 'science';
+    }
+  };
+
+  // Function to render product recommendations for a specific category
+  const renderProductRecommendations = (productType: string) => {
+    console.log(`Rendering products for ${productType}`);
+
+    // Map from generalized product type to specific category names in our product database
+    const categoryMapping: {[key: string]: string[]} = {
+      'Gentle Cleanser': ['Cleanser', 'Gentle Cleanser'],
+      'Acne Treatment Serum/Spot Treatment': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment'],
+      'Hydrating Moisturizer': ['Moisturizer', 'Hydrator', 'Lightweight Moisturizer']
+    };
+
+    // Find the matching categories from our mapping
+    const possibleCategories = categoryMapping[productType] || [productType];
+    console.log(`Possible categories for ${productType}:`, possibleCategories);
+
+    // Get products matching any of the possible categories
+    let products: SkincareProduct[] = [];
+    possibleCategories.forEach(category => {
+      const matchingProducts = productsByCategory[category] || [];
+      console.log(`Found ${matchingProducts.length} products for category ${category}`);
+      products = [...products, ...matchingProducts];
+    });
+
+    console.log(`Total products found for ${productType}: ${products.length}`);
+
+    // Filter products based on skin type and ingredients matching the recommendations
+    if (skinType) {
+      products = products.filter(product => {
+        // Check if product is suitable for this skin type
+        const matchesSkinType = product.skinType.some(type =>
+          type.toLowerCase() === skinType.toLowerCase() ||
+          type.toLowerCase() === 'all'
+        );
+
+        // For cleansers, check for ceramides, glycerin, or salicylic acid
+        if (productType === 'Gentle Cleanser') {
+          return matchesSkinType && product.ingredients &&
+            (product.ingredients.toLowerCase().includes('ceramide') ||
+             product.ingredients.toLowerCase().includes('glycerin') ||
+             product.ingredients.toLowerCase().includes('salicylic acid'));
+        }
+
+        // For acne treatments, check for salicylic acid, benzoyl peroxide, or adapalene
+        if (productType === 'Acne Treatment Serum/Spot Treatment') {
+          return matchesSkinType && product.ingredients &&
+            (product.ingredients.toLowerCase().includes('salicylic acid') ||
+             product.ingredients.toLowerCase().includes('benzoyl peroxide') ||
+             product.ingredients.toLowerCase().includes('adapalene'));
+        }
+
+        // For moisturizers, check for hyaluronic acid, glycerin, ceramides
+        if (productType === 'Hydrating Moisturizer') {
+          return matchesSkinType && product.ingredients &&
+            (product.ingredients.toLowerCase().includes('hyaluronic acid') ||
+             product.ingredients.toLowerCase().includes('glycerin') ||
+             product.ingredients.toLowerCase().includes('ceramide'));
+        }
+
+        return matchesSkinType;
+      });
+    }
+
+    // Sort products by price
+    products.sort((a, b) => a.price - b.price);
+
+    // Take only the first product for each category
+    products = products.slice(0, 1);
+
+    // If loading Gemini recommendations and no products yet, show loading indicator
+    if (products.length === 0 && isLoadingGemini) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={COLORS.primary.main} />
+          <Text style={styles.loadingText}>Getting AI recommendations...</Text>
+        </View>
+      );
+    }
+
+    // If no products found, return the "No specific products found" message
+    if (products.length === 0) {
+      return (
+        <View style={styles.noProductsContainer}>
+          <Text style={styles.noProductsText}>No specific products found for this category</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View>
+        <View style={styles.productsSection}>
+          {products.map((product, index) => (
+            <View key={index} style={styles.productCard}>
+              <View style={styles.productHeader}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons
+                    name={getCategoryIcon(product.category)}
+                    size={18}
+                    color={COLORS.white}
+                  />
+                </View>
+                <View style={styles.productInfo}>
+                  <Text style={styles.brandName}>{product.brand}</Text>
+                  <Text style={styles.productName}>{product.name}</Text>
+                </View>
+                <Text style={styles.productPrice}>
+                  ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
+                </Text>
+              </View>
+
+              {product.description && (
+                <Text style={styles.productDescription}>{product.description}</Text>
+              )}
+
+              {product.ingredients && (
+                <View style={styles.ingredientsContainer}>
+                  <Text style={styles.ingredientsLabel}>Key Ingredients:</Text>
+                  <Text style={styles.ingredientsText}>{product.ingredients}</Text>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  // Don't render anything if not visible
+  if (!visible) return null;
+
   return (
     <Modal
       visible={visible}
@@ -29,46 +273,68 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         </TouchableOpacity>
 
         <View style={styles.content}>
-          <SkinMatrixHeader 
-            title="Personalized Skincare Advice" 
-            subtitle={`Recommended regimen for ${analysisResult.skinType} skin`}
+          <SkinMatrixHeader
+            title="Personalized Skincare Advice"
+            subtitle={`Recommended regimen for ${skinType} skin`}
           />
-          
+
+          {isLoadingGemini && (
+            <View style={styles.loadingIndicatorContainer}>
+              <ActivityIndicator size="small" color={COLORS.primary.main} />
+              <Text style={styles.loadingIndicatorText}>Loading recommendations...</Text>
+            </View>
+          )}
+
           <ScrollView style={styles.scrollContainer}>
             <View style={styles.introContainer}>
               <Text style={styles.introTitle}>Skincare Product Recommendations</Text>
               <Text style={styles.introText}>
-                The following recommendations are tailored to your {analysisResult.skinType} skin type
+                The following recommendations are tailored to your {skinType} skin type
                 and specific concerns identified in your analysis. Incorporate these products
                 gradually into your routine for best results.
               </Text>
             </View>
-            
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.headerCell, styles.productColumn]}>Product Type</Text>
-                <Text style={[styles.headerCell, styles.ingredientsColumn]}>Recommended Ingredients</Text>
-                <Text style={[styles.headerCell, styles.usageColumn]}>Recommended Usage</Text>
-              </View>
-              
+
+            <View style={styles.recommendationsContainer}>
               {analysisResult.skincareRecommendations.map((item, index) => (
-                <View 
-                  key={index} 
+                <View
+                  key={index}
                   style={[
-                    styles.tableRow, 
-                    index % 2 === 0 ? styles.evenRow : styles.oddRow
+                    styles.recommendationCard,
+                    index % 2 === 0 ? styles.evenCard : styles.oddCard
                   ]}
                 >
-                  <View style={styles.productCell}>
-                    <Text style={[styles.cell, styles.productColumn, styles.productText]}>
-                      {item.productType}
-                    </Text>
+                  <View style={styles.recommendationHeader}>
+                    <View style={styles.recommendationIconContainer}>
+                      <MaterialIcons
+                        name={getCategoryIcon(item.productType)}
+                        size={24}
+                        color={COLORS.primary.main}
+                      />
+                    </View>
+                    <Text style={styles.productTypeText}>{item.productType}</Text>
+                  </View>
+
+                  <View style={styles.recommendationDetails}>
+                    <View style={styles.recommendationRow}>
+                      <Text style={styles.recommendationLabel}>Key Ingredients:</Text>
+                      <Text style={styles.recommendationValue}>{item.recommendedIngredients}</Text>
+                    </View>
+
+                    <View style={styles.recommendationRow}>
+                      <Text style={styles.recommendationLabel}>Usage:</Text>
+                      <Text style={styles.recommendationValue}>{item.recommendedUsage}</Text>
+                    </View>
+
                     {item.reason && (
-                      <Text style={styles.reasonText}>{item.reason}</Text>
+                      <View style={styles.recommendationRow}>
+                        <Text style={styles.recommendationLabel}>Why:</Text>
+                        <Text style={styles.reasonValue}>{item.reason}</Text>
+                      </View>
                     )}
                   </View>
-                  <Text style={[styles.cell, styles.ingredientsColumn]}>{item.recommendedIngredients}</Text>
-                  <Text style={[styles.cell, styles.usageColumn]}>{item.recommendedUsage}</Text>
+
+                  {renderProductRecommendations(item.productType)}
                 </View>
               ))}
             </View>
@@ -81,7 +347,7 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
                 </Text>
               ))}
             </View>
-            
+
             <View style={styles.disclaimer}>
               <Text style={styles.disclaimerTitle}>Important Notes:</Text>
               <Text style={styles.disclaimerText}>
@@ -125,6 +391,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  loadingIndicatorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  loadingIndicatorText: {
+    marginLeft: SPACING.sm,
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
   scrollContainer: {
     flex: 1,
     padding: SPACING.md,
@@ -148,64 +426,148 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     lineHeight: 20,
   },
-  tableContainer: {
+  recommendationsContainer: {
+    marginBottom: SPACING.lg,
+  },
+  recommendationCard: {
+    marginBottom: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.gray[200],
-    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.small,
   },
-  tableHeader: {
+  evenCard: {
+    backgroundColor: COLORS.white,
+  },
+  oddCard: {
+    backgroundColor: COLORS.gray[50],
+  },
+  recommendationHeader: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primary.main,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
-  },
-  headerCell: {
-    color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 14,
-    paddingHorizontal: SPACING.xs,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
+    alignItems: 'center',
+    padding: SPACING.md,
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[200],
   },
-  evenRow: {
-    backgroundColor: COLORS.gray[50],
+  recommendationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary.light + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
   },
-  oddRow: {
-    backgroundColor: COLORS.white,
-  },
-  cell: {
-    paddingHorizontal: SPACING.xs,
-    fontSize: 13,
+  productTypeText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.text.primary,
   },
-  productCell: {
-    flex: 1,
+  recommendationDetails: {
+    padding: SPACING.md,
   },
-  productColumn: {
-    flex: 1,
+  recommendationRow: {
+    marginBottom: SPACING.sm,
   },
-  ingredientsColumn: {
-    flex: 1.5,
-  },
-  usageColumn: {
-    flex: 1,
-  },
-  productText: {
+  recommendationLabel: {
+    fontSize: 14,
     fontWeight: '600',
-    color: COLORS.primary.main,
+    color: COLORS.text.primary,
+    marginBottom: 2,
   },
-  reasonText: {
-    fontSize: 11,
+  recommendationValue: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
+  },
+  reasonValue: {
+    fontSize: 14,
     color: COLORS.text.secondary,
     fontStyle: 'italic',
-    marginTop: 2,
+    lineHeight: 20,
+  },
+  productsSection: {
+    padding: SPACING.md,
+    backgroundColor: COLORS.background.paper + '80',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+  },
+  productsSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary.main,
+    marginBottom: SPACING.sm,
+  },
+  productCard: {
+    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+  },
+  productHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.primary.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.xs,
+  },
+  productInfo: {
+    flex: 1,
+  },
+  brandName: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    textTransform: 'uppercase',
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.text.primary,
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primary.main,
+  },
+  productDescription: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.xs,
+    lineHeight: 16,
+  },
+  productIngredients: {
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.xs,
+    fontStyle: 'italic',
+  },
+  ingredientsContainer: {
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+  },
+  ingredientsLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  ingredientsText: {
+    fontSize: 14,
+    color: COLORS.text.primary,
+    lineHeight: 20,
   },
   concernsContainer: {
     marginBottom: SPACING.lg,
@@ -243,6 +605,27 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     lineHeight: 18,
   },
+  loadingContainer: {
+    padding: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  loadingText: {
+    marginLeft: SPACING.xs,
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
+  noProductsContainer: {
+    padding: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noProductsText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+  }
 });
 
 export default SkincareAdviceModal;

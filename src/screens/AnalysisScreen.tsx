@@ -67,8 +67,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsQuotaError(false);
       setIsIpadError(false);
       const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
-      console.log('Gemini Analysis Result:', JSON.stringify(result, null, 2));
-      console.log('Recommended Treatments:', result?.recommendations || 'No recommendations');
       setAnalysisResult(result);
     } catch (error) {
       console.error('Error in analysis:', error);
@@ -145,8 +143,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         .map(rec => mapTreatmentId(rec.treatmentId))
         .filter(id => TREATMENTS.some(t => t.id === id)); // Filter out any IDs that still don't exist
       
-      console.log('Processed Recommended Treatments:', recommendedTreatments);
-
       // Create a reasons object mapping treatmentId to reason (with ID mapping)
       const reasons: { [key: string]: string[] } = {};
       analysisResult.recommendations.forEach(rec => {
@@ -159,7 +155,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
           reasons[mappedId].push(rec.reason);
         }
       });
-      console.log('Treatment Reasons:', reasons);
 
       navigation.navigate('RecommendedTreatments', {
         imageUri,

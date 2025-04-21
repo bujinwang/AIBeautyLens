@@ -11,6 +11,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { SkincareRecommendation } from '../types';
 import { TREATMENTS } from '../constants/treatments';
+import { SkincareProduct, SKINCARE_PRODUCTS, PRODUCTS_BY_SKIN_TYPE, getProductsForConcerns } from '../constants/skincareProducts';
 
 // Navigation reference for navigation outside of components
 let _navigationRef: any = null;
@@ -56,6 +57,22 @@ const logAPIResponse = (context: string, status: number, statusText: string) => 
 const logImageProcessing = (context: string, details: any) => {
   console.log(`[Image Processing] ${context}:`, details);
 };
+
+// Interface for Gemini API request with user's skin info
+interface GeminiProductRequestData {
+  skinType: string;
+  concerns: string[];
+  existingRecommendations: SkincareRecommendation[];
+}
+
+// Response from Gemini API with product recommendations
+interface GeminiProductResponseData {
+  products: SkincareProduct[];
+}
+
+// Mock API key - in a real app, this would be stored in environment variables
+// and accessed securely
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 
 /**
  * Analyzes a facial image and returns recommendations
@@ -506,10 +523,8 @@ IMPORTANT CLINICAL GUIDELINES:
         const content = data.candidates[0].content.parts[0].text;
         const finishReason = data.candidates[0].finishReason;
 
-        console.log('Raw Gemini Response:', content);
+        // Remove raw response logs
         console.log('Finish Reason:', finishReason);
-
-        // Check if response was truncated
         if (finishReason === "MAX_TOKENS") {
           console.warn('Response was truncated due to token limit. Attempting to fix incomplete JSON...');
         }
@@ -676,4 +691,258 @@ export const checkRuntimeSettings = async (): Promise<{success: boolean; message
       message: 'An error occurred while validating settings.'
     };
   }
+};
+
+/**
+ * Calls Gemini API to get personalized product recommendations based on skincare advice
+ */
+export const getGeminiProductRecommendations = async (
+  requestData: GeminiProductRequestData
+): Promise<SkincareProduct[]> => {
+  try {
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      throw new Error('Missing Gemini API key');
+    }
+
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `As a skincare expert, recommend specific skincare products for a user with ${requestData.skinType} skin 
+            and the following concerns: ${requestData.concerns.join(', ')}. 
+            
+            For each of these product types:
+            ${requestData.existingRecommendations.map(rec => `
+              - ${rec.productType}
+                Recommended ingredients: ${rec.recommendedIngredients}
+                Usage: ${rec.recommendedUsage}
+                Target concerns: ${rec.targetConcerns.join(', ')}
+            `).join('\n')}
+            
+            For each product type, recommend ONE specific product with:
+            - Real brand name
+            - Specific product name
+            - Actual retail price (USD)
+            - Key ingredients that match the recommended ingredients
+            - Brief description of benefits
+            - Usage instructions
+            
+            Format your response as a JSON array of products with these exact fields:
+            {
+              "id": string (unique identifier),
+              "name": string (specific product name),
+              "brand": string (brand name),
+              "category": string (matching the product type exactly),
+              "price": number (retail price in USD),
+              "skinType": string[] (array of compatible skin types),
+              "description": string (benefits and features),
+              "ingredients": string (key ingredients),
+              "usage": string (how to use)
+            }`
+          }]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Parse Gemini's response to extract the JSON product data
+    const productText = data.candidates[0].content.parts[0].text;
+    const productData = JSON.parse(productText.substring(
+      productText.indexOf('['),
+      productText.lastIndexOf(']') + 1
+    ));
+
+    return productData;
+  } catch (error) {
+    console.error("Error calling Gemini API:", error);
+    // Fallback to getSingleProductRecommendations if Gemini API fails
+    return getSingleProductRecommendations(requestData);
+  }
+};
+
+/**
+ * Recommends one product per skincare advice category from our curated database
+ * This provides more realistic recommendations than the mock Gemini function
+ */
+export const getSingleProductRecommendations = async (
+  requestData: GeminiProductRequestData
+): Promise<SkincareProduct[]> => {
+  const { skinType, concerns, existingRecommendations } = requestData;
+  
+  try {
+    // Get all products matching this skin type
+    const skinTypeProducts = skinType !== 'all' 
+      ? PRODUCTS_BY_SKIN_TYPE[skinType.toLowerCase()] || [] 
+      : SKINCARE_PRODUCTS;
+    
+    const recommendedProducts: SkincareProduct[] = [];
+    
+    // Process each recommendation type
+    for (const recommendation of existingRecommendations) {
+      // Get the product type (category)
+      const productType = recommendation.productType;
+      
+      // Find products in this category for this skin type
+      let matchingProducts = skinTypeProducts.filter(product => {
+        // Check if the product category matches (exact or contains)
+        const categoryMatch = 
+          product.category.toLowerCase() === productType.toLowerCase() ||
+          product.category.toLowerCase().includes(productType.toLowerCase()) ||
+          productType.toLowerCase().includes(product.category.toLowerCase());
+        
+        return categoryMatch;
+      });
+      
+      // If no exact matches, try to find products with matching ingredients
+      if (matchingProducts.length === 0 && recommendation.recommendedIngredients) {
+        const ingredientKeywords = recommendation.recommendedIngredients
+          .toLowerCase()
+          .split(',')
+          .map(i => i.trim());
+        
+        matchingProducts = skinTypeProducts.filter(product => 
+          product.ingredients && 
+          ingredientKeywords.some(keyword => 
+            product.ingredients?.toLowerCase().includes(keyword)
+          )
+        );
+      }
+      
+      // Prioritize products that match concerns
+      if (concerns.length > 0 && matchingProducts.length > 1) {
+        // Check if any products address the concerns
+        const concernProducts = matchingProducts.filter(product => 
+          product.description && 
+          concerns.some(concern => 
+            product.description?.toLowerCase().includes(concern.toLowerCase())
+          )
+        );
+        
+        if (concernProducts.length > 0) {
+          matchingProducts = concernProducts;
+        }
+      }
+      
+      // Select one product from matches (or placeholder if no matches)
+      if (matchingProducts.length > 0) {
+        // Find the best match (prioritize products with full info)
+        const bestMatches = matchingProducts.filter(p => p.usage && p.ingredients);
+        const selectedProduct = bestMatches.length > 0 
+          ? bestMatches[Math.floor(Math.random() * bestMatches.length)]
+          : matchingProducts[Math.floor(Math.random() * matchingProducts.length)];
+        
+        // Add to recommendations
+        recommendedProducts.push(selectedProduct);
+      } else {
+        // Create a placeholder product using our recommendation data
+        const placeholderProduct: SkincareProduct = {
+          id: `placeholder-${productType.toLowerCase().replace(/\s+/g, '-')}`,
+          name: `${skinType} ${productType}`,
+          brand: 'Recommended Brand',
+          category: productType,
+          price: productType.includes('Serum') || productType.includes('Treatment') ? 85.00 : 45.00,
+          skinType: [skinType.toLowerCase()],
+          description: `Specially formulated ${productType.toLowerCase()} for ${skinType} skin`,
+          ingredients: recommendation.recommendedIngredients || 'Recommended ingredients for your skin type',
+          usage: recommendation.recommendedUsage || 'As directed'
+        };
+        
+        recommendedProducts.push(placeholderProduct);
+      }
+    }
+    
+    // Add a short delay to simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return recommendedProducts;
+  } catch (error) {
+    console.error("Error generating product recommendations:", error);
+    return [];
+  }
+};
+
+/**
+ * Generates mock products based on user's skin type and concerns
+ * This is used as a placeholder until the actual Gemini API integration
+ */
+const generateMockProducts = (requestData: GeminiProductRequestData): SkincareProduct[] => {
+  const { skinType, concerns } = requestData;
+  const products: SkincareProduct[] = [];
+  
+  // Generate products for each recommendation type
+  requestData.existingRecommendations.forEach(recommendation => {
+    // Extract the product type and create a matching product
+    const productType = recommendation.productType;
+    
+    // Create 1-2 products per recommendation
+    const numProducts = Math.floor(Math.random() * 2) + 1;
+    
+    for (let i = 0; i < numProducts; i++) {
+      const productId = `gemini-${productType.toLowerCase().replace(/\s+/g, '-')}-${i+1}`;
+      
+      // Generate brand based on product type
+      let brand = 'CeraVe';
+      if (productType.includes('Acne') || productType.includes('Treatment')) {
+        brand = 'La Roche-Posay';
+      } else if (productType.includes('Moisturizer')) {
+        brand = 'Neutrogena';
+      } else if (productType.includes('Serum')) {
+        brand = 'The Ordinary';
+      } else if (i % 2 === 0) {
+        brand = 'Paula\'s Choice';
+      }
+      
+      // Generate price range based on product type
+      let priceBase = 20;
+      if (productType.includes('Serum') || productType.includes('Treatment')) {
+        priceBase = 30;
+      } else if (productType.includes('Moisturizer')) {
+        priceBase = 25;
+      } else if (productType.includes('Cleanser')) {
+        priceBase = 15;
+      }
+      
+      // Add some variation to the price
+      const price = priceBase + (Math.random() * 15).toFixed(2);
+      
+      // Use recommendation ingredients if available
+      const ingredients = recommendation.recommendedIngredients || 
+                         'Ingredients recommended for your skin type';
+      
+      // Create a product name
+      const productName = `${brand} ${skinType} ${productType}${i > 0 ? ' Plus' : ''}`;
+      
+      // Create a description that mentions skin type and concerns
+      let description = `Specially formulated for ${skinType} skin`;
+      if (concerns.length > 0) {
+        const targetConcern = concerns[Math.min(i, concerns.length - 1)];
+        description += ` targeting ${targetConcern}`;
+      }
+      
+      // Add the product
+      products.push({
+        id: productId,
+        name: productName,
+        brand,
+        category: productType,
+        price: parseFloat(price),
+        skinType: [skinType.toLowerCase(), 'all'],
+        description,
+        ingredients
+      });
+    }
+  });
+  
+  return products;
 };

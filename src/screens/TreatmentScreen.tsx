@@ -107,7 +107,6 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   useEffect(() => {
     if (visitPurpose && visitPurpose.length > 0) {
       const treatments = getConcernBasedRecommendations();
-      console.log('Treatments recommended based on visit purpose:', treatments);
       setConcernBasedTreatments(treatments);
     }
   }, []);

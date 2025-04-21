@@ -1,17 +1,44 @@
 // Define global types for AIBeautyLens app
 
+// Skincare recommendation interface
+export interface SkincareRecommendation {
+  productType: string;
+  recommendedIngredients: string;
+  recommendedUsage: string;
+  reason: string;
+  targetConcerns: string[];
+  precautions: string;
+}
+
 // Analysis result interface
+export interface Feature {
+  description: string;
+  severity: number;
+  location: string;
+  causes: string[];
+  status: 'active' | 'healing' | 'chronic';
+  characteristics: string[];
+  priority: number;
+}
+
+export interface TreatmentRecommendation {
+  treatmentId: string;
+  reason: string;
+  priority: number;
+  expectedOutcome: string;
+  recommendedInterval: string;
+}
+
 export interface AnalysisResult {
   estimatedAge: number;
+  gender: string;
+  genderConfidence: number;
   skinType: string;
-  features: {
-    description: string;
-    severity: number;
-  }[];
-  recommendations: {
-    treatmentId: string;
-    reason: string;
-  }[];
+  skinUndertone: string;
+  overallCondition: string;
+  features: Feature[];
+  recommendations: TreatmentRecommendation[];
+  skincareRecommendations: SkincareRecommendation[];
 }
 
 // Treatment interface

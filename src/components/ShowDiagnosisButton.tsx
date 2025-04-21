@@ -1,17 +1,29 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import DiagnosisReportModal from './DiagnosisReportModal';
+import { AnalysisResult } from '../types';
+import ShowSkincareButton from './ShowSkincareButton';
+import Button from './Button';
+import SkinMatrixHeader from './SkinMatrixHeader';
 
 interface ShowDiagnosisButtonProps {
   style?: object;
+  analysisResult: AnalysisResult;
 }
 
-const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({ style }) => {
+const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({ 
+  style, 
+  analysisResult 
+}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleShowReport = () => {
+    if (!analysisResult) {
+      console.warn('Analysis result is not available');
+      return;
+    }
     setModalVisible(true);
   };
 
@@ -25,6 +37,7 @@ const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({ style }) => {
         style={[styles.button, style]} 
         onPress={handleShowReport}
         activeOpacity={0.8}
+        disabled={!analysisResult}
       >
         <View style={styles.iconContainer}>
           <MaterialIcons name="assessment" size={20} color={COLORS.white} />
@@ -35,6 +48,7 @@ const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({ style }) => {
       <DiagnosisReportModal 
         visible={modalVisible}
         onClose={handleCloseModal}
+        analysisResult={analysisResult}
       />
     </>
   );

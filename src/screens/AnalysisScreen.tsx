@@ -380,8 +380,8 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <View style={styles.buttonContainer}>
               <View style={styles.reportButtonsRow}>
-                <ShowDiagnosisButton style={styles.reportButton} />
-                <ShowSkincareButton style={styles.reportButton} />
+                <ShowDiagnosisButton style={styles.reportButton} analysisResult={analysisResult} />
+                <ShowSkincareButton style={styles.reportButton} analysisResult={analysisResult} />
               </View>
               <Button
                 title="View Treatment Plan"

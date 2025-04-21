@@ -7,11 +7,13 @@ import DiagnosisReport from './DiagnosisReport';
 interface DiagnosisReportModalProps {
   visible: boolean;
   onClose: () => void;
+  analysisResult: AnalysisResult;
 }
 
 const DiagnosisReportModal: React.FC<DiagnosisReportModalProps> = ({
   visible,
-  onClose
+  onClose,
+  analysisResult
 }) => {
   return (
     <Modal
@@ -25,7 +27,7 @@ const DiagnosisReportModal: React.FC<DiagnosisReportModalProps> = ({
           <MaterialIcons name="close" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         
-        <DiagnosisReport onClose={onClose} />
+        <DiagnosisReport onClose={onClose} analysisResult={analysisResult} />
       </View>
     </Modal>
   );

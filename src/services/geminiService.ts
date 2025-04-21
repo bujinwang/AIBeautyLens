@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
+import { SkincareRecommendation } from '../types';
 
 // Navigation reference for navigation outside of components
 let _navigationRef: any = null;
@@ -254,36 +255,113 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
             role: "user",
             parts: [
               {
-                text: `You are an expert aesthetic medical professional specializing in facial analysis. Provide detailed assessments of facial features based on images. Be thorough and try to find facial features even in challenging images.
+                text: `You are an expert aesthetic medical professional and licensed dermatologist specializing in facial analysis and skincare recommendations. Provide comprehensive clinical assessments of facial features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed, similar to a professional dermatological consultation.
 
-Analyze this image for facial features and potential cosmetic treatments.
+Analyze this image for facial features, skin conditions, and provide a detailed clinical assessment.
 
-IMPORTANT: Make your best effort to identify facial features in the image. Even if the image is low quality, partially obscured, or taken from an unusual angle, try to detect any human facial features present.
+ANALYSIS REQUIREMENTS:
 
-Only return an error if you are 100% certain there is absolutely no human face or facial features in the image. In case of uncertainty, proceed with analysis and note your confidence level.
+1. Basic Profile:
+   - Estimated age based on visual indicators
+   - Gender with confidence score
+   - Overall skin type (oily, dry, combination, sensitive) based on visual cues
+   - Skin undertone assessment (warm, cool, neutral)
 
-For any images with human facial features, include estimated age, gender with confidence score, skin type, visible facial features that could benefit from treatments, and specific recommendations ONLY from our treatment catalog below.
+2. Overall Skin Health:
+   Provide a concise summary of:
+   - Primary skin concerns
+   - Current skin condition
+   - Any signs of inflammation or barrier issues
+   - General skin health status
+
+3. Clinical Assessment:
+   For EACH identified skin condition, analyze:
+   a) Condition Details:
+      - Precise clinical description
+      - Exact locations on face (e.g., T-zone, perioral area, etc.)
+      - Severity rating (1-5) with clinical justification
+      - Current status (active, healing, or chronic)
+      
+   b) Clinical Analysis:
+      - Probable causes (list all relevant factors)
+      - Observable characteristics
+      - Associated symptoms
+      - Impact on overall skin health
+      
+   c) Treatment Priority:
+      - Priority level (immediate attention, high, moderate, low, maintenance)
+      - Clinical reasoning for priority assignment
+      - Risk factors if left untreated
+
+4. Key Conditions to Assess:
+   Evaluate presence and severity of:
+   - Acne (comedonal, inflammatory, cystic)
+   - Post-inflammatory hyperpigmentation
+   - Texture irregularities
+   - Dehydration markers
+   - Barrier compromise signs
+   - Sebum production patterns
+   - Inflammatory responses
+   - Sun damage indicators
+   - Melasma/hyperpigmentation
+   - Skin sensitivity markers
+
+Format your response as a JSON object with these exact fields:
+{
+  "estimatedAge": number,
+  "gender": "male" | "female" | "unknown",
+  "genderConfidence": number (0.0 to 1.0),
+  "skinType": string,
+  "skinUndertone": string,
+  "overallCondition": string (detailed assessment),
+  "features": [
+    {
+      "description": string (clinical name),
+      "severity": number (1-5),
+      "location": string (specific facial areas),
+      "causes": string[] (evidence-based factors),
+      "status": "active" | "healing" | "chronic",
+      "characteristics": string[] (observable traits),
+      "priority": number (1-5, where 1 is highest)
+    }
+  ],
+  "recommendations": [
+    {
+      "treatmentId": string (from catalog),
+      "reason": string (clinical justification),
+      "priority": number (1-5),
+      "expectedOutcome": string,
+      "recommendedInterval": string
+    }
+  ],
+  "skincareRecommendations": [
+    {
+      "productType": string,
+      "recommendedIngredients": string,
+      "recommendedUsage": string,
+      "reason": string,
+      "targetConcerns": string[],
+      "precautions": string
+    }
+  ]
+}
 
 ${treatmentsList}
 
 ${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
 ${appointmentLength ? `APPOINTMENT LENGTH: ${appointmentLength}` : ''}
 
-IMPORTANT TREATMENT RULES:
-1. Products containing acids should not be used 7-10 days before or after undergoing laser or light-based treatments.
-2. Products containing hydroquinone are very effective for treating hyperpigmentation, especially melasma, but they must be used under medical supervision and cannot be used continuously.
-
-Format your response as a JSON object with these exact fields:
-1. estimatedAge (number)
-2. gender (string - "male", "female", or "unknown")
-3. genderConfidence (number - from 0.0 to 1.0, with 1.0 being 100% confident)
-4. skinType (string)
-5. features (array of objects with description and severity)
-6. recommendations (array of objects with treatmentId and reason)
-
-The treatmentId must be one of the IDs from the catalog (e.g., "botox", "fractional-laser").
-The severity should be a number from 1 to 5, where 1 is mild and 5 is severe.
-${appointmentLength ? `Consider the appointment length of ${appointmentLength} when making recommendations. Only recommend treatments that can be reasonably performed within this timeframe.` : ''}`
+IMPORTANT CLINICAL GUIDELINES:
+1. Base all assessments solely on visible evidence in the image
+2. Provide specific locations and descriptions for each condition
+3. Consider multiple factors for each condition's probable causes
+4. Assess severity based on clinical presentation
+5. Prioritize treatment based on condition severity and impact
+6. Note any conditions requiring immediate medical attention
+7. Consider potential condition interactions
+8. Document any signs of skin barrier compromise
+9. Assess both active and chronic conditions
+10. Consider patient age in all recommendations`
               },
               {
                 inline_data: {
@@ -432,6 +510,7 @@ ${appointmentLength ? `Consider the appointment length of ${appointmentLength} w
               throw new Error(parsedContent.message || 'The uploaded image does not contain a human face');
             }
 
+            // Return the analysis result directly since it now includes skincare recommendations
             return parsedContent;
           } catch (parseError) {
             console.error('JSON parse error:', parseError);

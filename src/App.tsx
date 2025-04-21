@@ -7,7 +7,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { setGlobalNavigationRef } from './services/geminiService';
 
 // Import our screens
-import ApiKeyScreen from './screens/ApiKeyScreen';
 import CameraScreen from './screens/CameraScreen';
 import AnalysisScreen from './screens/AnalysisScreen';
 import TreatmentScreen from './screens/TreatmentScreen';
@@ -20,7 +19,6 @@ import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 // Define the type for our stack navigator params
 export type RootStackParamList = {
   Home: undefined;
-  ApiKey: { forceShow?: boolean } | undefined;
   Camera: undefined;
   Analysis: {
     imageUri: string;
@@ -122,11 +120,6 @@ export default function App() {
               name="Home"
               component={HomeScreen}
               options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="ApiKey"
-              component={ApiKeyScreen}
-              options={{ title: 'API Key Setup', headerShown: false }}
             />
             <Stack.Screen
               name="Camera"

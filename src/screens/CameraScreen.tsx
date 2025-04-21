@@ -9,6 +9,7 @@ import CustomIcon from '../components/CustomIcon';
 import Logo from '../components/Logo';
 import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -104,10 +105,6 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Home');
   };
 
-  const openApiKeySettings = () => {
-    navigation.navigate('ApiKey', { forceShow: true });
-  };
-
   if (hasPermission === null) {
     return (
       <View style={styles.permissionContainer}>
@@ -155,12 +152,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
             <Logo size="medium" showTagline={false} color="white" containerStyle={styles.logo} />
           </View>
 
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={openApiKeySettings}
-          >
-            <CustomIcon name="settings" size={24} color="white" />
-          </TouchableOpacity>
+          <View style={{ width: 40 }} />
         </View>
       </LinearGradient>
 
@@ -205,10 +197,20 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                       ]}
                       onPress={() => setAppointmentLength(option)}
                     >
-                      <Text style={[
-                        styles.appointmentOptionText,
-                        appointmentLength === option && styles.appointmentOptionTextSelected
-                      ]}>{option}</Text>
+                      <View style={styles.appointmentOptionContent}>
+                        {(option === '2hrs' || option === '4hrs') && (
+                          <MaterialIcons 
+                            name="stars" 
+                            size={16} 
+                            color={appointmentLength === option ? COLORS.primary.main : COLORS.gray[400]} 
+                            style={styles.vipIcon}
+                          />
+                        )}
+                        <Text style={[
+                          styles.appointmentOptionText,
+                          appointmentLength === option && styles.appointmentOptionTextSelected
+                        ]}>{option}</Text>
+                      </View>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -320,9 +322,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.1 }],
   },
   backButton: {
-    padding: 8,
-  },
-  settingsButton: {
     padding: 8,
   },
   cameraContainer: {
@@ -588,6 +587,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  appointmentOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipIcon: {
+    marginRight: 4,
   },
 });
 

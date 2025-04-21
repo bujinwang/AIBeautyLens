@@ -28,14 +28,14 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Camera');
   };
 
-  const navigateToSettings = () => {
-    console.log("HomeScreen: Navigating to API Key settings");
-    navigation.navigate('ApiKey', { forceShow: true });
-  };
-
   const navigateToLogoGenerator = () => {
     console.log("HomeScreen: Navigating to Logo Generator");
     navigation.navigate('LogoGenerator');
+  };
+
+  const navigateToPrivacyPolicy = () => {
+    console.log("HomeScreen: Navigating to Privacy Policy");
+    navigation.navigate('PrivacyPolicy');
   };
 
   console.log("HomeScreen: Rendering");
@@ -43,37 +43,33 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   try {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-          <LinearGradient
-            colors={[COLORS.primary.main, COLORS.primary.light, 'rgba(255,255,255,0.9)']}
-            locations={[0, 0.7, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
-          >
-            <View style={styles.header}>
-              <View style={styles.logoWrapper}>
-                <View style={styles.logoContainer}>
-                  <Logo size="medium" showTagline={true} color="white" />
-                </View>
-              </View>
-              <TouchableOpacity onPress={navigateToSettings} style={styles.settingsButton}>
-                <MaterialIcons name="settings" size={24} color="white" />
-              </TouchableOpacity>
+        <LinearGradient
+          colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
+          locations={[0, 0.7, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.header}>
+            <View style={styles.logoWrapper}>
+              <Logo size="large" showTagline={true} color="white" />
             </View>
-          </LinearGradient>
+          </View>
+        </LinearGradient>
 
+        <ScrollView style={styles.content}>
           <View style={styles.heroContainer}>
             <ImageBackground
-              source={require('../../src/assets/images/beauty_hero.jpg')}
+              source={require('../assets/images/beauty_hero.jpg')}
               style={styles.heroImage}
               resizeMode="cover"
-              imageStyle={{ borderRadius: 16, opacity: 0.9 }}
             >
               <View style={styles.heroOverlay}>
-                <Text style={styles.heroTitle}>See your skin through the eyes of aesthetic experts</Text>
+                <Text style={styles.heroTitle}>
+                  AI-Powered Skin Analysis
+                </Text>
                 <Text style={styles.heroSubtitle}>
-                  Clinical-grade analysis. Expert recommendations. Visual results.
+                  Get personalized skincare recommendations based on advanced AI analysis
                 </Text>
               </View>
             </ImageBackground>
@@ -84,51 +80,51 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.actionButton, styles.primaryButton]}
               onPress={navigateToCamera}
             >
-              <MaterialIcons name="photo-camera" size={24} color="white" />
+              <MaterialIcons name="camera-alt" size={24} color="white" />
               <Text style={styles.actionButtonText}>Start DermaGraph™ Analysis</Text>
             </TouchableOpacity>
+          </View>
 
-            <View style={styles.featuresContainer}>
-              <Text style={styles.sectionTitle}>Elite Analysis Features</Text>
+          <View style={styles.featuresContainer}>
+            <Text style={styles.sectionTitle}>Elite Analysis Features</Text>
 
-              <View style={styles.featureCard}>
-                <MaterialIcons name="face" size={24} color={COLORS.primary.main} />
-                <View style={styles.featureTextContainer}>
-                  <Text style={styles.featureTitle}>DermaGraph™ Analysis</Text>
-                  <Text style={styles.featureDescription}>
-                    AI-powered skin scanning for comprehensive assessment
-                  </Text>
-                </View>
+            <View style={styles.featureCard}>
+              <MaterialIcons name="face" size={24} color={COLORS.primary.main} />
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>DermaGraph™ Analysis</Text>
+                <Text style={styles.featureDescription}>
+                  AI-powered skin scanning for comprehensive assessment
+                </Text>
               </View>
+            </View>
 
-              <View style={styles.featureCard}>
-                <MaterialIcons name="healing" size={24} color={COLORS.primary.main} />
-                <View style={styles.featureTextContainer}>
-                  <Text style={styles.featureTitle}>RejuvenationRx™</Text>
-                  <Text style={styles.featureDescription}>
-                    Personalized treatment recommendations from aesthetic experts
-                  </Text>
-                </View>
+            <View style={styles.featureCard}>
+              <MaterialIcons name="healing" size={24} color={COLORS.primary.main} />
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>RejuvenationRx™</Text>
+                <Text style={styles.featureDescription}>
+                  Personalized treatment recommendations from aesthetic experts
+                </Text>
               </View>
+            </View>
 
-              <View style={styles.featureCard}>
-                <MaterialIcons name="auto-fix-high" size={24} color={COLORS.primary.main} />
-                <View style={styles.featureTextContainer}>
-                  <Text style={styles.featureTitle}>TreatmentVision™</Text>
-                  <Text style={styles.featureDescription}>
-                    Visualize potential results with our advanced simulation technology
-                  </Text>
-                </View>
+            <View style={styles.featureCard}>
+              <MaterialIcons name="auto-fix-high" size={24} color={COLORS.primary.main} />
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>TreatmentVision™</Text>
+                <Text style={styles.featureDescription}>
+                  Visualize potential results with our advanced simulation technology
+                </Text>
               </View>
+            </View>
 
-              <View style={styles.featureCard}>
-                <MaterialIcons name="analytics" size={24} color={COLORS.primary.main} />
-                <View style={styles.featureTextContainer}>
-                  <Text style={styles.featureTitle}>BeautyBlueprint™</Text>
-                  <Text style={styles.featureDescription}>
-                    Personalized treatment planning system for your beauty journey
-                  </Text>
-                </View>
+            <View style={styles.featureCard}>
+              <MaterialIcons name="analytics" size={24} color={COLORS.primary.main} />
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>BeautyBlueprint™</Text>
+                <Text style={styles.featureDescription}>
+                  Personalized treatment planning system for your beauty journey
+                </Text>
               </View>
             </View>
           </View>
@@ -144,10 +140,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               Privacy-First Design: All processing happens on-device or via secure API calls
             </Text>
             <TouchableOpacity
-              onPress={() => {
-                console.log('HomeScreen: Navigating to Privacy Policy');
-                navigation.navigate('PrivacyPolicy');
-              }}
+              onPress={navigateToPrivacyPolicy}
               style={styles.privacyLink}
             >
               <Text style={styles.privacyLinkText}>
@@ -159,12 +152,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       </SafeAreaView>
     );
   } catch (error) {
-    console.error("HomeScreen render error:", error);
+    console.error("HomeScreen: Render error:", error);
     return (
-      <SafeAreaView style={styles.errorContainer}>
+      <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Something went wrong</Text>
-        <Text style={styles.errorDetails}>{error instanceof Error ? error.message : String(error)}</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 };
@@ -193,8 +185,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 5,
   },
-  settingsButton: {
-    padding: 8,
+  content: {
+    flex: 1,
   },
   heroContainer: {
     marginHorizontal: 20,
@@ -258,6 +250,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   featuresContainer: {
+    marginHorizontal: 20,
     marginBottom: 20,
   },
   sectionTitle: {
@@ -293,18 +286,30 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
   taglineContainer: {
-    backgroundColor: COLORS.primary.main,
-    padding: 20,
+    backgroundColor: 'white',
+    padding: 24,
     marginHorizontal: 20,
     marginBottom: 20,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary.light,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   taglineText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     fontStyle: 'italic',
-    color: 'white',
+    color: COLORS.primary.main,
     textAlign: 'center',
+    lineHeight: 28,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   footer: {
     borderTopWidth: 1,
@@ -318,42 +323,31 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     fontWeight: '500',
+    marginBottom: 16,
   },
   privacyLink: {
     marginTop: 16,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: 'transparent',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: COLORS.text.secondary,
   },
   privacyLinkText: {
-    color: 'white',
+    color: COLORS.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa',
   },
   errorText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#dc3545',
-    marginBottom: 10,
-  },
-  errorDetails: {
     fontSize: 16,
-    color: '#495057',
-    textAlign: 'center',
+    color: '#dc3545',
   },
 });
 

@@ -3,15 +3,21 @@ import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import SkincareAdviceModal from './SkincareAdviceModal';
+import { AnalysisResult } from '../types';
 
 interface ShowSkincareButtonProps {
   style?: object;
+  analysisResult: AnalysisResult;
 }
 
-const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style }) => {
+const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style, analysisResult }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleShowAdvice = () => {
+    if (!analysisResult) {
+      console.warn('Analysis result is not available');
+      return;
+    }
     setModalVisible(true);
   };
 
@@ -25,6 +31,7 @@ const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style }) => {
         style={[styles.button, style]} 
         onPress={handleShowAdvice}
         activeOpacity={0.8}
+        disabled={!analysisResult}
       >
         <View style={styles.iconContainer}>
           <MaterialIcons name="spa" size={20} color={COLORS.white} />
@@ -35,6 +42,7 @@ const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style }) => {
       <SkincareAdviceModal 
         visible={modalVisible}
         onClose={handleCloseModal}
+        analysisResult={analysisResult}
       />
     </>
   );

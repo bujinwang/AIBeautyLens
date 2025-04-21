@@ -20,13 +20,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.autobebesys.aibeautylens",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "AIBeautyLens uses your camera to capture facial images for personalized skincare analysis. We analyze specific skin features such as texture, tone, and blemishes to identify conditions like acne, hyperpigmentation, or dryness. For example, if we detect signs of dehydration, we'll recommend appropriate moisturizing treatments. Your images are processed securely, not shared with third parties, and automatically deleted after analysis.",
         "NSPhotoLibraryUsageDescription": "AIBeautyLens needs access to your photos to analyze existing facial images for skincare assessment. You can select photos to receive personalized skin analysis and treatment simulations showing potential improvements.",
         "NSPhotoLibraryAddUsageDescription": "AIBeautyLens saves your analysis results and treatment simulations to your photo library, allowing you to track your skin's progress over time and share results with skincare professionals.",
         "ITSAppUsesNonExemptEncryption": false,
-        "KeychainAccessGroups": ["$(AppIdentifierPrefix)com.autobebesys.aibeautylens"]
+        "KeychainAccessGroups": [
+          "$(AppIdentifierPrefix)com.autobebesys.aibeautylens"
+        ]
       }
     },
     "android": {
@@ -47,11 +49,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "6232a81c-eb54-4d1d-8db0-6adc3f8de40d"
-      }
-    },
     "plugins": [
       [
         "expo-camera",
@@ -60,6 +57,11 @@
         }
       ]
     ],
-    "owner": "bujinwang"
+    "owner": "bwangsbc",
+    "extra": {
+      "eas": {
+        "projectId": "9f0756ad-eef5-4306-9861-916b73d9fa57"
+      }
+    }
   }
 }

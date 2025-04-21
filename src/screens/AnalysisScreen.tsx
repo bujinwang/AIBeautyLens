@@ -43,13 +43,13 @@ type AnalysisResult = {
 
 
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { imageUri, base64Image } = route.params;
+  const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isQuotaError, setIsQuotaError] = useState(false);
   const [isIpadError, setIsIpadError] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [visitPurpose, setVisitPurpose] = useState<string>('');
+  const [visitPurpose, setVisitPurpose] = useState<string>(routeVisitPurpose || '');
   const isIPad = Platform.OS === 'ios' && Platform.isPad;
 
   // Replace SKIN_CONCERNS and toggleConcern with update function for visitPurpose
@@ -81,7 +81,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setError(null);
       setIsQuotaError(false);
       setIsIpadError(false);
-      const result = await analyzeFacialImage(base64Image);
+      const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
       setAnalysisResult(result);
     } catch (error) {
       console.error('Error in analysis:', error);
@@ -128,6 +128,8 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         base64Image,
         recommendedTreatments,
         reasons,
+        visitPurpose,
+        appointmentLength,
       });
     }
   };
@@ -239,31 +241,32 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
-  // Replace renderConcernsSection with renderVisitPurposeSection
-  const renderVisitPurposeSection = () => {
+  // Display the visit purpose and appointment length as read-only information
+  const renderVisitInfoSection = () => {
+    if (!visitPurpose && !appointmentLength) return null;
+
     return (
       <Card
         variant="elevated"
         style={styles.visitPurposeCard}
-        title="Purpose of Visit"
-        subtitle="Enter the main reason for this consultation"
+        title="Visit Information"
+        subtitle="Details for this consultation"
         icon="assignment"
       >
-        <View style={styles.textInputContainer}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Example: Patient wants to reduce fine lines and improve skin elasticity..."
-            placeholderTextColor={COLORS.gray[400]}
-            multiline
-            numberOfLines={4}
-            value={visitPurpose}
-            onChangeText={updateVisitPurpose}
-            textAlignVertical="top"
-            blurOnSubmit={false}
-            autoCapitalize="sentences"
-            keyboardType="default"
-            returnKeyType="default"
-          />
+        <View style={styles.visitInfoContainer}>
+          {visitPurpose ? (
+            <View style={styles.visitInfoItem}>
+              <Text style={styles.visitInfoLabel}>Purpose of Visit:</Text>
+              <Text style={styles.visitInfoValue}>{visitPurpose}</Text>
+            </View>
+          ) : null}
+
+          {appointmentLength ? (
+            <View style={styles.visitInfoItem}>
+              <Text style={styles.visitInfoLabel}>Appointment Length:</Text>
+              <Text style={styles.visitInfoValue}>{appointmentLength}</Text>
+            </View>
+          ) : null}
         </View>
       </Card>
     );
@@ -373,7 +376,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               </View>
             </Card>
 
-            {renderVisitPurposeSection()}
+            {renderVisitInfoSection()}
 
             <View style={styles.buttonContainer}>
               <View style={styles.reportButtonsRow}>
@@ -762,20 +765,26 @@ const styles = StyleSheet.create({
   visitPurposeCard: {
     marginBottom: SPACING.md,
   },
-  textInputContainer: {
+  visitInfoContainer: {
     padding: SPACING.md,
-    minHeight: 80,
   },
-  textInput: {
-    flex: 1,
+  visitInfoItem: {
+    marginBottom: SPACING.sm,
+  },
+  visitInfoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: 4,
+  },
+  visitInfoValue: {
     fontSize: 16,
     color: COLORS.text.primary,
-    minHeight: 60,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
     borderWidth: 1,
-    borderColor: COLORS.gray[300],
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    backgroundColor: COLORS.white,
+    borderColor: COLORS.gray[200],
   },
   buttonContainer: {
     marginHorizontal: SPACING.md,

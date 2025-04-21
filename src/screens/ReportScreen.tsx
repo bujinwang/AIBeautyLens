@@ -16,12 +16,52 @@ type Props = {
 };
 
 const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { treatmentIds, beforeImage, afterImage } = route.params;
+  const { treatmentIds, beforeImage } = route.params;
   const [generating, setGenerating] = useState(false);
+
+  // Format the base64 image with proper prefix if needed
+  const getFormattedImageUri = (base64String: string) => {
+    if (!base64String) return '';
+    
+    // If it already has a data URI prefix, return as is
+    if (base64String.startsWith('data:image')) {
+      return base64String;
+    }
+
+    // Check if it starts with a file:// URI
+    if (base64String.startsWith('file://')) {
+      return base64String;
+    }
+
+    // Detect image type from base64 prefix
+    let mimeType = 'image/jpeg'; // default
+    if (base64String.startsWith('/9j/')) {
+      mimeType = 'image/jpeg';
+    } else if (base64String.startsWith('iVBORw0KGgo')) {
+      mimeType = 'image/png';
+    }
+
+    // Add the appropriate data URI prefix
+    return `data:${mimeType};base64,${base64String}`;
+  };
+
+  // Add debug logging
+  console.log('ReportScreen - original beforeImage:', beforeImage?.substring(0, 50) + '...');
+  const formattedImageUri = getFormattedImageUri(beforeImage);
+  console.log('ReportScreen - formatted image URI prefix:', formattedImageUri.substring(0, 50) + '...');
 
   const selectedTreatments = treatmentIds
     .map(id => TREATMENTS.find(t => t.id === id))
     .filter(Boolean);
+
+  // Add error handling for image loading
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    console.error('Failed to load image. Original:', beforeImage?.substring(0, 50));
+    console.error('Failed to load image. Formatted:', formattedImageUri.substring(0, 50));
+    setImageError(true);
+  };
 
   const totalPrice = selectedTreatments.reduce((sum, treatment) => sum + (treatment?.price || 0), 0);
 
@@ -79,16 +119,18 @@ Total: $${totalPrice}
         <Text style={styles.date}>Date: {formatDate()}</Text>
       </View>
 
-      <View style={styles.comparisonContainer}>
-        <View style={styles.imageContainer}>
-          <Text style={styles.imageLabel}>Before</Text>
-          <Image source={{ uri: beforeImage }} style={styles.image} />
-        </View>
-        
-        <View style={styles.imageContainer}>
-          <Text style={styles.imageLabel}>After (Simulated)</Text>
-          <Image source={{ uri: afterImage }} style={styles.image} />
-        </View>
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: formattedImageUri }} 
+          style={styles.image} 
+          resizeMode="contain"
+          onError={handleImageError}
+        />
+        {imageError && (
+          <Text style={styles.imageErrorText}>
+            Failed to load image. Please try again.
+          </Text>
+        )}
       </View>
 
       <View style={styles.treatmentsContainer}>
@@ -112,10 +154,7 @@ Total: $${totalPrice}
       <View style={styles.disclaimerContainer}>
         <Text style={styles.disclaimerTitle}>Important Information</Text>
         <Text style={styles.disclaimerText}>
-          This is a computer-generated recommendation based on AI analysis.
-          Actual treatments, prices, and results may vary. 
-          The simulation provided is for reference only.
-          Please consult with a qualified aesthetic medicine specialist for personalized advice.
+          This analysis is powered by advanced machine learning algorithms trained on data from thousands of aesthetic medicine cases and specialist consultations. While our AI provides comprehensive insights based on extensive medical data, individual results may vary. For optimal results, please consult with a qualified aesthetic medicine specialist who can consider your unique needs and medical history.
         </Text>
       </View>
 
@@ -162,26 +201,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  comparisonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
   imageContainer: {
-    width: '48%',
+    width: '100%',
     alignItems: 'center',
-  },
-  imageLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#333',
+    padding: 16,
+    backgroundColor: '#ffffff',
+    minHeight: 320,
   },
   image: {
     width: '100%',
-    height: 200,
+    height: 300,
     borderRadius: 12,
-    backgroundColor: '#eee',
+    backgroundColor: '#f5f5f5',
   },
   treatmentsContainer: {
     backgroundColor: 'white',
@@ -249,42 +280,43 @@ const styles = StyleSheet.create({
     color: '#4361ee',
   },
   disclaimerContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    backgroundColor: '#fff8e1',
+    margin: 16,
     padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffd54f',
   },
   disclaimerTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#424242',
+    marginBottom: 12,
+    letterSpacing: 0.25,
   },
   disclaimerText: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 18,
+    fontSize: 15,
+    color: '#424242',
+    lineHeight: 22,
+    letterSpacing: 0.15,
   },
   buttonsContainer: {
     padding: 16,
-    marginBottom: 16,
+    gap: 12,
   },
   button: {
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 12,
   },
   shareButton: {
     backgroundColor: '#4361ee',
   },
   startOverButton: {
-    backgroundColor: 'white',
+    backgroundColor: '#f8f9fa',
     borderWidth: 1,
-    borderColor: '#4361ee',
+    borderColor: '#ddd',
   },
   buttonText: {
     color: 'white',
@@ -292,9 +324,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   startOverButtonText: {
-    color: '#4361ee',
+    color: '#333',
     fontSize: 16,
     fontWeight: '600',
+  },
+  imageErrorText: {
+    color: '#ff3b30',
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 

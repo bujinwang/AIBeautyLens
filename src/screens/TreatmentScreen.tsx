@@ -37,6 +37,7 @@ interface TreatmentParams {
   reasons: { [key: string]: string[] };
   benefits: { [key: string]: string[] };
   visitPurpose: string;
+  appointmentLength?: string;
 }
 
 // Define a Treatment type to match the TREATMENTS structure
@@ -53,6 +54,8 @@ interface SimulationParams {
   selectedTreatments: string[]; // Keep original name for compatibility
   imageUri: string;
   base64Image: string;
+  visitPurpose?: string;
+  appointmentLength?: string;
 }
 
 const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -69,7 +72,8 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     recommendedTreatments = [],
     reasons = {},
     benefits = {},
-    visitPurpose = ""
+    visitPurpose = "",
+    appointmentLength = ""
   } = route.params as TreatmentParams;
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
@@ -113,14 +117,11 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
       return;
     }
 
-    const simulationParams: SimulationParams = {
-      selectedTreatments, // Keep using the original parameter name
-      imageUri,
-      base64Image
-    };
-
-    navigation.navigate('Simulation', simulationParams);
-  }, [selectedTreatments, imageUri, base64Image, navigation]);
+    navigation.navigate('Report', {
+      treatmentIds: selectedTreatments,
+      beforeImage: base64Image,
+    });
+  }, [selectedTreatments, base64Image, navigation]);
 
   // Move this outside the render function using useMemo
   const uniqueTreatmentIds = useMemo(() => {
@@ -364,14 +365,25 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     return [...new Set(recommendedTreatmentIds)];
   };
 
-  // Add a function to render selected concerns
+  // Add a function to render visit information
   const renderVisitPurpose = () => {
-    if (!visitPurpose) return null;
+    if (!visitPurpose && !appointmentLength) return null;
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Purpose of Visit</Text>
-        <Text style={styles.purposeText}>{visitPurpose}</Text>
+        <Text style={styles.sectionTitle}>Visit Information</Text>
+        {visitPurpose && (
+          <View style={styles.visitInfoItem}>
+            <Text style={styles.visitInfoLabel}>Purpose of Visit:</Text>
+            <Text style={styles.purposeText}>{visitPurpose}</Text>
+          </View>
+        )}
+        {appointmentLength && (
+          <View style={styles.visitInfoItem}>
+            <Text style={styles.visitInfoLabel}>Appointment Length:</Text>
+            <Text style={styles.purposeText}>{appointmentLength}</Text>
+          </View>
+        )}
       </View>
     );
   };
@@ -440,7 +452,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
           disabled={selectedTreatments.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Continue to Simulation</Text>
+          <Text style={styles.buttonText}>View Report</Text>
         </TouchableOpacity>
       </View>
     );
@@ -833,11 +845,25 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: SPACING.md,
   },
+  visitInfoItem: {
+    marginBottom: SPACING.sm,
+  },
+  visitInfoLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: 4,
+  },
   purposeText: {
     fontSize: 16,
     color: '#333',
     marginTop: 5,
     marginBottom: 10,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
 
   // Enhanced treatment card styles

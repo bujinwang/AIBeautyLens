@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -21,6 +21,8 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   const [type, setType] = useState<CameraType>(CameraType.front);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
+  const [visitPurpose, setVisitPurpose] = useState<string>('');
+  const [appointmentLength, setAppointmentLength] = useState<string>('60m');
   const cameraRef = useRef<Camera>(null);
 
   useEffect(() => {
@@ -90,6 +92,8 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
       navigation.navigate('Analysis', {
         imageUri: capturedImage.uri,
         base64Image: base64Image,
+        visitPurpose: visitPurpose,
+        appointmentLength: appointmentLength
       });
     } catch (error) {
       console.error('Error preparing image for analysis:', error);
@@ -112,13 +116,13 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
       </View>
     );
   }
-  
+
   if (hasPermission === false) {
     return (
       <View style={styles.permissionContainer}>
         <CustomIcon name="no-photography" size={50} color={COLORS.error.main} />
         <Text style={styles.permissionText}>No access to camera</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.permissionButton}
           onPress={() => navigation.goBack()}
         >
@@ -131,7 +135,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
+
       <LinearGradient
         colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
         locations={[0, 0.7, 1]}
@@ -140,18 +144,18 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={navigateToHome}
           >
             <CustomIcon name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          
+
           <View style={styles.logoContainer}>
             <Logo size="medium" showTagline={false} color="white" containerStyle={styles.logo} />
           </View>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.settingsButton}
             onPress={openApiKeySettings}
           >
@@ -165,28 +169,70 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {previewVisible && capturedImage ? (
-        <View style={styles.previewContainer}>
-          <Image
-            source={{ uri: capturedImage.uri }}
-            style={styles.cameraPreview}
-          />
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
-              onPress={retakePicture}
-            >
-              <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>Retake</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={handleAnalyze}
-            >
-              <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} />
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>Begin Analysis</Text>
-            </TouchableOpacity>
+        <ScrollView style={styles.previewScrollContainer}>
+          <View style={styles.previewContainer}>
+            <Image
+              source={{ uri: capturedImage.uri }}
+              style={styles.cameraPreview}
+            />
+
+            <View style={styles.formContainer}>
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Purpose of Visit</Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Example: Reduce fine lines and improve skin elasticity..."
+                  placeholderTextColor={COLORS.gray[400]}
+                  multiline
+                  numberOfLines={3}
+                  value={visitPurpose}
+                  onChangeText={setVisitPurpose}
+                  textAlignVertical="top"
+                  blurOnSubmit={false}
+                  autoCapitalize="sentences"
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Appointment Length</Text>
+                <View style={styles.appointmentOptions}>
+                  {['45m', '60m', '2hrs', '4hrs'].map((option) => (
+                    <TouchableOpacity
+                      key={option}
+                      style={[
+                        styles.appointmentOption,
+                        appointmentLength === option && styles.appointmentOptionSelected
+                      ]}
+                      onPress={() => setAppointmentLength(option)}
+                    >
+                      <Text style={[
+                        styles.appointmentOptionText,
+                        appointmentLength === option && styles.appointmentOptionTextSelected
+                      ]}>{option}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton]}
+                onPress={retakePicture}
+              >
+                <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
+                <Text style={[styles.buttonText, styles.secondaryButtonText]}>Retake</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton]}
+                onPress={handleAnalyze}
+              >
+                <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} />
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>Begin Analysis</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       ) : (
         <View style={styles.cameraContainer}>
           <Camera
@@ -205,7 +251,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
                 <Text style={styles.frameTip}>Center your face</Text>
               </View>
-              
+
               <TouchableOpacity
                 style={styles.flipButton}
                 onPress={() => {
@@ -219,7 +265,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 <CustomIcon name="flip-camera-ios" size={26} color="white" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton]}
@@ -347,11 +393,64 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: COLORS.primary.main,
   },
-  previewContainer: {
+  previewScrollContainer: {
     flex: 1,
+    margin: 12,
+  },
+  previewContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 12,
+    paddingBottom: 20,
+  },
+  formContainer: {
+    width: '90%',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  formSection: {
+    marginBottom: 15,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    color: COLORS.text.primary,
+    backgroundColor: 'white',
+    minHeight: 80,
+  },
+  appointmentOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  appointmentOption: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: 10,
+    backgroundColor: 'white',
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  appointmentOptionSelected: {
+    borderColor: COLORS.primary.main,
+    backgroundColor: COLORS.primary.light,
+  },
+  appointmentOptionText: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+  },
+  appointmentOptionTextSelected: {
+    color: COLORS.primary.main,
+    fontWeight: '600',
   },
   cameraPreview: {
     width: '90%',
@@ -492,4 +591,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CameraScreen; 
+export default CameraScreen;

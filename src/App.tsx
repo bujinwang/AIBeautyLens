@@ -12,11 +12,9 @@ import CameraScreen from './screens/CameraScreen';
 import AnalysisScreen from './screens/AnalysisScreen';
 import TreatmentScreen from './screens/TreatmentScreen';
 import RecommendedTreatmentsScreen from './screens/RecommendedTreatmentsScreen';
-import SimulationScreen from './screens/SimulationScreen';
 import ReportScreen from './screens/ReportScreen';
 import HomeScreen from './screens/HomeScreen';
 import LogoGenerator from './utils/LogoGenerator';
-import OAuthSetupScreen from './screens/OAuthSetupScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 
 // Define the type for our stack navigator params
@@ -24,7 +22,12 @@ export type RootStackParamList = {
   Home: undefined;
   ApiKey: { forceShow?: boolean } | undefined;
   Camera: undefined;
-  Analysis: { imageUri: string; base64Image: string };
+  Analysis: {
+    imageUri: string;
+    base64Image: string;
+    visitPurpose?: string;
+    appointmentLength?: string;
+  };
   Treatment: {
     analysisResult: any;
     imageUri: string;
@@ -36,11 +39,14 @@ export type RootStackParamList = {
     base64Image: string;
     recommendedTreatments: string[];
     reasons: { [key: string]: string[] };
+    visitPurpose?: string;
+    appointmentLength?: string;
   };
-  Simulation: { selectedTreatments: string[]; imageUri: string; base64Image: string };
-  Report: { treatmentIds: string[]; beforeImage: string; afterImage: string };
+  Report: {
+    treatmentIds: string[];
+    beforeImage: string;
+  };
   LogoGenerator: undefined;
-  OAuthSetup: undefined;
   PrivacyPolicy: undefined;
 };
 
@@ -143,11 +149,6 @@ export default function App() {
               options={{ title: 'Recommended Treatments' }}
             />
             <Stack.Screen
-              name="Simulation"
-              component={SimulationScreen}
-              options={{ title: 'Treatment Simulation' }}
-            />
-            <Stack.Screen
               name="Report"
               component={ReportScreen}
               options={{ title: 'Treatment Report' }}
@@ -156,11 +157,6 @@ export default function App() {
               name="LogoGenerator"
               component={LogoGenerator}
               options={{ title: 'Logo Generator' }}
-            />
-            <Stack.Screen
-              name="OAuthSetup"
-              component={OAuthSetupScreen}
-              options={{ title: 'OAuth Setup' }}
             />
             <Stack.Screen
               name="PrivacyPolicy"

@@ -19,12 +19,16 @@ interface TreatmentParams {
   base64Image: string;
   recommendedTreatments: string[];
   reasons: { [key: string]: string[] };
+  visitPurpose?: string;
+  appointmentLength?: string;
 }
 
 interface SimulationParams {
   selectedTreatments: string[];
   imageUri: string;
   base64Image: string;
+  visitPurpose?: string;
+  appointmentLength?: string;
 }
 
 const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -32,7 +36,9 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     imageUri = "",
     base64Image = "",
     recommendedTreatments = [],
-    reasons = {}
+    reasons = {},
+    visitPurpose,
+    appointmentLength
   } = route.params as TreatmentParams;
 
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
@@ -75,19 +81,16 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     });
   };
 
-  // Handle continue to simulation
+  // Handle continue to report
   const handleContinue = () => {
     if (selectedTreatments.length === 0) {
       return;
     }
 
-    const simulationParams: SimulationParams = {
-      selectedTreatments,
-      imageUri,
-      base64Image
-    };
-
-    navigation.navigate('Simulation', simulationParams);
+    navigation.navigate('Report', {
+      treatmentIds: selectedTreatments,
+      beforeImage: base64Image,
+    });
   };
 
   // Render a treatment card
@@ -171,7 +174,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
           disabled={selectedTreatments.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Continue to Simulation</Text>
+          <Text style={styles.buttonText}>View Report</Text>
         </TouchableOpacity>
       </View>
     </View>

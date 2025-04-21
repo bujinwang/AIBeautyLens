@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { SkincareRecommendation } from '../types';
+import { TREATMENTS } from '../constants/treatments';
 
 // Navigation reference for navigation outside of components
 let _navigationRef: any = null;
@@ -221,32 +222,61 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
       const mimeType = getImageMimeType(processedBase64);
       console.log('Detected image mime type:', mimeType);
 
-      // Treatments catalog to provide to the AI
-      const treatmentsList = `
-      Available treatments for recommendation:
+      // Dynamically generate treatments catalog from TREATMENTS array
+      const generateTreatmentsList = () => {
+        let treatmentsCatalog = `
+        Available treatments for recommendation:
+        
+        `;
+        
+        // Group treatments by category
+        const categorizedTreatments: Record<string, typeof TREATMENTS> = {};
+        TREATMENTS.forEach(treatment => {
+          if (!categorizedTreatments[treatment.category]) {
+            categorizedTreatments[treatment.category] = [];
+          }
+          categorizedTreatments[treatment.category].push(treatment);
+        });
+        
+        // Build the treatments list by category
+        Object.entries(categorizedTreatments).forEach(([category, treatments]) => {
+          treatmentsCatalog += `${category.toUpperCase()} TREATMENTS:\n`;
+          
+          treatments.forEach(treatment => {
+            treatmentsCatalog += `- ${treatment.id}: ${treatment.name} (${treatment.area}) - ${treatment.description}\n`;
+            
+            if (treatment.contraindications && treatment.contraindications.length > 0) {
+              treatmentsCatalog += `  CONTRAINDICATIONS: ${treatment.contraindications.join(', ')}\n`;
+            }
+            
+            if (treatment.restrictions) {
+              treatmentsCatalog += `  RESTRICTIONS: ${treatment.restrictions}\n`;
+            }
+            
+            treatmentsCatalog += `\n`;
+          });
+        });
+        
+        // Add treatment selection guidelines
+        treatmentsCatalog += `
+        IMPORTANT TREATMENT SELECTION GUIDELINES:
+        1. Always check contraindications before recommending any treatment
+        2. For clients with active acne or inflammation, avoid laser and radiofrequency treatments
+        3. Consider HydraFacial as a safer alternative for acne-prone skin
+        4. For severe acne cases, recommend medical consultation before any aesthetic treatments
+        5. Consider skin type and sensitivity when recommending treatments
+        6. Always prioritize skin barrier repair before aggressive treatments
+        7. Factor in recent procedures or medications that might affect treatment safety
+        8. Consider alternative treatments when contraindications are present
+        9. Always ensure the treatment addresses the client's specific concerns
+        10. Consider the client's skin tone for treatments with pigmentation risks
+        `;
+        
+        return treatmentsCatalog;
+      };
 
-      LASER TREATMENTS:
-      - pico-laser: Picosecond Laser (Face) - Advanced laser technology that delivers energy in ultra-short picosecond pulses to target pigmentation and improve skin texture
-      - fractional-laser: Fractional Laser (Face) - Creates micro-damage zones to stimulate collagen production and skin rejuvenation
-      - laser-hair-removal: Permanent Laser Hair Removal (Various) - Uses laser energy to target hair follicles for permanent hair reduction
-
-      RADIOFREQUENCY TREATMENTS:
-      - tempsure-rf: Tempsure Gold RF Lifting (Face) - Radiofrequency treatment that heats deep skin layers to stimulate collagen production and tighten skin
-      - thermage: Thermage (Face/Body) - Premium radiofrequency treatment for significant skin tightening and contouring
-      - flexsure: Flexsure Body Contouring (Body) - Targeted radiofrequency treatment for body contouring and fat reduction
-
-      INJECTION TREATMENTS:
-      - ha-filler: Hyaluronic Acid Filler (Face) - Injectable gel that adds volume, smooths lines, and enhances facial contours
-      - botox: Botulinum Toxin (Face) - Relaxes muscles to reduce the appearance of wrinkles and fine lines
-      - fat-dissolving: Fat Dissolving Injection (Face/Body) - Injectable treatment that breaks down fat cells for localized fat reduction
-      - prp: PRP (Platelet-Rich Plasma) (Face/Scalp) - Uses patient's own blood plasma to stimulate cell regeneration and collagen production
-
-      SPECIAL TREATMENTS:
-      - hydrofacial: HydroFacial (Face) - Multi-step treatment that cleanses, exfoliates, and hydrates the skin
-      - aqua-needle: Aqua Acupuncture (Face) - Microinjections of hyaluronic acid and nutrients for skin hydration and rejuvenation
-      - head-spa: Head Spa Machine (Scalp) - Deep cleansing and stimulating treatment for the scalp to promote hair health and relieve tension
-      - acupuncture: Acupuncture (Face/Body) - Traditional therapy using fine needles to stimulate specific points on the body, promoting natural healing and wellness
-      `;
+      // Generate the treatments list from the full TREATMENTS array
+      const treatmentsList = generateTreatmentsList();
 
       // Prepare the request body for Gemini
       const requestBody = {
@@ -346,6 +376,8 @@ Format your response as a JSON object with these exact fields:
   ]
 }
 
+IMPORTANT: Keep your response concise but complete. Focus on the most relevant conditions and recommendations. If the response is too long, it may be truncated.
+
 ${treatmentsList}
 
 ${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
@@ -374,8 +406,10 @@ IMPORTANT CLINICAL GUIDELINES:
         ],
         generation_config: {
           temperature: 0.6,
-          max_output_tokens: 4096,
-          response_mime_type: "application/json"
+          max_output_tokens: 8192,
+          response_mime_type: "application/json",
+          top_p: 0.8,
+          top_k: 40
         }
       };
 
@@ -471,6 +505,9 @@ IMPORTANT CLINICAL GUIDELINES:
         // Get the text content from the Gemini response
         const content = data.candidates[0].content.parts[0].text;
         const finishReason = data.candidates[0].finishReason;
+
+        console.log('Raw Gemini Response:', content);
+        console.log('Finish Reason:', finishReason);
 
         // Check if response was truncated
         if (finishReason === "MAX_TOKENS") {

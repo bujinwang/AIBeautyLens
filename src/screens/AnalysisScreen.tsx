@@ -4,6 +4,7 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
+import { AnalysisResult } from '../types';
 import { analyzeFacialImage } from '../services/geminiService';
 import GenderConfidenceDisplay from '../components/GenderConfidenceDisplay';
 import FeatureSeverityRating from '../components/FeatureSeverityRating';
@@ -16,6 +17,7 @@ import ShowDiagnosisButton from '../components/ShowDiagnosisButton';
 import ShowSkincareButton from '../components/ShowSkincareButton';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TREATMENTS } from '../constants/treatments';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -24,23 +26,6 @@ type Props = {
   route: AnalysisScreenRouteProp;
   navigation: AnalysisScreenNavigationProp;
 };
-
-type AnalysisResult = {
-  estimatedAge: number;
-  gender: string;
-  genderConfidence: number;
-  skinType: string;
-  features: {
-    description: string;
-    severity: number;
-  }[];
-  recommendations: {
-    treatmentId: string;
-    reason: string;
-  }[];
-};
-
-
 
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
@@ -82,6 +67,8 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsQuotaError(false);
       setIsIpadError(false);
       const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
+      console.log('Gemini Analysis Result:', JSON.stringify(result, null, 2));
+      console.log('Recommended Treatments:', result?.recommendations || 'No recommendations');
       setAnalysisResult(result);
     } catch (error) {
       console.error('Error in analysis:', error);
@@ -111,17 +98,68 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   // Navigate to the new RecommendedTreatmentsScreen
   const handleNext = () => {
     if (analysisResult) {
-      // Extract recommended treatments and reasons from analysis result
-      const recommendedTreatments = analysisResult.recommendations.map(rec => rec.treatmentId);
+      // Map Gemini treatment IDs to match our TREATMENTS array IDs
+      const mapTreatmentId = (geminiId: string): string => {
+        // Create a comprehensive mapping table for all potential mismatches
+        const treatmentIdMap: Record<string, string> = {
+          // Common spelling/formatting differences
+          'hydrofacial': 'hydrafacial',
+          'pico-laser': 'picoway',
+          'ha-filler': 'dermal-facial-fillers',
+          'botulinum-toxin': 'botox',
+          'botulinum': 'botox',
+          'fractional-laser': 'fotona-deep',
+          'prp': 'prp-facial',
+          'tempsure': 'thermage',
+          'tempsure-rf': 'thermage',
+          'microneedling': 'beauty-booster',
+          'chemical': 'chemical-peel',
+          'chemical-peel': 'chemical-peel',
+          'led-therapy': 'm22-stellar',
+          'ipl': 'm22-stellar',
+          'lip-filler': 'dermal-lip-fillers',
+          'laser-hair-removal': 'splendor-x',
+          'fat-dissolution': 'belkyra',
+          'aqua-needle': 'skin-booster',
+        };
+        
+        // Try direct mapping first
+        if (treatmentIdMap[geminiId]) {
+          return treatmentIdMap[geminiId];
+        }
+        
+        // If no direct match, try case-insensitive partial matching
+        const normalizedGeminiId = geminiId.toLowerCase().replace(/[-_\s]/g, '');
+        
+        // Check if any treatment ID in our TREATMENTS array is similar
+        const matchingTreatment = TREATMENTS.find(treatment => {
+          const normalizedId = treatment.id.toLowerCase().replace(/[-_\s]/g, '');
+          return normalizedId.includes(normalizedGeminiId) || normalizedGeminiId.includes(normalizedId);
+        });
+        
+        return matchingTreatment ? matchingTreatment.id : geminiId;
+      };
 
-      // Create a reasons object mapping treatmentId to reason
+      // Extract recommended treatments and reasons from analysis result with ID mapping
+      const recommendedTreatments = analysisResult.recommendations
+        .map(rec => mapTreatmentId(rec.treatmentId))
+        .filter(id => TREATMENTS.some(t => t.id === id)); // Filter out any IDs that still don't exist
+      
+      console.log('Processed Recommended Treatments:', recommendedTreatments);
+
+      // Create a reasons object mapping treatmentId to reason (with ID mapping)
       const reasons: { [key: string]: string[] } = {};
       analysisResult.recommendations.forEach(rec => {
-        if (!reasons[rec.treatmentId]) {
-          reasons[rec.treatmentId] = [];
+        const mappedId = mapTreatmentId(rec.treatmentId);
+        // Only add reasons for treatments that exist in our TREATMENTS array
+        if (TREATMENTS.some(t => t.id === mappedId)) {
+          if (!reasons[mappedId]) {
+            reasons[mappedId] = [];
+          }
+          reasons[mappedId].push(rec.reason);
         }
-        reasons[rec.treatmentId].push(rec.reason);
       });
+      console.log('Treatment Reasons:', reasons);
 
       navigation.navigate('RecommendedTreatments', {
         imageUri,
@@ -133,8 +171,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       });
     }
   };
-
-
 
   const renderErrorContent = () => {
     if (isQuotaError) {

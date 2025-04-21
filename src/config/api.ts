@@ -27,4 +27,4 @@ export const storeApiKey = async (apiKey: string): Promise<boolean> => {
 
 // API Endpoints
 export const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models';
-export const GEMINI_VISION_API = `${GEMINI_API}/gemini-2.0-flash:generateContent`;
+export const GEMINI_VISION_API = `${GEMINI_API}/gemini-2.5-pro-preview-03-25:generateContent`;

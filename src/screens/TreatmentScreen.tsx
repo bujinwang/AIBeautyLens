@@ -130,86 +130,102 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
       [];
   }, [analysisResult]);
 
-  // Define treatment details with extended information
-  const treatmentDetails: { [key: string]: any } = {
-    'botox': {
-      title: 'Botox Injection',
-      description: 'Reduces the appearance of facial wrinkles by temporarily paralyzing muscles.',
-      icon: 'healing',
-      benefits: [
-        'Reduces dynamic wrinkles and fine lines',
-        'Prevents wrinkle formation',
-        'Quick treatment with minimal downtime',
-        'Results last 3-6 months'
-      ]
-    },
-    'filler': {
-      title: 'Dermal Filler',
-      description: 'Soft tissue filler injected to restore volume and fullness to the skin.',
-      icon: 'invert-colors',
-      benefits: [
-        'Restores lost volume in hollow areas',
-        'Smooths deep lines and creases',
-        'Enhances facial contours',
-        'Results last 6-18 months depending on product'
-      ]
-    },
-    'chemical_peel': {
-      title: 'Chemical Peel',
-      description: 'A solution applied to the skin that exfoliates and eventually peels off.',
-      icon: 'bolt',
-      benefits: [
-        'Improves skin texture and tone',
-        'Reduces sun damage and age spots',
-        'Helps clear acne and reduce scarring',
-        'Available in different strengths for customized treatment'
-      ]
-    },
-    'microdermabrasion': {
-      title: 'Microdermabrasion',
-      description: 'A minimally invasive procedure that exfoliates and removes the superficial layer of skin.',
-      icon: 'grain',
-      benefits: [
-        'Improves skin texture and tone',
-        'Reduces the appearance of fine lines',
-        'Minimizes pores and mild acne scars',
-        'No downtime required after treatment'
-      ]
-    },
-    'laser_therapy': {
-      title: 'Laser Therapy',
-      description: 'Using focused light therapy to treat skin concerns like pigmentation and scars.',
-      icon: 'flare',
-      benefits: [
-        'Targets specific skin concerns without affecting surrounding tissue',
-        'Stimulates collagen production',
-        'Reduces hyperpigmentation and redness',
-        'Improves overall skin appearance'
-      ]
-    },
-    'head-spa': {
-      title: 'Head Spa Machine',
-      description: 'Deep cleansing and stimulating treatment for the scalp to promote hair health and relieve tension.',
-      icon: 'spa',
-      benefits: [
-        'Improves scalp circulation and hair growth',
-        'Relieves tension and stress',
-        'Removes buildup of products and oils',
-        'Enhances effectiveness of hair treatments'
-      ]
-    },
-    'acupuncture': {
-      title: 'Facial Acupuncture',
-      description: 'Traditional therapy using fine needles to stimulate specific points on the face, promoting natural healing and wellness.',
-      icon: 'touch-app',
-      benefits: [
-        'Stimulates collagen production naturally',
-        'Improves facial muscle tone',
-        'Reduces fine lines and wrinkles',
-        'Promotes overall skin health and circulation'
-      ]
-    },
-  };
+  // Instead of hard-coding, generate treatment details dynamically
+  const treatmentDetails = useMemo(() => {
+    // Default UI enhancements that can be applied to treatments
+    const defaultUIEnhancements: Record<string, any> = {
+      // Map treatment categories to icons
+      categoryIcons: {
+        'Injectables': 'healing',
+        'Laser': 'flare',
+        'Medical Rejuvenation': 'auto-fix-high',
+        'Skin Med Care': 'spa',
+        'Body Treatment': 'fitness-center',
+        'Women Health': 'favorite',
+        'Microblading': 'brush',
+        'Others': 'star'
+      },
+      // Common benefits by treatment category (can be overridden)
+      categoryBenefits: {
+        'Injectables': [
+          'Quick treatment with minimal downtime',
+          'Targeted results for specific concerns',
+          'Temporary and adjustable results',
+          'Can be combined with other treatments'
+        ],
+        'Laser': [
+          'Targets specific skin concerns without affecting surrounding tissue',
+          'Stimulates collagen production',
+          'Reduces hyperpigmentation and redness',
+          'Improves overall skin appearance'
+        ],
+        'Skin Med Care': [
+          'Improves skin texture and tone',
+          'Customizable for different skin types',
+          'Addresses multiple skin concerns',
+          'Enhances skincare product absorption'
+        ]
+      },
+      // Specific treatment overrides (for treatments that need custom information)
+      specificOverrides: {
+        'botox': {
+          icon: 'healing',
+          benefits: [
+            'Reduces dynamic wrinkles and fine lines',
+            'Prevents wrinkle formation',
+            'Quick treatment with minimal downtime',
+            'Results last 3-6 months'
+          ]
+        },
+        'dermal-facial-fillers': {
+          icon: 'invert-colors',
+          benefits: [
+            'Restores lost volume in hollow areas',
+            'Smooths deep lines and creases',
+            'Enhances facial contours',
+            'Results last 6-18 months depending on product'
+          ]
+        },
+        'hydrafacial': {
+          icon: 'water-outline',
+          benefits: [
+            'Deep cleansing and hydration',
+            'Suitable for sensitive skin',
+            'No downtime required',
+            'Immediate visible results'
+          ]
+        }
+      }
+    };
+
+    // Generate treatment details for all treatments
+    const details: Record<string, any> = {};
+    
+    TREATMENTS.forEach(treatment => {
+      // Get category-based defaults
+      const categoryIcon = defaultUIEnhancements.categoryIcons[treatment.category] || 'star';
+      const categoryBenefits = defaultUIEnhancements.categoryBenefits[treatment.category] || [
+        'Professionally administered treatment',
+        'Targets specific skin concerns',
+        'Results may vary by individual',
+        'Conducted by trained specialists'
+      ];
+      
+      // Check for specific overrides
+      const override = defaultUIEnhancements.specificOverrides[treatment.id];
+      
+      // Create the treatment detail entry
+      details[treatment.id] = {
+        title: treatment.name,
+        description: treatment.description,
+        icon: override?.icon || categoryIcon,
+        benefits: override?.benefits || categoryBenefits,
+        // Add any additional UI-specific fields needed
+      };
+    });
+    
+    return details;
+  }, []); // Empty dependency array since TREATMENTS is constant
 
   // Update the EnhancedTreatmentCard component to use both sources
   const EnhancedTreatmentCard = React.memo(({ treatmentId, treatment, isSelected, onToggle }: {
@@ -220,6 +236,10 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   }) => {
     const details = treatmentDetails[treatmentId];
     const treatmentReasons = reasons[treatmentId] || [];
+    
+    // If no details are found for this treatment ID, use basic info from the treatment object
+    const displayIcon = details?.icon || 'star';
+    const displayBenefits = details?.benefits || [];
 
     return (
       <TouchableOpacity
@@ -250,10 +270,10 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           )}
 
-          {details?.benefits && (
+          {displayBenefits.length > 0 && (
             <View style={styles.enhancedBenefitsSection}>
               <Text style={styles.enhancedBenefitsTitle}>Benefits:</Text>
-              {details.benefits.map((benefit: string, index: number) => (
+              {displayBenefits.map((benefit: string, index: number) => (
                 <View key={index} style={styles.enhancedBenefitItem}>
                   <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.benefitIcon} />
                   <Text style={styles.enhancedBenefitText}>{benefit}</Text>
@@ -336,29 +356,36 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Add function to get treatments based on concerns
   const getConcernBasedRecommendations = () => {
-    // This is a placeholder - in a real app, you would call an LLM API here
-    // with the concerns and treatments data to get personalized recommendations
-
+    // Map common concerns to appropriate treatments using our actual treatment IDs
     const concernToTreatmentMap: { [key: string]: string[] } = {
-      'wrinkles': ['botox', 'ha-filler', 'prp', 'thermage'],
-      'acne': ['hydrofacial', 'chemical_peel', 'laser_therapy', 'microdermabrasion'],
-      'pigmentation': ['pico-laser', 'fractional-laser', 'chemical_peel'],
-      'dryness': ['hydrofacial', 'aqua-needle', 'prp'],
-      'oiliness': ['hydrofacial', 'chemical_peel'],
-      'redness': ['laser_therapy', 'prp'],
-      'pores': ['fractional-laser', 'microdermabrasion', 'hydrofacial'],
-      'texture': ['microdermabrasion', 'fractional-laser', 'chemical_peel'],
-      'elasticity': ['thermage', 'tempsure-rf', 'ha-filler', 'prp'],
-      'darkCircles': ['ha-filler', 'prp', 'aqua-needle']
+      'wrinkles': ['botox', 'dermal-facial-fillers', 'thermage', 'ultherapy'],
+      'volume-loss': ['dermal-facial-fillers', 'sculptra', 'radiesse'],
+      'double-chin': ['belkyra'],
+      'skin-texture': ['fotona-deep', 'chemical-peel', 'hydrafacial', 'mesotherapy'],
+      'pigmentation': ['picoway', 'picosure', 'm22-stellar', 'chemical-peel'],
+      'acne': ['hydrafacial', 'chemical-peel', 'bela-md'],
+      'dryness': ['hydrafacial', 'skin-booster', 'beauty-booster'],
+      'redness': ['vbeam', 'm22', 'lumecca'],
+      'sagging': ['trilift', 'thermage', 'ultherapy'],
+      'body-contouring': ['emsculpt-neo', 'body-contouring'],
+      'hair-loss': ['prp-facial', 'hair-restoration'],
+      'pelvic-floor': ['btl-emsella'],
+      'feminine-wellness': ['feminine-wellness', 'vaginal-rejuvenation'],
+      'eyebrows': ['eyebrows-microblading'],
+      'lips': ['dermal-lip-fillers', 'lips-microblading'],
+      'hairline': ['hairline-microblading'],
+      'scalp-concerns': ['scalp-cleaning', 'hair-restoration'],
+      'hands': ['hand-treatment', 'radiesse'],
+      'snoring': ['snoring-treatment'],
+      'general-wellness': ['massage', 'acupuncture']
     };
 
     // Get treatments based on selected concerns
     let recommendedTreatmentIds: string[] = [];
 
     // Since visitPurpose is now a string, we need to handle it differently
-    // Check if there's a mapping for this visit purpose
-    if (visitPurpose && concernToTreatmentMap[visitPurpose]) {
-      recommendedTreatmentIds = [...concernToTreatmentMap[visitPurpose]];
+    if (visitPurpose && concernToTreatmentMap[visitPurpose.toLowerCase()]) {
+      recommendedTreatmentIds = [...concernToTreatmentMap[visitPurpose.toLowerCase()]];
     }
 
     // Remove duplicates

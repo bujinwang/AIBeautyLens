@@ -15,6 +15,7 @@ export interface SkincareProduct {
   brand: string;
   category: string;
   price: number;
+  size?: string;
   skinType: string[];
   description?: string;
   ingredients?: string;
@@ -46,9 +47,14 @@ export const getRecommendationsForSkinType = (
     const reason = `Recommended for ${skinType} skin${
       concerns.length > 0 ? ` and targets ${concerns.join(', ')}` : ''
     }`;
+
+    // Create full product name with brand only
+    const fullProductName = `${product.brand} ${product.name}`;
     
     return {
       productType: product.category,
+      productName: fullProductName,
+      size: product.size,  // Keep size as a separate field
       recommendedIngredients: ingredients,
       recommendedUsage: usage,
       reason: reason,
@@ -263,6 +269,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'CeraVe',
     category: 'Gentle Cleanser',
     price: 15.99,
+    size: '355ml',
     skinType: ['combination', 'all'],
     description: 'Hydrating non-comedogenic cleanser for gentle yet effective cleansing',
     ingredients: 'Glycerin, Ceramides, Hyaluronic Acid, Non-foaming surfactants',
@@ -274,6 +281,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'La Roche-Posay',
     category: 'Gentle Cleanser',
     price: 19.99,
+    size: '200ml',
     skinType: ['combination', 'all'],
     description: 'Gentle cleanser with Salicylic Acid for combination skin',
     ingredients: 'Salicylic Acid (0.5-2%), Ceramides, Glycerin',
@@ -285,6 +293,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Paula\'s Choice',
     category: 'Acne Treatment Serum/Spot Treatment',
     price: 29.99,
+    size: '30ml',
     skinType: ['combination', 'acne-prone'],
     description: 'Targeted spot treatment for active breakouts',
     ingredients: 'Salicylic Acid (2%), Benzoyl Peroxide (2.5%)',
@@ -331,6 +340,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Cleanser',
     price: 64.00,
+    size: '50ml',
     skinType: ['normal', 'oily', 'combination'],
     description: 'Exfoliating cleanser for normal to oily skin',
     ingredients: 'Salicylic acid, Jojoba esters',
@@ -342,6 +352,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 94.00,
+    size: '60 pads',
     skinType: ['oily', 'combination', 'acne-prone'],
     description: 'Treatment pads for acne-prone skin',
     ingredients: 'Salicylic acid, Tea tree oil, Glycolic acid',
@@ -353,6 +364,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 208.00,
+    size: '50ml',
     skinType: ['all', 'aging', 'normal'],
     description: 'Targeted treatment for wrinkles and texture issues',
     ingredients: 'Retinol, Peptides, Vitamin E'
@@ -363,6 +375,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Sunscreen',
     price: 88.00,
+    size: '30ml',
     skinType: ['all', 'normal'],
     description: 'Dual-action sunscreen and makeup primer',
     ingredients: 'Zinc Oxide, Titanium Dioxide, Antioxidants'
@@ -373,6 +386,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Sunscreen',
     price: 86.00,
+    size: '10g',
     skinType: ['all', 'oily', 'normal'],
     description: 'Powder sunscreen perfect for touch-ups throughout the day',
     ingredients: 'Zinc Oxide, Titanium Dioxide, Antioxidants'
@@ -383,6 +397,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Sunscreen',
     price: 88.00,
+    size: '50ml',
     skinType: ['all', 'normal'],
     description: 'Color-adapting sunscreen with high SPF protection',
     ingredients: 'Zinc Oxide, Titanium Dioxide, Antioxidants'
@@ -393,6 +408,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 128.00,
+    size: '50ml',
     skinType: ['sensitive', 'rosacea-prone'],
     description: 'Treatment for redness and rosacea-prone skin',
     ingredients: 'Amino acids, Antioxidants, Anti-inflammatory agents'
@@ -403,6 +419,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 120.00,
+    size: '50ml',
     skinType: ['all', 'hyperpigmented', 'normal'],
     description: 'Brightening treatment with retinol in multiple strengths',
     ingredients: 'Retinol, Antioxidants, Brightening agents'
@@ -413,6 +430,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Hydrator',
     price: 142.00,
+    size: '50ml',
     skinType: ['normal', 'dry', 'combination'],
     description: 'Hydrating renewal cream for normal to dry skin',
     ingredients: 'Retinol, Ceramides, Antioxidants'
@@ -423,6 +441,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Hydrator',
     price: 146.00,
+    size: '50ml',
     skinType: ['sensitive', 'irritated', 'dry'],
     description: 'Recovery cream for sensitive, irritated or dry skin',
     ingredients: 'Ceramides, Anti-inflammatory agents, Antioxidants',
@@ -434,6 +453,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 235.00,
+    size: '60ml',
     skinType: ['all', 'aging', 'normal'],
     description: 'Intensive night repair treatment',
     ingredients: 'Retinol, Antioxidants, Peptides'
@@ -444,6 +464,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Eye Care',
     price: 159.00,
+    size: '15ml',
     skinType: ['all', 'normal'],
     description: 'Intensive eye cream for all skin types',
     ingredients: 'Retinol, Peptides, Vitamin E'
@@ -456,6 +477,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'LUXYN',
     category: 'Masks',
     price: 40.00,
+    size: '10 sheets',
     skinType: ['all', 'dry', 'dehydrated', 'normal'],
     description: 'Hydrating sheet mask set',
     ingredients: 'Hyaluronic Acid, Niacinamide, Peptides'
@@ -468,6 +490,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Ecosmetic',
     category: 'Cleanser',
     price: 38.00,
+    size: '200ml',
     skinType: ['normal', 'sensitive'],
     description: 'To cleanse effectively without stripping the skin\'s natural moisture barrier, crucial for acne-prone and potentially compromised skin.',
     ingredients: 'Ceramides, Glycerin, Hyaluronic Acid (Sulfate-free)',
@@ -479,6 +502,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Ecosmetic',
     category: 'Hydrator',
     price: 45.00,
+    size: '50ml',
     skinType: ['normal'],
     description: 'Lightweight daily moisturizer designed specifically for normal skin types',
     ingredients: 'Hyaluronic Acid, Ceramides, Glycerin, Antioxidants',
@@ -490,6 +514,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Serum',
     price: 110.00,
+    size: '30ml',
     skinType: ['normal', 'all'],
     description: 'Brightening and antioxidant serum ideal for maintaining even skin tone',
     ingredients: 'Vitamin C (L-Ascorbic Acid), Vitamin E, Ferulic Acid',
@@ -501,6 +526,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Ecosmetic',
     category: 'Sunscreen',
     price: 52.00,
+    size: '50ml',
     skinType: ['normal', 'all'],
     description: 'Lightweight sunscreen specifically formulated for daily use on normal skin',
     ingredients: 'Zinc Oxide, Titanium Dioxide, Hyaluronic Acid, Vitamin E',
@@ -512,6 +538,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Ecosmetic',
     category: 'Toner',
     price: 32.00,
+    size: '200ml',
     skinType: ['normal'],
     description: 'Alcohol-free toner that maintains skin\'s natural pH balance',
     ingredients: 'Rose Water, Glycerin, Niacinamide, Panthenol',
@@ -523,6 +550,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'Ecosmetic',
     category: 'Night Treatment',
     price: 78.00,
+    size: '30ml',
     skinType: ['normal', 'all'],
     description: 'Restorative night treatment to maintain skin health and prevent premature aging',
     ingredients: 'Retinol, Peptides, Ceramides, Squalane',
@@ -536,6 +564,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Targeted Treatment',
     price: 204.00,
+    size: '50ml',
     skinType: ['all', 'dry', 'aging'],
     description: 'Advanced treatment that brightens and provides antioxidant protection',
     ingredients: 'Vitamin C, Antioxidants, Hydrating agents',
@@ -547,6 +576,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Hydrator',
     price: 130.00,
+    size: '60ml',
     skinType: ['dry', 'dehydrated', 'normal'],
     description: 'Rich, deeply hydrating cream for dry or dehydrated skin',
     ingredients: 'Ceramides, Hyaluronic Acid, Shea Butter, Vitamin E',
@@ -558,6 +588,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Cleanser',
     price: 64.00,
+    size: '200ml',
     skinType: ['normal', 'dry'],
     description: 'Gentle hydrating cleanser specifically formulated for normal to dry skin',
     ingredients: 'Panthenol, Allantoin, Glycerin, Sodium Hyaluronate',
@@ -569,6 +600,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'ZO',
     category: 'Cleanser',
     price: 64.00,
+    size: '200ml',
     skinType: ['sensitive', 'dry', 'irritated'],
     description: 'Ultra-gentle cleanser for sensitive or irritated skin',
     ingredients: 'Hydrating complex, Botanical extracts, Chamomile',
@@ -580,6 +612,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Cleanser',
     price: 52.00,
+    size: '150ml',
     skinType: ['sensitive', 'dry'],
     description: 'Gentle foaming cleanser that removes impurities without stripping skin',
     ingredients: 'Glycerin, Sorbitol, Orange Oil, Cucumber Extract',
@@ -591,6 +624,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Targeted Treatment',
     price: 86.00,
+    size: '50ml',
     skinType: ['sensitive', 'dry', 'rosacea-prone'],
     description: 'Helps reduce the appearance of redness and flushing',
     ingredients: 'Peptides, Silymarin, Bisabolol, Hyaluronic Acid',
@@ -602,6 +636,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Targeted Treatment',
     price: 148.00,
+    size: '30ml',
     skinType: ['all', 'dry', 'aging'],
     description: 'Comprehensive daily emulsion that helps improve early signs of photoaging',
     ingredients: 'Niacinamide (5%), Tripeptide Complex, Glycerin',
@@ -613,6 +648,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Serum',
     price: 146.00,
+    size: '30ml',
     skinType: ['all', 'dry', 'dehydrated'],
     description: 'Multi-functional serum that amplifies skin\'s hyaluronic acid levels',
     ingredients: 'Proxylane (10%), Purple Rice Extract, Hyaluronic Acid, Licorice Root Extract',
@@ -620,10 +656,11 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
   },
   {
     id: 'skinceuticals-gentle-cleanser-200ml',
-    name: 'SkinCeuticals Gentle Cleanser 200ml',
+    name: 'SkinCeuticals Gentle Cleanser',
     brand: 'SkinCeuticals',
     category: 'Cleanser',
     price: 56.00,
+    size: '200ml',
     skinType: ['dry', 'sensitive'],
     description: 'Creamy, non-foaming cleanser that removes impurities while maintaining skin moisture',
     ingredients: 'Glycerin, Allantoin, Orange Oil, Pro-Vitamin B5',
@@ -635,6 +672,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Hydrator',
     price: 94.00,
+    size: '60ml',
     skinType: ['dry', 'very dry'],
     description: 'Rich, restorative moisturizer for dry to very dry skin',
     ingredients: 'Essential oils, Grapeseed Oil, Rose Hip Oil, Macadamia Nut Oil',
@@ -646,6 +684,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     brand: 'SkinCeuticals',
     category: 'Hydrator',
     price: 170.00,
+    size: '50ml',
     skinType: ['aging', 'dry', 'very dry'],
     description: 'Anti-aging cream that restores essential skin lipids and improves the appearance of visible signs of aging',
     ingredients: 'Ceramides, Cholesterol, Fatty Acids, Essential Oils',

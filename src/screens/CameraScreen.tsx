@@ -294,7 +294,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background.default,
   },
   headerGradient: {
     paddingTop: Platform.OS === 'ios' ? 55 : 20,
@@ -349,36 +349,28 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    margin: 20,
-    zIndex: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 40,
+    gap: 12,
   },
   button: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 10,
-    minWidth: 120,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    minHeight: 48,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  buttonIcon: {
-    marginRight: 6,
   },
   primaryButton: {
     backgroundColor: COLORS.primary.main,
@@ -387,27 +379,26 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   secondaryButton: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.background.paper,
+    borderWidth: 1,
+    borderColor: COLORS.primary.main,
   },
   secondaryButtonText: {
     color: COLORS.primary.main,
   },
   previewScrollContainer: {
     flex: 1,
-    margin: 12,
   },
   previewContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 20,
+    flex: 1,
+    paddingBottom: 40,
   },
   formContainer: {
-    width: '90%',
+    paddingHorizontal: 20,
     marginTop: 20,
-    marginBottom: 10,
   },
   formSection: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   formLabel: {
     fontSize: 16,
@@ -417,55 +408,54 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: COLORS.gray[300],
-    borderRadius: 10,
+    borderColor: COLORS.gray[200],
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
     color: COLORS.text.primary,
-    backgroundColor: 'white',
-    minHeight: 80,
+    backgroundColor: COLORS.background.paper,
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
   appointmentOptions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   appointmentOption: {
     flex: 1,
-    padding: 12,
+    minWidth: '45%',
     borderWidth: 1,
-    borderColor: COLORS.gray[300],
-    borderRadius: 10,
-    backgroundColor: 'white',
-    marginHorizontal: 4,
-    alignItems: 'center',
+    borderColor: COLORS.gray[200],
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: COLORS.background.paper,
   },
   appointmentOptionSelected: {
     borderColor: COLORS.primary.main,
     backgroundColor: COLORS.primary.light,
   },
+  appointmentOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipIcon: {
+    marginRight: 4,
+  },
   appointmentOptionText: {
     fontSize: 16,
     color: COLORS.text.primary,
+    textAlign: 'center',
   },
   appointmentOptionTextSelected: {
     color: COLORS.primary.main,
     fontWeight: '600',
   },
   cameraPreview: {
-    width: '90%',
-    height: '80%',
-    borderRadius: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    width: '100%',
+    aspectRatio: 3/4,
+    marginTop: 20,
   },
   cameraOverlay: {
     flex: 1,
@@ -587,14 +577,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-  },
-  appointmentOptionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vipIcon: {
-    marginRight: 4,
   },
 });
 

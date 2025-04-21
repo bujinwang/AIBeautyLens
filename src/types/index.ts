@@ -53,6 +53,8 @@ export interface SkinIssue {
 
 export interface SkincareRecommendation {
   productType: string;
+  productName: string;
+  size?: string;
   recommendedIngredients: string;
   recommendedUsage: string;
   reason: string;

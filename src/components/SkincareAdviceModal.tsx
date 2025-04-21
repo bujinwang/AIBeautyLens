@@ -131,15 +131,24 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
     }
   };
 
+  // Add this before the renderProductRecommendations function
+  const [shownProductIds] = useState(new Set<string>());
+
   // Function to render product recommendations for a specific category
   const renderProductRecommendations = (productType: string) => {
     console.log(`Rendering products for ${productType}`);
 
     // Map from generalized product type to specific category names in our product database
     const categoryMapping: {[key: string]: string[]} = {
+      'Cleanser': ['Cleanser', 'Gentle Cleanser'],
       'Gentle Cleanser': ['Cleanser', 'Gentle Cleanser'],
-      'Acne Treatment Serum/Spot Treatment': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment'],
-      'Hydrating Moisturizer': ['Moisturizer', 'Hydrator', 'Lightweight Moisturizer']
+      'Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      'Treatment Serum (Anti-inflammatory/PIH)': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      'Treatment Serum (Acne/Texture - Use cautiously)': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment Serum/Spot Treatment'],
+      'Sunscreen': ['Sunscreen'],
+      'Hydrating Serum': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
+      'Lightweight Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      'Hydrating Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer']
     };
 
     // Find the matching categories from our mapping
@@ -149,10 +158,32 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
     // Get products matching any of the possible categories
     let products: SkincareProduct[] = [];
     possibleCategories.forEach(category => {
-      const matchingProducts = productsByCategory[category] || [];
+      const matchingProducts = Object.values(productsByCategory)
+        .flat()
+        .filter(product => {
+          const productCategoryLower = product.category.toLowerCase();
+          const categoryLower = category.toLowerCase();
+          
+          // Check for exact match or partial match
+          const isMatch = productCategoryLower === categoryLower ||
+                 productCategoryLower.includes(categoryLower) ||
+                 categoryLower.includes(productCategoryLower);
+          
+          // Also check if product is suitable for the skin type
+          const skinTypes = skinType.toLowerCase().split('/').map(type => type.trim());
+          const matchesSkinType = product.skinType.some(type => 
+            skinTypes.includes(type.toLowerCase()) || type.toLowerCase() === 'all'
+          );
+          
+          return isMatch && matchesSkinType;
+        });
+      
       console.log(`Found ${matchingProducts.length} products for category ${category}`);
       products = [...products, ...matchingProducts];
     });
+
+    // Remove duplicates
+    products = Array.from(new Set(products));
 
     console.log(`Total products found for ${productType}: ${products.length}`);
 
@@ -233,16 +264,18 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
                 </View>
                 <View style={styles.productInfo}>
                   <Text style={styles.brandName}>{product.brand}</Text>
-                  <Text style={styles.productName}>{product.name}</Text>
+                  <Text style={styles.productName}>
+                    {product.name}{product.size ? ` (${product.size})` : ''}
+                  </Text>
                 </View>
                 <Text style={styles.productPrice}>
                   ${typeof product.price === 'number' ? product.price.toFixed(2) : product.price}
                 </Text>
               </View>
 
-              {product.description && (
-                <Text style={styles.productDescription}>{product.description}</Text>
-              )}
+              <Text style={styles.productDescription}>
+                {product.description || `Specially formulated ${product.category.toLowerCase()} for ${skinType} skin`}
+              </Text>
 
               {product.ingredients && (
                 <View style={styles.ingredientsContainer}>
@@ -312,7 +345,12 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
                         color={COLORS.primary.main}
                       />
                     </View>
-                    <Text style={styles.productTypeText}>{item.productType}</Text>
+                    <View style={styles.productHeaderText}>
+                      <Text style={styles.productTypeText}>{item.productType}</Text>
+                      <Text style={styles.productNameText}>
+                        {item.productName}
+                      </Text>
+                    </View>
                   </View>
 
                   <View style={styles.recommendationDetails}>
@@ -461,10 +499,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: SPACING.sm,
   },
+  productHeaderText: {
+    flex: 1,
+  },
   productTypeText: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text.primary,
+  },
+  productNameText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginTop: 2,
   },
   recommendationDetails: {
     padding: SPACING.md,
@@ -529,22 +575,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.text.secondary,
     textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   productName: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.text.primary,
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
     color: COLORS.primary.main,
   },
   productDescription: {
-    fontSize: 12,
+    fontSize: 14,
     color: COLORS.text.secondary,
-    marginTop: SPACING.xs,
-    lineHeight: 16,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   productIngredients: {
     fontSize: 11,

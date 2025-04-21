@@ -781,12 +781,20 @@ export const getSingleProductRecommendations = async (
   const { skinType, concerns, existingRecommendations } = requestData;
   
   try {
-    // Get all products matching this skin type
-    const skinTypeProducts = skinType !== 'all' 
-      ? PRODUCTS_BY_SKIN_TYPE[skinType.toLowerCase()] || [] 
+    // Handle combined skin types (e.g., "Combination/Sensitive")
+    const skinTypes = skinType.toLowerCase().split('/').map(type => type.trim());
+    
+    // Get all products matching any of the skin types
+    const skinTypeProducts = skinTypes.length > 0
+      ? SKINCARE_PRODUCTS.filter(product => 
+          product.skinType.some(type => 
+            skinTypes.includes(type.toLowerCase()) || type.toLowerCase() === 'all'
+          )
+        )
       : SKINCARE_PRODUCTS;
     
     const recommendedProducts: SkincareProduct[] = [];
+    const usedProductIds = new Set<string>(); // Track used product IDs
     
     // Process each recommendation type
     for (const recommendation of existingRecommendations) {
@@ -795,28 +803,139 @@ export const getSingleProductRecommendations = async (
       
       // Find products in this category for this skin type
       let matchingProducts = skinTypeProducts.filter(product => {
-        // Check if the product category matches (exact or contains)
-        const categoryMatch = 
-          product.category.toLowerCase() === productType.toLowerCase() ||
-          product.category.toLowerCase().includes(productType.toLowerCase()) ||
-          productType.toLowerCase().includes(product.category.toLowerCase());
+        // Skip if we've already recommended this product
+        if (usedProductIds.has(product.id)) {
+          return false;
+        }
+
+        // Normalize categories for comparison
+        const normalizedProductCategory = product.category.toLowerCase().replace(/-/g, ' ');
+        const normalizedRecommendationType = productType.toLowerCase().replace(/-/g, ' ');
         
-        return categoryMatch;
+        // Map common category variations
+        const categoryMappings: { [key: string]: string[] } = {
+          'gentle cleanser': ['cleanser', 'gentle cleanser'],
+          'exfoliating/pih serum': ['serum', 'targeted treatment', 'exfoliator'],
+          'lightweight moisturizer': ['moisturizer', 'hydrator', 'lightweight moisturizer'],
+          'treatment serum (anti-inflammatory / brightening)': ['serum', 'targeted treatment', 'niacinamide', 'azelaic acid'],
+          'treatment serum (acne / texture - use cautiously)': ['serum', 'targeted treatment', 'adapalene', 'retinol'],
+          'treatment serum (am)': ['serum', 'targeted treatment', 'vitamin c'],
+          'treatment serum (pm)': ['serum', 'targeted treatment', 'retinol', 'adapalene'],
+          'treatment serum': ['serum', 'targeted treatment'],
+          'hydrating moisturizer': ['moisturizer', 'hydrator']
+        };
+
+        // Check direct match
+        if (normalizedProductCategory === normalizedRecommendationType) {
+          return true;
+        }
+
+        // Check mapped categories and handle specific treatment types
+        const mappedCategories = categoryMappings[normalizedRecommendationType] || [];
+        if (mappedCategories.some(cat => normalizedProductCategory.includes(cat))) {
+          // For anti-inflammatory/brightening serums, prefer products with niacinamide or azelaic acid
+          if (normalizedRecommendationType === 'treatment serum (anti-inflammatory / brightening)' && 
+              (!product.ingredients || 
+               !(product.ingredients.toLowerCase().includes('niacinamide') || 
+                 product.ingredients.toLowerCase().includes('azelaic acid')))) {
+            return false;
+          }
+          
+          // For acne/texture serums, prefer adapalene or retinol products
+          if (normalizedRecommendationType === 'treatment serum (acne / texture - use cautiously)' && 
+              (!product.ingredients || 
+               !(product.ingredients.toLowerCase().includes('adapalene') || 
+                 product.ingredients.toLowerCase().includes('retinol')))) {
+            return false;
+          }
+          
+          // For AM treatment serums, prefer Vitamin C products
+          if (normalizedRecommendationType === 'treatment serum (am)' && 
+              (!product.ingredients || !product.ingredients.toLowerCase().includes('vitamin c'))) {
+            return false;
+          }
+          
+          // For PM treatment serums, prefer retinol/adapalene products
+          if (normalizedRecommendationType === 'treatment serum (pm)' && 
+              (!product.ingredients || 
+               !(product.ingredients.toLowerCase().includes('retinol') || 
+                 product.ingredients.toLowerCase().includes('adapalene')))) {
+            return false;
+          }
+          
+          return true;
+        }
+
+        // Check if product category contains the recommendation type or vice versa
+        return normalizedProductCategory.includes(normalizedRecommendationType) ||
+               normalizedRecommendationType.includes(normalizedProductCategory);
       });
+
+      console.log(`Found ${matchingProducts.length} matching products for ${productType}`);
+      matchingProducts.forEach(p => console.log(`- ${p.brand} ${p.name} (${p.category})`));
       
       // If no exact matches, try to find products with matching ingredients
       if (matchingProducts.length === 0 && recommendation.recommendedIngredients) {
         const ingredientKeywords = recommendation.recommendedIngredients
           .toLowerCase()
-          .split(',')
-          .map(i => i.trim());
+          .replace(/[()%]/g, '')  // Remove parentheses and percentage signs
+          .replace(/-/g, ' ')     // Replace hyphens with spaces
+          .split(/[,.]/)          // Split by comma or period
+          .map(i => i.trim())
+          .filter(i => i.length > 0)  // Remove empty strings
+          .map(i => i.replace(/\d+(\.\d+)?/g, '').trim()); // Remove numbers
         
-        matchingProducts = skinTypeProducts.filter(product => 
-          product.ingredients && 
-          ingredientKeywords.some(keyword => 
-            product.ingredients?.toLowerCase().includes(keyword)
-          )
-        );
+        console.log(`Looking for products with ingredients: ${ingredientKeywords.join(', ')}`);
+        
+        matchingProducts = skinTypeProducts.filter(product => {
+          if (!product.ingredients) return false;
+          
+          const productIngredients = product.ingredients.toLowerCase();
+          
+          // Count how many recommended ingredients match
+          const matchCount = ingredientKeywords.filter(keyword =>
+            productIngredients.includes(keyword) ||
+            // Handle common variations
+            (keyword.includes('vitamin') && productIngredients.includes('vit')) ||
+            (keyword.includes('acid') && productIngredients.includes(keyword.replace(' acid', ''))) ||
+            (keyword === 'zinc oxide' && productIngredients.includes('zinc')) ||
+            (keyword === 'titanium dioxide' && productIngredients.includes('titanium'))
+          ).length;
+          
+          // Match if product contains at least one of the recommended ingredients
+          return matchCount > 0;
+        });
+
+        // Sort by number of matching ingredients
+        matchingProducts.sort((a, b) => {
+          if (!a.ingredients || !b.ingredients) return 0;
+          
+          const aIngredients = a.ingredients.toLowerCase();
+          const bIngredients = b.ingredients.toLowerCase();
+          
+          const aMatches = ingredientKeywords.filter(keyword =>
+            aIngredients.includes(keyword) ||
+            // Handle common variations
+            (keyword.includes('vitamin') && aIngredients.includes('vit')) ||
+            (keyword.includes('acid') && aIngredients.includes(keyword.replace(' acid', ''))) ||
+            (keyword === 'zinc oxide' && aIngredients.includes('zinc')) ||
+            (keyword === 'titanium dioxide' && aIngredients.includes('titanium'))
+          ).length;
+          
+          const bMatches = ingredientKeywords.filter(keyword =>
+            bIngredients.includes(keyword) ||
+            // Handle common variations
+            (keyword.includes('vitamin') && bIngredients.includes('vit')) ||
+            (keyword.includes('acid') && bIngredients.includes(keyword.replace(' acid', ''))) ||
+            (keyword === 'zinc oxide' && bIngredients.includes('zinc')) ||
+            (keyword === 'titanium dioxide' && bIngredients.includes('titanium'))
+          ).length;
+          
+          return bMatches - aMatches;
+        });
+
+        console.log(`Found ${matchingProducts.length} products with matching ingredients`);
+        matchingProducts.forEach(p => console.log(`- ${p.brand} ${p.name} (matching ingredients)`));
       }
       
       // Prioritize products that match concerns
@@ -836,29 +955,47 @@ export const getSingleProductRecommendations = async (
       
       // Select one product from matches (or placeholder if no matches)
       if (matchingProducts.length > 0) {
-        // Find the best match (prioritize products with full info)
-        const bestMatches = matchingProducts.filter(p => p.usage && p.ingredients);
-        const selectedProduct = bestMatches.length > 0 
-          ? bestMatches[Math.floor(Math.random() * bestMatches.length)]
-          : matchingProducts[Math.floor(Math.random() * matchingProducts.length)];
+        // Sort products by a deterministic score based on:
+        // 1. Whether it has full info (usage & ingredients)
+        // 2. Number of matching ingredients with recommendations
+        // 3. Price (prefer lower price)
+        // 4. Alphabetical order of brand+name (for consistent tiebreaker)
+        matchingProducts.sort((a, b) => {
+          // Score based on having full info
+          const aFullInfo = (a.usage && a.ingredients) ? 1 : 0;
+          const bFullInfo = (b.usage && b.ingredients) ? 1 : 0;
+          if (aFullInfo !== bFullInfo) return bFullInfo - aFullInfo;
+
+          // Score based on matching ingredients
+          const recommendedIngredients = recommendation.recommendedIngredients?.toLowerCase() || '';
+          const aIngredientsMatch = a.ingredients?.toLowerCase().split(',')
+            .filter(i => recommendedIngredients.includes(i.trim())).length || 0;
+          const bIngredientsMatch = b.ingredients?.toLowerCase().split(',')
+            .filter(i => recommendedIngredients.includes(i.trim())).length || 0;
+          if (aIngredientsMatch !== bIngredientsMatch) return bIngredientsMatch - aIngredientsMatch;
+
+          // Score based on price (prefer lower price)
+          if (a.price !== b.price) return a.price - b.price;
+
+          // Finally, sort by brand+name for consistency
+          const aName = `${a.brand} ${a.name}`.toLowerCase();
+          const bName = `${b.brand} ${b.name}`.toLowerCase();
+          return aName.localeCompare(bName);
+        });
+
+        // Select the best matching product
+        const selectedProduct = matchingProducts[0];
+        
+        // Track this product as used
+        usedProductIds.add(selectedProduct.id);
         
         // Add to recommendations
         recommendedProducts.push(selectedProduct);
       } else {
-        // Create a placeholder product using our recommendation data
-        const placeholderProduct: SkincareProduct = {
-          id: `placeholder-${productType.toLowerCase().replace(/\s+/g, '-')}`,
-          name: `${skinType} ${productType}`,
-          brand: 'Recommended Brand',
-          category: productType,
-          price: productType.includes('Serum') || productType.includes('Treatment') ? 85.00 : 45.00,
-          skinType: [skinType.toLowerCase()],
-          description: `Specially formulated ${productType.toLowerCase()} for ${skinType} skin`,
-          ingredients: recommendation.recommendedIngredients || 'Recommended ingredients for your skin type',
-          usage: recommendation.recommendedUsage || 'As directed'
-        };
-        
-        recommendedProducts.push(placeholderProduct);
+        // Log that no matching product was found
+        console.log(`No matching product found for ${productType} in our database`);
+        // Skip adding a placeholder product
+        continue;
       }
     }
     

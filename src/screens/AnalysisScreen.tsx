@@ -15,7 +15,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import ShowDiagnosisButton from '../components/ShowDiagnosisButton';
 import ShowSkincareButton from '../components/ShowSkincareButton';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TREATMENTS } from '../constants/treatments';
 
@@ -452,10 +452,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
-    paddingBottom: SPACING.sm,
+    paddingBottom: SPACING.xl,
   },
   imageContainer: {
-    marginHorizontal: 20,
+    marginHorizontal: SPACING.md,
     marginTop: SPACING.md,
     marginBottom: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
@@ -537,66 +537,80 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: SPACING.md,
   },
-  resultContainer: {
+  resultCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.background.paper,
+    ...SHADOWS.small,
+  },
+  resultContent: {
     marginTop: SPACING.md,
   },
-  analysisCard: {
-    marginBottom: SPACING.md,
-  },
-  infoRow: {
+  resultRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
-  },
-  infoLabel: {
-    fontSize: 16,
-    color: COLORS.text.secondary,
-  },
-  infoValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-  },
-  featuresCard: {
     marginBottom: SPACING.md,
   },
-  featuresContent: {
+  resultItem: {
+    flex: 1,
+    marginHorizontal: SPACING.sm,
+  },
+  resultLabel: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  resultValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+  },
+  genderContainer: {
+    marginTop: SPACING.md,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  featuresCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
     padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.background.paper,
+    ...SHADOWS.small,
   },
   featureHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    marginBottom: SPACING.md,
   },
   featureHeaderLogo: {
-    marginRight: SPACING.md,
+    marginRight: SPACING.sm,
   },
   featureHeaderTextContainer: {
     flex: 1,
   },
   featureHeaderTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.text.primary,
   },
   featureHeaderSubtitle: {
-    fontSize: 12,
+    fontSize: 14,
     color: COLORS.text.secondary,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   },
   infoButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.gray[100],
+    padding: SPACING.xs,
+  },
+  featuresContent: {
+    marginTop: SPACING.md,
   },
   featureItem: {
     flexDirection: 'row',
@@ -607,39 +621,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[200],
   },
+  featureInfo: {
+    flex: 1,
+  },
+  featureText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+  },
+  featureLocation: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginTop: 2,
+  },
   featureRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     minWidth: 120,
     justifyContent: 'flex-end',
-  },
-  featureHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-    flex: 1,
-    paddingRight: SPACING.sm,
-  },
-  severityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  severityDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 2,
-  },
-  severityText: {
-    marginLeft: SPACING.xs,
-    fontSize: 14,
-    color: COLORS.text.secondary,
   },
   insightContainer: {
     flexDirection: 'row',
@@ -677,62 +676,45 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: SPACING.xs,
   },
-  resultCard: {
+  visitPurposeCard: {
     marginBottom: SPACING.md,
   },
-  resultContent: {
+  visitInfoContainer: {
     padding: SPACING.md,
   },
-  resultRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+  visitInfoItem: {
+    marginBottom: SPACING.sm,
   },
-  resultItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  resultLabel: {
-    fontSize: 16,
-    color: COLORS.text.secondary,
-    marginRight: SPACING.md,
-  },
-  resultValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-  },
-  genderContainer: {
-    marginBottom: SPACING.md,
-  },
-  genderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  genderValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-    marginRight: SPACING.md,
-  },
-  featureInfo: {
-    flex: 1,
-  },
-  featureText: {
+  visitInfoLabel: {
     fontSize: 16,
     fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: 4,
+  },
+  visitInfoValue: {
+    fontSize: 16,
     color: COLORS.text.primary,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
   },
-  featureLocation: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginTop: 2,
+  buttonContainer: {
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
   },
-  severityFraction: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.text.secondary,
-    marginLeft: SPACING.xs,
+  reportButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  reportButton: {
+    flex: 1,
+    marginHorizontal: SPACING.xs,
+  },
+  diagnosisButton: {
+    marginBottom: SPACING.md,
   },
   footnoteContainer: {
     padding: SPACING.sm,
@@ -792,46 +774,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.primary,
     marginLeft: SPACING.xs,
-  },
-  visitPurposeCard: {
-    marginBottom: SPACING.md,
-  },
-  visitInfoContainer: {
-    padding: SPACING.md,
-  },
-  visitInfoItem: {
-    marginBottom: SPACING.sm,
-  },
-  visitInfoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-    marginBottom: 4,
-  },
-  visitInfoValue: {
-    fontSize: 16,
-    color: COLORS.text.primary,
-    backgroundColor: COLORS.background.paper,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-  },
-  buttonContainer: {
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  reportButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
-  },
-  reportButton: {
-    flex: 1,
-    marginHorizontal: SPACING.xs,
-  },
-  diagnosisButton: {
-    marginBottom: SPACING.md,
   },
 });
 

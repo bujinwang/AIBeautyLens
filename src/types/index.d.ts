@@ -3,6 +3,7 @@
 // Skincare recommendation interface
 export interface SkincareRecommendation {
   productType: string;
+  productName: string;
   recommendedIngredients: string;
   recommendedUsage: string;
   reason: string;

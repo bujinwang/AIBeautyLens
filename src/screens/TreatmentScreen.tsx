@@ -8,7 +8,8 @@ import Card from '../components/Card';
 import Button from '../components/Button';
 import GenderConfidenceDisplay from '../components/GenderConfidenceDisplay';
 import { COLORS, SPACING, SHADOWS, BORDER_RADIUS, TYPOGRAPHY } from '../constants/theme';
-import { TREATMENTS } from '../constants/treatments';
+import { getLocalizedTreatments } from '../constants/treatments';
+import { useLocalization } from '../i18n/localizationContext';
 
 type TreatmentScreenRouteProp = RouteProp<RootStackParamList, 'Treatment'>;
 type TreatmentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Treatment'>;
@@ -59,6 +60,7 @@ interface SimulationParams {
 }
 
 const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { t } = useLocalization();
   const {
     analysisResult = {
       gender: "",
@@ -78,10 +80,20 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [concernBasedTreatments, setConcernBasedTreatments] = useState<string[]>([]);
+  const [treatments, setTreatments] = useState<any[]>([]);
+
+  // Load localized treatments
+  useEffect(() => {
+    const loadTreatments = async () => {
+      const localizedTreatments = await getLocalizedTreatments();
+      setTreatments(localizedTreatments);
+    };
+    loadTreatments();
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Recommended Treatments',
+      title: t('recommendedTreatments'),
       headerTintColor: '#FFFFFF',
       headerStyle: {
         backgroundColor: '#4A90E2',
@@ -96,13 +108,13 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   }, [navigation]);
 
   useEffect(() => {
-    // Calculate total price whenever selectedTreatments changes
+    // Calculate total price whenever selectedTreatments or treatments changes
     const newTotal = selectedTreatments.reduce((sum, id) => {
-      const treatment = TREATMENTS.find(t => t.id === id);
+      const treatment = treatments.find(t => t.id === id);
       return sum + (treatment?.price || 0);
     }, 0);
     setTotalPrice(newTotal);
-  }, [selectedTreatments]);
+  }, [selectedTreatments, treatments]);
 
   useEffect(() => {
     if (visitPurpose && visitPurpose.length > 0) {
@@ -199,8 +211,8 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
     // Generate treatment details for all treatments
     const details: Record<string, any> = {};
-    
-    TREATMENTS.forEach(treatment => {
+
+    treatments.forEach(treatment => {
       // Get category-based defaults
       const categoryIcon = defaultUIEnhancements.categoryIcons[treatment.category] || 'star';
       const categoryBenefits = defaultUIEnhancements.categoryBenefits[treatment.category] || [
@@ -209,10 +221,10 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         'Results may vary by individual',
         'Conducted by trained specialists'
       ];
-      
+
       // Check for specific overrides
       const override = defaultUIEnhancements.specificOverrides[treatment.id];
-      
+
       // Create the treatment detail entry
       details[treatment.id] = {
         title: treatment.name,
@@ -222,9 +234,9 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         // Add any additional UI-specific fields needed
       };
     });
-    
+
     return details;
-  }, []); // Empty dependency array since TREATMENTS is constant
+  }, [treatments]); // Update dependency array to include treatments
 
   // Update the EnhancedTreatmentCard component to use both sources
   const EnhancedTreatmentCard = React.memo(({ treatmentId, treatment, isSelected, onToggle }: {
@@ -235,7 +247,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   }) => {
     const details = treatmentDetails[treatmentId];
     const treatmentReasons = reasons[treatmentId] || [];
-    
+
     // If no details are found for this treatment ID, use basic info from the treatment object
     const displayIcon = details?.icon || 'star';
     const displayBenefits = details?.benefits || [];
@@ -256,7 +268,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
 
         <View style={styles.enhancedCardContent}>
-          <Text style={styles.enhancedAreaLabel}>Area: {treatment.area}</Text>
+          <Text style={styles.enhancedAreaLabel}>{t('area')} {treatment.area}</Text>
 
           <Text style={styles.enhancedTreatmentDescription}>
             {treatment.description}
@@ -264,14 +276,14 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
           {treatmentReasons.length > 0 && (
             <View style={styles.enhancedReasonSection}>
-              <Text style={styles.enhancedReasonTitle}>Why it's recommended:</Text>
+              <Text style={styles.enhancedReasonTitle}>{t('whyRecommended')}</Text>
               <Text style={styles.enhancedReasonText}>{treatmentReasons[0]}</Text>
             </View>
           )}
 
           {displayBenefits.length > 0 && (
             <View style={styles.enhancedBenefitsSection}>
-              <Text style={styles.enhancedBenefitsTitle}>Benefits:</Text>
+              <Text style={styles.enhancedBenefitsTitle}>{t('benefits')}</Text>
               {displayBenefits.map((benefit: string, index: number) => (
                 <View key={index} style={styles.enhancedBenefitItem}>
                   <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.benefitIcon} />
@@ -296,7 +308,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     const handlers: { [key: string]: () => void } = {};
 
     // Pre-generate handlers for all possible treatments
-    TREATMENTS.forEach(treatment => {
+    treatments.forEach(treatment => {
       handlers[treatment.id] = () => {
         setSelectedTreatments(prev => {
           if (prev.includes(treatment.id)) {
@@ -309,16 +321,20 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     });
 
     return handlers;
-  }, []);  // Empty dependency array as we want this to be created only once
+  }, [treatments]);  // Update dependency array to include treatments
 
   // Update the treatmentCheckboxes useMemo to use the enhanced treatment card
   const treatmentCheckboxes = useMemo(() => {
-    const treatments = recommendedTreatments && recommendedTreatments.length > 0
+    const treatmentIds = recommendedTreatments && recommendedTreatments.length > 0
       ? recommendedTreatments
       : uniqueTreatmentIds;
 
-    return treatments.map((treatmentId) => {
-      const treatment = TREATMENTS.find(t => t.id === treatmentId);
+    if (treatments.length === 0) {
+      return <Text style={styles.loadingText}>{t('loading')}...</Text>;
+    }
+
+    return treatmentIds.map((treatmentId) => {
+      const treatment = treatments.find(t => t.id === treatmentId);
       if (!treatment) return null;
 
       const isSelected = selectedTreatments.includes(treatmentId);
@@ -332,7 +348,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         />
       );
     });
-  }, [recommendedTreatments, uniqueTreatmentIds, selectedTreatments, treatmentToggleHandlers, concernBasedTreatments, reasons]);
+  }, [recommendedTreatments, uniqueTreatmentIds, selectedTreatments, treatmentToggleHandlers, concernBasedTreatments, reasons, treatments, t]);
 
   // 3. Add a performance enhancement to limit unnecessary renders
   // Add this useEffect to run when the component mounts and set style optimization flags
@@ -355,6 +371,11 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Add function to get treatments based on concerns
   const getConcernBasedRecommendations = () => {
+    // Check if treatments are loaded
+    if (!treatments || treatments.length === 0) {
+      return [];
+    }
+
     // Map common concerns to appropriate treatments using our actual treatment IDs
     const concernToTreatmentMap: { [key: string]: string[] } = {
       'wrinkles': ['botox', 'dermal-facial-fillers', 'thermage', 'ultherapy'],
@@ -397,16 +418,16 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Visit Information</Text>
+        <Text style={styles.sectionTitle}>{t('visitInformation')}</Text>
         {visitPurpose && (
           <View style={styles.visitInfoItem}>
-            <Text style={styles.visitInfoLabel}>Purpose of Visit:</Text>
+            <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
             <Text style={styles.purposeText}>{visitPurpose}</Text>
           </View>
         )}
         {appointmentLength && (
           <View style={styles.visitInfoItem}>
-            <Text style={styles.visitInfoLabel}>Appointment Length:</Text>
+            <Text style={styles.visitInfoLabel}>{t('appointmentLengthLabel')}</Text>
             <Text style={styles.purposeText}>{appointmentLength}</Text>
           </View>
         )}
@@ -417,7 +438,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
   const AnalysisSummaryMemo = useMemo(() => (
     <Card
       variant="elevated"
-      title="SkinMatrix™ Analysis Summary"
+      title={t('skinMatrixSummary')}
       icon="face-retouching-natural"
       style={styles.summaryCard}
     >
@@ -427,11 +448,11 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
         <View style={styles.summaryDetails}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Age:</Text>
-            <Text style={styles.summaryValue}>{analysisResult?.estimatedAge || "N/A"} {analysisResult?.estimatedAge ? "years" : ""}</Text>
+            <Text style={styles.summaryLabel}>{t('age')}</Text>
+            <Text style={styles.summaryValue}>{analysisResult?.estimatedAge || "N/A"} {analysisResult?.estimatedAge ? t('years') : ""}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Gender:</Text>
+            <Text style={styles.summaryLabel}>{t('gender')}</Text>
             <View style={styles.summaryValueContainer}>
               {analysisResult?.gender ? (
                 <GenderConfidenceDisplay
@@ -445,12 +466,12 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
             </View>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Skin Type:</Text>
+            <Text style={styles.summaryLabel}>{t('skinType')}</Text>
             <Text style={styles.summaryValue}>{analysisResult?.skinType || "N/A"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Features:</Text>
-            <Text style={styles.summaryValue}>{analysisResult?.features?.length || 0} identified</Text>
+            <Text style={styles.summaryLabel}>{t('features')}</Text>
+            <Text style={styles.summaryValue}>{analysisResult?.features?.length || 0} {t('identified')}</Text>
           </View>
         </View>
       </View>
@@ -463,10 +484,10 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
       <View style={styles.footer}>
         <View style={styles.summaryContainer}>
           <Text style={styles.selectedTreatmentsText}>
-            Selected Treatments: {selectedTreatments.length}
+            {t('selectedTreatments')} {selectedTreatments.length}
           </Text>
           <Text style={styles.totalPriceText}>
-            Total: <Text style={styles.totalPriceAmount}>${totalPrice}</Text>
+            {t('total')} <Text style={styles.totalPriceAmount}>${totalPrice}</Text>
           </Text>
         </View>
         <TouchableOpacity
@@ -478,7 +499,7 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
           disabled={selectedTreatments.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>View Report</Text>
+          <Text style={styles.buttonText}>{t('viewReport')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -488,9 +509,9 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headingContainer}>
-          <Text style={styles.heading}>Recommended Treatments</Text>
+          <Text style={styles.heading}>{t('recommendedTreatments')}</Text>
           <Text style={styles.subheading}>
-            Based on your facial analysis, the following treatments are recommended:
+            {t('basedOnAnalysis')}
           </Text>
         </View>
 
@@ -733,6 +754,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666666',
+    textAlign: 'center',
+    marginVertical: 20,
   },
   // Premium treatment card styles
   premiumCardContainer: {

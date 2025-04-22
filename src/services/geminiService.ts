@@ -7,18 +7,28 @@ import {
 } from '../config/api';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { translations } from '../i18n/localizationContext';
+import { getFacialAnalysisPrompt, getProductRecommendationsPrompt, generateTreatmentsList } from './promptTemplates';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { SkincareRecommendation } from '../types';
 import { TREATMENTS } from '../constants/treatments';
-import { SkincareProduct, SKINCARE_PRODUCTS, PRODUCTS_BY_SKIN_TYPE, getProductsForConcerns } from '../constants/skincareProducts';
+import { SkincareProduct, SKINCARE_PRODUCTS } from '../constants/skincareProducts';
 
 // Navigation reference for navigation outside of components
+// This is used in the navigate function below
 let _navigationRef: any = null;
 
 // Set the navigation reference
 export const setGlobalNavigationRef = (navigationRef: any) => {
   _navigationRef = navigationRef;
+};
+
+// This function is used elsewhere in the app to navigate programmatically
+export const navigate = (name: string, params?: any) => {
+  if (_navigationRef && _navigationRef.isReady()) {
+    _navigationRef.navigate(name, params);
+  }
 };
 
 // Helper function to determine image type from base64 prefix
@@ -45,7 +55,8 @@ const logNetworkError = (context: string, error: any, details?: any) => {
 };
 
 // Function to log API responses in a standardized way
-const logAPIResponse = (context: string, status: number, statusText: string) => {
+// This is used in the API calls below
+export const logAPIResponse = (context: string, status: number, statusText: string) => {
   if (status >= 400) {
     console.error(`[API Error] ${context} - Status: ${status}, Message: ${statusText}`);
   } else {
@@ -58,21 +69,332 @@ const logImageProcessing = (context: string, details: any) => {
   console.log(`[Image Processing] ${context}:`, details);
 };
 
+// Function to translate product information based on language
+const translateProductInfo = (text: string, language: string): string => {
+  if (language === 'zh') {
+    // Simple translations for common skincare terms
+    const translations: Record<string, string> = {
+      'Cleanser': '洁面乳',
+      'Moisturizer': '保湿霜',
+      'Serum': '精华液',
+      'Sunscreen': '防晒霜',
+      'Exfoliator': '去角质产品',
+      'Toner': '爽肤水',
+      'Mask': '面膜',
+      'Apply': '使用',
+      'Skin': '皮肤',
+      'Face': '面部',
+      'Morning': '早上',
+      'Evening': '晚上',
+      'Daily': '每天',
+      'Twice': '两次',
+      'Gently': '轻轻地',
+      'Massage': '按摩',
+      'Rinse': '冲洗',
+      'Hydrating': '保湿',
+      'Nourishing': '滋养',
+      'Soothing': '舒缓',
+      'Brightening': '美白',
+      'Anti-aging': '抗衰老',
+      'Acne': '痘痘',
+      'Sensitive': '敏感',
+      'Dry': '干性',
+      'Oily': '油性',
+      'Combination': '混合性',
+      'Normal': '中性',
+      'Ingredients': '成分',
+      'Benefits': '好处',
+      'Usage': '使用方法',
+      'Directions': '使用说明',
+      'Recommended': '推荐',
+      'For': '适用于',
+      'And': '和',
+      'With': '含有',
+      'Contains': '含有',
+      'Helps': '有助于',
+      'Reduces': '减少',
+      'Improves': '改善',
+      'Prevents': '预防',
+      'Protects': '保护',
+      'Repairs': '修复',
+      'Restores': '恢复',
+      'Balances': '平衡',
+      'Calms': '镇静',
+      'Soothes': '舒缓',
+      'Hydrates': '保湿',
+      'Moisturizes': '滋润',
+      'Nourishes': '滋养',
+      'Cleanses': '清洁',
+      'Exfoliates': '去角质',
+      'Tones': '调理',
+      'Brightens': '美白',
+      'Firms': '紧致',
+      'Smooths': '平滑',
+      'Evens': '均匀',
+      'Texture': '质地',
+      'Tone': '肤色',
+      'Appearance': '外观',
+      'Skin barrier': '皮肤屏障',
+      'Pores': '毛孔',
+      'Wrinkles': '皱纹',
+      'Fine lines': '细纹',
+      'Dark spots': '黑斑',
+      'Redness': '泛红',
+      'Inflammation': '炎症',
+      'Irritation': '刺激',
+      'Dryness': '干燥',
+      'Oiliness': '油腻',
+      'Breakouts': '爆发',
+      'Blemishes': '瑕疵',
+      'Blackheads': '黑头',
+      'Whiteheads': '白头',
+      'Hyperpigmentation': '色素沉着',
+      'Sun damage': '日晒伤害',
+      'Aging': '老化',
+      'Dullness': '暗沉',
+      'Uneven': '不均匀',
+      'Radiant': '光彩',
+      'Glowing': '发光',
+      'Healthy': '健康',
+      'Youthful': '年轻',
+      'Smooth': '光滑',
+      'Soft': '柔软',
+      'Firm': '紧致',
+      'Plump': '丰满',
+      'Supple': '柔软',
+      'Elastic': '有弹性',
+      'Refreshed': '焕然一新',
+      'Revitalized': '恢复活力',
+      'Renewed': '更新',
+      'Transformed': '转变',
+      'Enhanced': '增强',
+      'Improved': '改善',
+      'Optimized': '优化',
+      'Maximized': '最大化',
+      'Boosted': '提升',
+      'Strengthened': '加强',
+      'Fortified': '强化',
+      'Enriched': '丰富',
+      'Infused': '注入',
+      'Packed': '充满',
+      'Loaded': '装载',
+      'Formulated': '配制',
+      'Designed': '设计',
+      'Created': '创建',
+      'Developed': '开发',
+      'Tested': '测试',
+      'Proven': '证明',
+      'Clinically': '临床',
+      'Dermatologically': '皮肤科',
+      'Hypoallergenic': '低过敏性',
+      'Non-comedogenic': '不致粉刺',
+      'Fragrance-free': '无香料',
+      'Alcohol-free': '无酒精',
+      'Paraben-free': '无对羟基苯甲酸酯',
+      'Sulfate-free': '无硫酸盐',
+      'Silicone-free': '无硅',
+      'Oil-free': '无油',
+      'Cruelty-free': '不做动物测试',
+      'Vegan': '纯素',
+      'Natural': '天然',
+      'Organic': '有机',
+      'Clean': '清洁',
+      'Safe': '安全',
+      'Effective': '有效',
+      'Powerful': '强大',
+      'Gentle': '温和',
+      'Mild': '温和',
+      'Lightweight': '轻盈',
+      'Rich': '丰富',
+      'Creamy': '奶油状',
+      'Silky': '丝滑',
+      'Luxurious': '豪华',
+      'Premium': '高级',
+      'Professional': '专业',
+      'Advanced': '先进',
+      'Innovative': '创新',
+      'Revolutionary': '革命性',
+      'Breakthrough': '突破',
+      'Cutting-edge': '前沿',
+      'State-of-the-art': '最先进',
+      'Next-generation': '下一代',
+      'High-performance': '高性能',
+      'Multi-tasking': '多任务',
+      'All-in-one': '多合一',
+      'Targeted': '针对性',
+      'Specialized': '专业',
+      'Customized': '定制',
+      'Personalized': '个性化',
+      'Tailored': '量身定制',
+      'Exclusive': '独家',
+      'Unique': '独特',
+      'Signature': '标志性',
+      'Iconic': '标志性',
+      'Classic': '经典',
+      'Bestselling': '畅销',
+      'Award-winning': '获奖',
+      'Cult-favorite': '流行',
+      'Must-have': '必备',
+      'Essential': '必需',
+      'Staple': '主要',
+      'Go-to': '首选',
+      'Holy grail': '圣杯',
+      'Game-changer': '游戏规则改变者',
+      'Life-changing': '改变生活',
+      'Transformative': '变革',
+      'Miraculous': '神奇',
+      'Amazing': '惊人',
+      'Incredible': '难以置信',
+      'Extraordinary': '非凡',
+      'Exceptional': '特殊',
+      'Outstanding': '杰出',
+      'Remarkable': '显著',
+      'Impressive': '令人印象深刻',
+      'Stunning': '惊人',
+      'Spectacular': '壮观',
+      'Fabulous': '极好',
+      'Fantastic': '极好',
+      'Wonderful': '精彩',
+      'Excellent': '优秀',
+      'Superb': '极好',
+      'Superior': '优越',
+      'Ultimate': '终极',
+      'Perfect': '完美',
+      'Ideal': '理想',
+      'Optimal': '最佳',
+      'Best': '最好',
+      'Top': '顶级',
+      'Premium_1': '高级',
+      'Luxury': '奢侈',
+      'High-end': '高端',
+      'Prestige': '声望',
+      'Elite': '精英',
+      'Exclusive_1': '独家',
+      'Limited edition': '限量版',
+      'Special': '特别',
+      'Unique_1': '独特',
+      'One-of-a-kind': '独一无二',
+      'Distinctive': '独特',
+      'Innovative_1': '创新',
+      'Groundbreaking': '开创性',
+      'Revolutionary_1': '革命性',
+      'Pioneering': '开创性',
+      'Trailblazing': '开创性',
+      'Visionary': '有远见',
+      'Forward-thinking': '前瞻性',
+      'Futuristic': '未来主义',
+      'Modern': '现代',
+      'Contemporary': '当代',
+      'Trendy': '时尚',
+      'Fashionable': '时尚',
+      'Stylish': '时尚',
+      'Chic': '别致',
+      'Sophisticated': '复杂',
+      'Elegant': '优雅',
+      'Refined': '精致',
+      'Polished': '精致',
+      'Sleek': '时尚',
+      'Minimalist': '极简主义',
+      'Clean_1': '干净',
+      'Pure_1': '纯净',
+      'Simple': '简单',
+      'Uncomplicated': '不复杂',
+      'Straightforward': '直接',
+      'Easy': '容易',
+      'Convenient': '方便',
+      'Practical': '实用',
+      'Functional': '功能性',
+      'Versatile': '多功能',
+      'Flexible': '灵活',
+      'Adaptable': '适应性',
+      'Universal': '通用',
+      'All-purpose': '多用途',
+      'Comprehensive': '全面',
+      'Complete': '完整',
+      'Thorough': '彻底',
+      'Extensive': '广泛',
+      'Expansive': '广阔',
+      'Wide-ranging': '广泛',
+      'Far-reaching': '深远',
+      'Long-lasting': '持久',
+      'Enduring': '持久',
+      'Durable': '耐用',
+      'Resilient': '有弹性',
+      'Robust': '强健',
+      'Strong': '强大',
+      'Powerful_1': '强大',
+      'Potent': '有效',
+      'Concentrated': '浓缩',
+      'Intense': '强烈',
+      'Deep': '深',
+      'Profound': '深刻',
+      'Significant': '重要',
+      'Substantial': '实质性',
+      'Considerable': '相当',
+      'Notable': '显著',
+      'Noticeable': '明显',
+      'Visible': '可见',
+      'Apparent': '明显',
+      'Evident': '明显',
+      'Clear': '清晰',
+      'Obvious': '明显',
+      'Unmistakable': '明确',
+      'Undeniable': '不可否认',
+      'Indisputable': '无可争议',
+      'Unquestionable': '无可置疑',
+      'Certain': '确定',
+      'Definite': '明确',
+      'Absolute': '绝对',
+      'Complete_1': '完整',
+      'Total': '总',
+      'Utter': '完全',
+      'Sheer': '纯',
+      'Pure_2': '纯',
+      'Unadulterated': '纯',
+      'Undiluted': '未稀释',
+      'Full-strength': '全强度',
+      'Maximum': '最大',
+      'Optimal_1': '最佳',
+      'Ideal_1': '理想',
+      'Perfect_1': '完美',
+    };
+
+    // Replace English terms with Chinese translations
+    let translatedText = text;
+    Object.entries(translations).forEach(([english, chinese]) => {
+      // Use word boundary to avoid partial word matches
+      const regex = new RegExp(`\\b${english}\\b`, 'gi');
+      translatedText = translatedText.replace(regex, chinese);
+    });
+
+    return translatedText;
+  }
+
+  // Return original text for other languages
+  return text;
+};
+
 // Interface for Gemini API request with user's skin info
 interface GeminiProductRequestData {
   skinType: string;
   concerns: string[];
   existingRecommendations: SkincareRecommendation[];
+  language?: string;
 }
 
 // Response from Gemini API with product recommendations
+// This interface is used in the implementation of the Gemini API integration
+// It's kept here for documentation purposes
+/*
 interface GeminiProductResponseData {
   products: SkincareProduct[];
 }
+*/
 
 // Mock API key - in a real app, this would be stored in environment variables
 // and accessed securely
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
+// This is now handled in the config/api.ts file
+// const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
 
 /**
  * Analyzes a facial image and returns recommendations
@@ -82,6 +404,16 @@ const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY";
  * @returns Analysis results including age, skin type, and treatment recommendations
  */
 export const analyzeFacialImage = async (base64Image: string, visitPurpose?: string, appointmentLength?: string) => {
+  // Get the current language from AsyncStorage
+  let currentLanguage = 'en';
+  try {
+    const savedLanguage = await AsyncStorage.getItem('language');
+    if (savedLanguage) {
+      currentLanguage = savedLanguage;
+    }
+  } catch (error) {
+    console.error('Error loading language preference:', error);
+  }
   let retryCount = 0;
   // Update to ensure the value is capped at 2 (for a total of 3 attempts max)
   const MAX_RETRIES = Math.min(2, Platform.OS === 'ios' && Platform.isPad ? 2 : 1);
@@ -137,7 +469,7 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
         await FileSystem.deleteAsync(tempFilePath);
 
         console.log(`Compressed image size: ${Math.round(compressedBase64.length/1024)} KB`);
-        
+
         // If compression didn't reduce size enough, try one more time with more aggressive settings
         if (compressedBase64.length > 750000) {
           console.log('First compression not sufficient, trying more aggressive compression...');
@@ -215,7 +547,7 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
         try {
           processedBase64 = await reduceBase64ImageSize(base64Image);
           console.log('Processed Base64 image length:', processedBase64.length);
-          
+
           // If image is still too large after processing, throw a specific error
           if (processedBase64.length > 1000000) {
             throw new Error('IMAGE_TOO_LARGE: The image is too large for processing on iPad even after compression. Please try with a smaller image or use a different device.');
@@ -239,61 +571,8 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
       const mimeType = getImageMimeType(processedBase64);
       console.log('Detected image mime type:', mimeType);
 
-      // Dynamically generate treatments catalog from TREATMENTS array
-      const generateTreatmentsList = () => {
-        let treatmentsCatalog = `
-        Available treatments for recommendation:
-        
-        `;
-        
-        // Group treatments by category
-        const categorizedTreatments: Record<string, typeof TREATMENTS> = {};
-        TREATMENTS.forEach(treatment => {
-          if (!categorizedTreatments[treatment.category]) {
-            categorizedTreatments[treatment.category] = [];
-          }
-          categorizedTreatments[treatment.category].push(treatment);
-        });
-        
-        // Build the treatments list by category
-        Object.entries(categorizedTreatments).forEach(([category, treatments]) => {
-          treatmentsCatalog += `${category.toUpperCase()} TREATMENTS:\n`;
-          
-          treatments.forEach(treatment => {
-            treatmentsCatalog += `- ${treatment.id}: ${treatment.name} (${treatment.area}) - ${treatment.description}\n`;
-            
-            if (treatment.contraindications && treatment.contraindications.length > 0) {
-              treatmentsCatalog += `  CONTRAINDICATIONS: ${treatment.contraindications.join(', ')}\n`;
-            }
-            
-            if (treatment.restrictions) {
-              treatmentsCatalog += `  RESTRICTIONS: ${treatment.restrictions}\n`;
-            }
-            
-            treatmentsCatalog += `\n`;
-          });
-        });
-        
-        // Add treatment selection guidelines
-        treatmentsCatalog += `
-        IMPORTANT TREATMENT SELECTION GUIDELINES:
-        1. Always check contraindications before recommending any treatment
-        2. For clients with active acne or inflammation, avoid laser and radiofrequency treatments
-        3. Consider HydraFacial as a safer alternative for acne-prone skin
-        4. For severe acne cases, recommend medical consultation before any aesthetic treatments
-        5. Consider skin type and sensitivity when recommending treatments
-        6. Always prioritize skin barrier repair before aggressive treatments
-        7. Factor in recent procedures or medications that might affect treatment safety
-        8. Consider alternative treatments when contraindications are present
-        9. Always ensure the treatment addresses the client's specific concerns
-        10. Consider the client's skin tone for treatments with pigmentation risks
-        `;
-        
-        return treatmentsCatalog;
-      };
-
       // Generate the treatments list from the full TREATMENTS array
-      const treatmentsList = generateTreatmentsList();
+      const treatmentsList = generateTreatmentsList(TREATMENTS);
 
       // Prepare the request body for Gemini
       const requestBody = {
@@ -302,115 +581,7 @@ export const analyzeFacialImage = async (base64Image: string, visitPurpose?: str
             role: "user",
             parts: [
               {
-                text: `You are an expert aesthetic medical professional and licensed dermatologist specializing in facial analysis and skincare recommendations. Provide comprehensive clinical assessments of facial features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed, similar to a professional dermatological consultation.
-
-Analyze this image for facial features, skin conditions, and provide a detailed clinical assessment.
-
-ANALYSIS REQUIREMENTS:
-
-1. Basic Profile:
-   - Estimated age based on visual indicators
-   - Gender with confidence score
-   - Overall skin type (oily, dry, combination, sensitive) based on visual cues
-   - Skin undertone assessment (warm, cool, neutral)
-
-2. Overall Skin Health:
-   Provide a concise summary of:
-   - Primary skin concerns
-   - Current skin condition
-   - Any signs of inflammation or barrier issues
-   - General skin health status
-
-3. Clinical Assessment:
-   For EACH identified skin condition, analyze:
-   a) Condition Details:
-      - Precise clinical description
-      - Exact locations on face (e.g., T-zone, perioral area, etc.)
-      - Severity rating (1-5) with clinical justification
-      - Current status (active, healing, or chronic)
-      
-   b) Clinical Analysis:
-      - Probable causes (list all relevant factors)
-      - Observable characteristics
-      - Associated symptoms
-      - Impact on overall skin health
-      
-   c) Treatment Priority:
-      - Priority level (immediate attention, high, moderate, low, maintenance)
-      - Clinical reasoning for priority assignment
-      - Risk factors if left untreated
-
-4. Key Conditions to Assess:
-   Evaluate presence and severity of:
-   - Acne (comedonal, inflammatory, cystic)
-   - Post-inflammatory hyperpigmentation
-   - Texture irregularities
-   - Dehydration markers
-   - Barrier compromise signs
-   - Sebum production patterns
-   - Inflammatory responses
-   - Sun damage indicators
-   - Melasma/hyperpigmentation
-   - Skin sensitivity markers
-
-Format your response as a JSON object with these exact fields:
-{
-  "estimatedAge": number,
-  "gender": "male" | "female" | "unknown",
-  "genderConfidence": number (0.0 to 1.0),
-  "skinType": string,
-  "skinUndertone": string,
-  "overallCondition": string (detailed assessment),
-  "features": [
-    {
-      "description": string (clinical name),
-      "severity": number (1-5),
-      "location": string (specific facial areas),
-      "causes": string[] (evidence-based factors),
-      "status": "active" | "healing" | "chronic",
-      "characteristics": string[] (observable traits),
-      "priority": number (1-5, where 1 is highest)
-    }
-  ],
-  "recommendations": [
-    {
-      "treatmentId": string (from catalog),
-      "reason": string (clinical justification),
-      "priority": number (1-5),
-      "expectedOutcome": string,
-      "recommendedInterval": string
-    }
-  ],
-  "skincareRecommendations": [
-    {
-      "productType": string,
-      "recommendedIngredients": string,
-      "recommendedUsage": string,
-      "reason": string,
-      "targetConcerns": string[],
-      "precautions": string
-    }
-  ]
-}
-
-IMPORTANT: Keep your response concise but complete. Focus on the most relevant conditions and recommendations. If the response is too long, it may be truncated.
-
-${treatmentsList}
-
-${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
-${appointmentLength ? `APPOINTMENT LENGTH: ${appointmentLength}` : ''}
-
-IMPORTANT CLINICAL GUIDELINES:
-1. Base all assessments solely on visible evidence in the image
-2. Provide specific locations and descriptions for each condition
-3. Consider multiple factors for each condition's probable causes
-4. Assess severity based on clinical presentation
-5. Prioritize treatment based on condition severity and impact
-6. Note any conditions requiring immediate medical attention
-7. Consider potential condition interactions
-8. Document any signs of skin barrier compromise
-9. Assess both active and chronic conditions
-10. Consider patient age in all recommendations`
+                text: getFacialAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, appointmentLength)
               },
               {
                 inline_data: {
@@ -606,31 +777,31 @@ IMPORTANT CLINICAL GUIDELINES:
       }
     } catch (error: any) {
       console.error('Error in executeWithRetry:', error);
-      
+
       // Special handling for iPad-specific errors
       if (isIPad) {
         // If we haven't retried yet and it's a network error
-        if (retryCount < MAX_RETRIES && 
-            (error.message.includes('Network request failed') || 
+        if (retryCount < MAX_RETRIES &&
+            (error.message.includes('Network request failed') ||
              error.message.includes('Network Error') ||
              error.message.includes('timeout'))) {
           console.log(`Retrying iPad request (attempt ${retryCount + 1} of ${MAX_RETRIES})`);
-          
+
           // Add exponential backoff delay between retries
           const delay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10 seconds
           console.log(`Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
-          
+
           retryCount++;
           return executeWithRetry();
         }
-        
+
         // For iPad-specific errors, provide more detailed guidance
         if (error.message.includes('IMAGE_TOO_LARGE')) {
           throw new Error('The image is too large for processing on iPad. Please try:\n1. Taking a new photo with better lighting\n2. Using a different device\n3. Reducing the image size before uploading');
         }
       }
-      
+
       throw error;
     }
   };
@@ -640,10 +811,10 @@ IMPORTANT CLINICAL GUIDELINES:
     return await executeWithRetry();
   } catch (error: any) {
     logNetworkError('Final error in facial analysis', error);
-    
+
     // Special iPad-specific error message with more helpful guidance
     if (isIPad) {
-      if (error.message.includes('Network request failed') || 
+      if (error.message.includes('Network request failed') ||
           error.message.includes('Network Error') ||
           error.message.includes('timeout')) {
         throw new Error('Network connection issue detected. Please check your internet connection or try again later.');
@@ -651,7 +822,7 @@ IMPORTANT CLINICAL GUIDELINES:
         throw new Error('We encountered an issue processing your request. Please try taking a new photo with better lighting or reducing the image size.');
       }
     }
-    
+
     throw error;
   }
 };
@@ -699,6 +870,16 @@ export const checkRuntimeSettings = async (): Promise<{success: boolean; message
 export const getGeminiProductRecommendations = async (
   requestData: GeminiProductRequestData
 ): Promise<SkincareProduct[]> => {
+  // Get the current language from AsyncStorage
+  let currentLanguage = 'en';
+  try {
+    const savedLanguage = await AsyncStorage.getItem('language');
+    if (savedLanguage) {
+      currentLanguage = savedLanguage;
+    }
+  } catch (error) {
+    console.error('Error loading language preference:', error);
+  }
   try {
     const apiKey = await getApiKey();
     if (!apiKey) {
@@ -714,37 +895,12 @@ export const getGeminiProductRecommendations = async (
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `As a skincare expert, recommend specific skincare products for a user with ${requestData.skinType} skin 
-            and the following concerns: ${requestData.concerns.join(', ')}. 
-            
-            For each of these product types:
-            ${requestData.existingRecommendations.map(rec => `
-              - ${rec.productType}
-                Recommended ingredients: ${rec.recommendedIngredients}
-                Usage: ${rec.recommendedUsage}
-                Target concerns: ${rec.targetConcerns.join(', ')}
-            `).join('\n')}
-            
-            For each product type, recommend ONE specific product with:
-            - Real brand name
-            - Specific product name
-            - Actual retail price (USD)
-            - Key ingredients that match the recommended ingredients
-            - Brief description of benefits
-            - Usage instructions
-            
-            Format your response as a JSON array of products with these exact fields:
-            {
-              "id": string (unique identifier),
-              "name": string (specific product name),
-              "brand": string (brand name),
-              "category": string (matching the product type exactly),
-              "price": number (retail price in USD),
-              "skinType": string[] (array of compatible skin types),
-              "description": string (benefits and features),
-              "ingredients": string (key ingredients),
-              "usage": string (how to use)
-            }`
+            text: getProductRecommendationsPrompt(
+              currentLanguage,
+              requestData.skinType,
+              requestData.concerns,
+              requestData.existingRecommendations
+            )
           }]
         }]
       })
@@ -755,7 +911,7 @@ export const getGeminiProductRecommendations = async (
     }
 
     const data = await response.json();
-    
+
     // Parse Gemini's response to extract the JSON product data
     const productText = data.candidates[0].content.parts[0].text;
     const productData = JSON.parse(productText.substring(
@@ -778,29 +934,109 @@ export const getGeminiProductRecommendations = async (
 export const getSingleProductRecommendations = async (
   requestData: GeminiProductRequestData
 ): Promise<SkincareProduct[]> => {
+  // Get the language from the request data or AsyncStorage
+  let currentLanguage = requestData.language || 'en';
+  if (!requestData.language) {
+    try {
+      const savedLanguage = await AsyncStorage.getItem('language');
+      if (savedLanguage) {
+        currentLanguage = savedLanguage;
+      }
+    } catch (error) {
+      console.error('Error loading language preference:', error);
+    }
+  }
   const { skinType, concerns, existingRecommendations } = requestData;
-  
+
+  // Function to translate Chinese category to English for better matching
+  const translateCategoryToEnglish = (category: string): string => {
+    // Map of Chinese categories to English equivalents
+    const chineseToEnglishMap: Record<string, string> = {
+      '洁面乳': 'Gentle Cleanser',
+      '温和洁面乳': 'Gentle Cleanser',
+      '洗面奶': 'Cleanser',
+      '洁面': 'Cleanser',
+      '保湿霜': 'Moisturizer',
+      '保湿面霜': 'Moisturizer',
+      '轻盈保湿霜': 'Lightweight Moisturizer',
+      '面霜': 'Moisturizer',
+      '乳液': 'Moisturizer',
+      '精华': 'Serum',
+      '精华液': 'Serum',
+      '精华 (抗炎/色素沉着后炎症)': 'Treatment Serum (Anti-inflammatory/PIH)',
+      '抗炎精华': 'Treatment Serum (Anti-inflammatory)',
+      '祛斑精华': 'Treatment Serum (PIH)',
+      '美白精华': 'Brightening Serum',
+      '精华 (痘痘/质地 - 谨慎使用)': 'Treatment Serum (Acne/Texture - Use cautiously)',
+      '祛痘精华': 'Acne Treatment Serum',
+      '痘痘精华': 'Acne Treatment Serum',
+      '抗痘精华': 'Acne Treatment Serum',
+      '防晒霜': 'Sunscreen',
+      '防晒': 'Sunscreen',
+      '防晒乳': 'Sunscreen',
+      '保湿精华': 'Hydrating Serum',
+      '补水精华': 'Hydrating Serum',
+      '精华 (日间)': 'Treatment Serum (AM)',
+      '日间精华': 'Treatment Serum (AM)',
+      '精华 (夜间 - 交替使用)': 'Treatment Serum (PM)',
+      '夜间精华': 'Treatment Serum (PM)',
+      '爽肤水': 'Toner',
+      '化妆水': 'Toner',
+      '柔肤水': 'Toner',
+      '去角质产品': 'Exfoliator',
+      '磨砂膏': 'Exfoliator',
+      '去角质': 'Exfoliator',
+      '面膜': 'Mask',
+      '眼霜': 'Eye Cream',
+      '眼部护理': 'Eye Care'
+    };
+
+    // Return English equivalent if found, otherwise return original
+    return chineseToEnglishMap[category] || category;
+  };
+
   try {
     // Handle combined skin types (e.g., "Combination/Sensitive")
     const skinTypes = skinType.toLowerCase().split('/').map(type => type.trim());
-    
+
     // Get all products matching any of the skin types
     const skinTypeProducts = skinTypes.length > 0
-      ? SKINCARE_PRODUCTS.filter(product => 
-          product.skinType.some(type => 
+      ? SKINCARE_PRODUCTS.filter(product =>
+          product.skinType.some(type =>
             skinTypes.includes(type.toLowerCase()) || type.toLowerCase() === 'all'
           )
         )
       : SKINCARE_PRODUCTS;
-    
+
     const recommendedProducts: SkincareProduct[] = [];
     const usedProductIds = new Set<string>(); // Track used product IDs
-    
+
     // Process each recommendation type
     for (const recommendation of existingRecommendations) {
-      // Get the product type (category)
-      const productType = recommendation.productType;
-      
+      // Get the product type (category) and translate to English if needed
+      let productType = recommendation.productType;
+      let originalProductType = productType; // Keep original for logging
+
+      // If UI is in Chinese, translate the category to English for better matching
+      if (currentLanguage === 'zh') {
+        const englishProductType = translateCategoryToEnglish(productType);
+        console.log(`Translating category from '${productType}' to '${englishProductType}' for better matching`);
+        productType = englishProductType;
+      }
+
+      // Log the category we're processing
+      console.log(`Processing product category: ${productType}${currentLanguage === 'zh' ? ` (original: ${originalProductType})` : ''}`);
+
+      // Ensure we have a valid product type - use a default if somehow empty
+      if (!productType || productType.trim() === '') {
+        console.warn(`Empty product type found, using default category`);
+        // Use a default category based on position in recommendations
+        const defaultCategories = ['Cleanser', 'Serum', 'Moisturizer', 'Sunscreen'];
+        const index = Math.min(existingRecommendations.indexOf(recommendation), defaultCategories.length - 1);
+        productType = defaultCategories[index];
+        console.log(`Using default category: ${productType}`);
+      }
+
       // Find products in this category for this skin type
       let matchingProducts = skinTypeProducts.filter(product => {
         // Skip if we've already recommended this product
@@ -811,9 +1047,10 @@ export const getSingleProductRecommendations = async (
         // Normalize categories for comparison
         const normalizedProductCategory = product.category.toLowerCase().replace(/-/g, ' ');
         const normalizedRecommendationType = productType.toLowerCase().replace(/-/g, ' ');
-        
+
         // Map common category variations
         const categoryMappings: { [key: string]: string[] } = {
+          // English categories
           'gentle cleanser': ['cleanser', 'gentle cleanser'],
           'exfoliating/pih serum': ['serum', 'targeted treatment', 'exfoliator'],
           'lightweight moisturizer': ['moisturizer', 'hydrator', 'lightweight moisturizer'],
@@ -822,7 +1059,46 @@ export const getSingleProductRecommendations = async (
           'treatment serum (am)': ['serum', 'targeted treatment', 'vitamin c'],
           'treatment serum (pm)': ['serum', 'targeted treatment', 'retinol', 'adapalene'],
           'treatment serum': ['serum', 'targeted treatment'],
-          'hydrating moisturizer': ['moisturizer', 'hydrator']
+          'hydrating moisturizer': ['moisturizer', 'hydrator'],
+
+          // Chinese categories
+          '洁面乳': ['cleanser', 'gentle cleanser'],
+          '温和洁面乳': ['cleanser', 'gentle cleanser'],
+          '洗面奶': ['cleanser', 'gentle cleanser'],
+          '洁面': ['cleanser', 'gentle cleanser'],
+          '保湿霜': ['moisturizer', 'hydrator', 'hydrating moisturizer'],
+          '保湿面霜': ['moisturizer', 'hydrator', 'hydrating moisturizer'],
+          '轻盈保湿霜': ['moisturizer', 'hydrator', 'lightweight moisturizer'],
+          '面霜': ['moisturizer', 'hydrator', 'hydrating moisturizer'],
+          '乳液': ['moisturizer', 'hydrator', 'hydrating moisturizer'],
+          '精华': ['serum', 'targeted treatment'],
+          '精华液': ['serum', 'targeted treatment'],
+          '精华 (抗炎/色素沉着后炎症)': ['serum', 'targeted treatment', 'niacinamide', 'azelaic acid'],
+          '抗炎精华': ['serum', 'targeted treatment', 'niacinamide', 'azelaic acid'],
+          '祛斑精华': ['serum', 'targeted treatment', 'niacinamide', 'azelaic acid'],
+          '美白精华': ['serum', 'targeted treatment', 'niacinamide', 'azelaic acid'],
+          '精华 (痘痘/质地 - 谨慎使用)': ['serum', 'targeted treatment', 'adapalene', 'retinol'],
+          '祛痘精华': ['serum', 'targeted treatment', 'adapalene', 'retinol'],
+          '痘痘精华': ['serum', 'targeted treatment', 'adapalene', 'retinol'],
+          '抗痘精华': ['serum', 'targeted treatment', 'adapalene', 'retinol'],
+          '防晒霜': ['sunscreen'],
+          '防晒': ['sunscreen'],
+          '防晒乳': ['sunscreen'],
+          '保湿精华': ['serum', 'hydrating & calming serum', 'targeted treatment'],
+          '补水精华': ['serum', 'hydrating & calming serum', 'targeted treatment'],
+          '精华 (日间)': ['serum', 'targeted treatment', 'vitamin c'],
+          '日间精华': ['serum', 'targeted treatment', 'vitamin c'],
+          '精华 (夜间 - 交替使用)': ['serum', 'targeted treatment', 'retinol', 'adapalene'],
+          '夜间精华': ['serum', 'targeted treatment', 'retinol', 'adapalene'],
+          '爽肤水': ['toner'],
+          '化妆水': ['toner'],
+          '柔肤水': ['toner'],
+          '去角质产品': ['exfoliator'],
+          '磨砂膏': ['exfoliator'],
+          '去角质': ['exfoliator'],
+          '面膜': ['masks', 'mask'],
+          '眼霜': ['eye care', 'eye cream'],
+          '眼部护理': ['eye care', 'eye cream']
         };
 
         // Check direct match
@@ -832,50 +1108,68 @@ export const getSingleProductRecommendations = async (
 
         // Check mapped categories and handle specific treatment types
         const mappedCategories = categoryMappings[normalizedRecommendationType] || [];
-        if (mappedCategories.some(cat => normalizedProductCategory.includes(cat))) {
+        if (mappedCategories.some(cat =>
+          normalizedProductCategory.includes(cat) ||
+          cat.includes(normalizedProductCategory)
+        )) {
           // For anti-inflammatory/brightening serums, prefer products with niacinamide or azelaic acid
-          if (normalizedRecommendationType === 'treatment serum (anti-inflammatory / brightening)' && 
-              (!product.ingredients || 
-               !(product.ingredients.toLowerCase().includes('niacinamide') || 
+          if (normalizedRecommendationType === 'treatment serum (anti-inflammatory / brightening)' &&
+              (!product.ingredients ||
+               !(product.ingredients.toLowerCase().includes('niacinamide') ||
                  product.ingredients.toLowerCase().includes('azelaic acid')))) {
             return false;
           }
-          
+
           // For acne/texture serums, prefer adapalene or retinol products
-          if (normalizedRecommendationType === 'treatment serum (acne / texture - use cautiously)' && 
-              (!product.ingredients || 
-               !(product.ingredients.toLowerCase().includes('adapalene') || 
+          if (normalizedRecommendationType === 'treatment serum (acne / texture - use cautiously)' &&
+              (!product.ingredients ||
+               !(product.ingredients.toLowerCase().includes('adapalene') ||
                  product.ingredients.toLowerCase().includes('retinol')))) {
             return false;
           }
-          
+
           // For AM treatment serums, prefer Vitamin C products
-          if (normalizedRecommendationType === 'treatment serum (am)' && 
+          if (normalizedRecommendationType === 'treatment serum (am)' &&
               (!product.ingredients || !product.ingredients.toLowerCase().includes('vitamin c'))) {
             return false;
           }
-          
+
           // For PM treatment serums, prefer retinol/adapalene products
-          if (normalizedRecommendationType === 'treatment serum (pm)' && 
-              (!product.ingredients || 
-               !(product.ingredients.toLowerCase().includes('retinol') || 
+          if (normalizedRecommendationType === 'treatment serum (pm)' &&
+              (!product.ingredients ||
+               !(product.ingredients.toLowerCase().includes('retinol') ||
                  product.ingredients.toLowerCase().includes('adapalene')))) {
             return false;
           }
-          
+
           return true;
         }
 
         // Check if product category contains the recommendation type or vice versa
-        return normalizedProductCategory.includes(normalizedRecommendationType) ||
-               normalizedRecommendationType.includes(normalizedProductCategory);
+        // Also check for partial matches with a minimum length to avoid false positives
+        if (normalizedProductCategory.includes(normalizedRecommendationType) ||
+            normalizedRecommendationType.includes(normalizedProductCategory)) {
+          return true;
+        }
+
+        // Check for partial word matches with a minimum length
+        const productWords = normalizedProductCategory.split(/\s+/);
+        const recommendationWords = normalizedRecommendationType.split(/\s+/);
+
+        // Check if any word in product category matches any word in recommendation type
+        return productWords.some(pWord =>
+          pWord.length > 3 && recommendationWords.some(rWord =>
+            rWord.length > 3 && (pWord.includes(rWord) || rWord.includes(pWord))
+          )
+        );
       });
 
       console.log(`Found ${matchingProducts.length} matching products for ${productType}`);
       matchingProducts.forEach(p => console.log(`- ${p.brand} ${p.name} (${p.category})`));
-      
+
       // If no exact matches, try to find products with matching ingredients
       if (matchingProducts.length === 0 && recommendation.recommendedIngredients) {
+        console.log(`No category matches found for ${productType}, trying ingredient matching...`);
         const ingredientKeywords = recommendation.recommendedIngredients
           .toLowerCase()
           .replace(/[()%]/g, '')  // Remove parentheses and percentage signs
@@ -884,14 +1178,14 @@ export const getSingleProductRecommendations = async (
           .map(i => i.trim())
           .filter(i => i.length > 0)  // Remove empty strings
           .map(i => i.replace(/\d+(\.\d+)?/g, '').trim()); // Remove numbers
-        
+
         console.log(`Looking for products with ingredients: ${ingredientKeywords.join(', ')}`);
-        
+
         matchingProducts = skinTypeProducts.filter(product => {
           if (!product.ingredients) return false;
-          
+
           const productIngredients = product.ingredients.toLowerCase();
-          
+
           // Count how many recommended ingredients match
           const matchCount = ingredientKeywords.filter(keyword =>
             productIngredients.includes(keyword) ||
@@ -901,7 +1195,7 @@ export const getSingleProductRecommendations = async (
             (keyword === 'zinc oxide' && productIngredients.includes('zinc')) ||
             (keyword === 'titanium dioxide' && productIngredients.includes('titanium'))
           ).length;
-          
+
           // Match if product contains at least one of the recommended ingredients
           return matchCount > 0;
         });
@@ -909,10 +1203,10 @@ export const getSingleProductRecommendations = async (
         // Sort by number of matching ingredients
         matchingProducts.sort((a, b) => {
           if (!a.ingredients || !b.ingredients) return 0;
-          
+
           const aIngredients = a.ingredients.toLowerCase();
           const bIngredients = b.ingredients.toLowerCase();
-          
+
           const aMatches = ingredientKeywords.filter(keyword =>
             aIngredients.includes(keyword) ||
             // Handle common variations
@@ -921,7 +1215,7 @@ export const getSingleProductRecommendations = async (
             (keyword === 'zinc oxide' && aIngredients.includes('zinc')) ||
             (keyword === 'titanium dioxide' && aIngredients.includes('titanium'))
           ).length;
-          
+
           const bMatches = ingredientKeywords.filter(keyword =>
             bIngredients.includes(keyword) ||
             // Handle common variations
@@ -930,29 +1224,29 @@ export const getSingleProductRecommendations = async (
             (keyword === 'zinc oxide' && bIngredients.includes('zinc')) ||
             (keyword === 'titanium dioxide' && bIngredients.includes('titanium'))
           ).length;
-          
+
           return bMatches - aMatches;
         });
 
         console.log(`Found ${matchingProducts.length} products with matching ingredients`);
         matchingProducts.forEach(p => console.log(`- ${p.brand} ${p.name} (matching ingredients)`));
       }
-      
+
       // Prioritize products that match concerns
       if (concerns.length > 0 && matchingProducts.length > 1) {
         // Check if any products address the concerns
-        const concernProducts = matchingProducts.filter(product => 
-          product.description && 
-          concerns.some(concern => 
+        const concernProducts = matchingProducts.filter(product =>
+          product.description &&
+          concerns.some(concern =>
             product.description?.toLowerCase().includes(concern.toLowerCase())
           )
         );
-        
+
         if (concernProducts.length > 0) {
           matchingProducts = concernProducts;
         }
       }
-      
+
       // Select one product from matches (or placeholder if no matches)
       if (matchingProducts.length > 0) {
         // Sort products by a deterministic score based on:
@@ -985,23 +1279,107 @@ export const getSingleProductRecommendations = async (
 
         // Select the best matching product
         const selectedProduct = matchingProducts[0];
-        
+
         // Track this product as used
         usedProductIds.add(selectedProduct.id);
-        
-        // Add to recommendations
-        recommendedProducts.push(selectedProduct);
+
+        // Translate product information if language is Chinese
+        if (currentLanguage === 'zh') {
+          // Translate product information
+          const translatedProduct = {
+            ...selectedProduct,
+            description: translateProductInfo(selectedProduct.description || '', currentLanguage),
+            usage: translateProductInfo(selectedProduct.usage || '', currentLanguage),
+            // Ensure category is displayed in Chinese
+            category: originalProductType || selectedProduct.category
+          };
+          // Add to recommendations
+          recommendedProducts.push(translatedProduct);
+          console.log(`Added translated product: ${selectedProduct.brand} ${selectedProduct.name} with category '${translatedProduct.category}'`);
+        } else {
+          // Add to recommendations
+          recommendedProducts.push(selectedProduct);
+          console.log(`Added product: ${selectedProduct.brand} ${selectedProduct.name} with category '${selectedProduct.category}'`);
+        }
       } else {
         // Log that no matching product was found
-        console.log(`No matching product found for ${productType} in our database`);
-        // Skip adding a placeholder product
-        continue;
+        console.log(`No matching product found for ${productType} in our database. Using fallback...`);
+
+        // FALLBACK: Get any product that might be suitable for this skin type
+        // First, try to find any product in the same broad category
+        const broadCategoryMap: Record<string, string[]> = {
+          'Serum': ['serum', 'essence', 'treatment', 'ampoule'],
+          'Moisturizer': ['moisturizer', 'cream', 'lotion', 'emulsion', 'gel'],
+          'Sunscreen': ['sunscreen', 'spf', 'sun protection', 'uv protection'],
+          'Cleanser': ['cleanser', 'wash', 'cleansing'],
+          'Toner': ['toner', 'lotion', 'water'],
+          'Exfoliator': ['exfoliator', 'scrub', 'peel'],
+          'Mask': ['mask', 'pack'],
+          'Eye Cream': ['eye', 'eye cream', 'eye care']
+        };
+
+        // Find the broad category keywords that match our product type
+        let broadKeywords: string[] = [];
+        for (const [broad, specifics] of Object.entries(broadCategoryMap)) {
+          const normalizedBroad = broad.toLowerCase();
+          const normalizedType = productType.toLowerCase();
+
+          if (normalizedType.includes(normalizedBroad) ||
+              normalizedBroad.includes(normalizedType) ||
+              specifics.some(s => normalizedType.includes(s))) {
+            broadKeywords = [...specifics, normalizedBroad];
+            console.log(`Using broad category '${broad}' for fallback matching`);
+            break;
+          }
+        }
+
+        // Try to find any product that matches the broad category
+        let fallbackProducts = skinTypeProducts.filter(product => {
+          if (usedProductIds.has(product.id)) return false;
+
+          const normalizedCategory = product.category.toLowerCase();
+          return broadKeywords.some(keyword => normalizedCategory.includes(keyword));
+        });
+
+        // If still no matches, just get any product for this skin type that we haven't used yet
+        if (fallbackProducts.length === 0) {
+          console.log(`No broad category matches, using any available product for this skin type`);
+          fallbackProducts = skinTypeProducts.filter(product => !usedProductIds.has(product.id));
+        }
+
+        // If we found any fallback products, use the first one
+        if (fallbackProducts.length > 0) {
+          const selectedProduct = fallbackProducts[0];
+          usedProductIds.add(selectedProduct.id);
+
+          // Translate product information if language is Chinese
+          if (currentLanguage === 'zh') {
+            const translatedProduct = {
+              ...selectedProduct,
+              description: translateProductInfo(selectedProduct.description || '', currentLanguage),
+              usage: translateProductInfo(selectedProduct.usage || '', currentLanguage),
+              // Ensure category is displayed in Chinese
+              category: originalProductType || selectedProduct.category
+            };
+            recommendedProducts.push(translatedProduct);
+            console.log(`Added fallback translated product: ${selectedProduct.brand} ${selectedProduct.name} with category '${translatedProduct.category}'`);
+          } else {
+            recommendedProducts.push(selectedProduct);
+            console.log(`Added fallback product: ${selectedProduct.brand} ${selectedProduct.name} with category '${selectedProduct.category}'`);
+          }
+
+          console.log(`Using fallback product: ${selectedProduct.brand} ${selectedProduct.name}`);
+        } else {
+          // If we still have no products, skip this category
+          console.log(`No fallback products available for ${productType}. Skipping category.`);
+          continue;
+        }
       }
     }
-    
+
     // Add a short delay to simulate API call
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     return recommendedProducts;
   } catch (error) {
     console.error("Error generating product recommendations:", error);
@@ -1009,77 +1387,4 @@ export const getSingleProductRecommendations = async (
   }
 };
 
-/**
- * Generates mock products based on user's skin type and concerns
- * This is used as a placeholder until the actual Gemini API integration
- */
-const generateMockProducts = (requestData: GeminiProductRequestData): SkincareProduct[] => {
-  const { skinType, concerns } = requestData;
-  const products: SkincareProduct[] = [];
-  
-  // Generate products for each recommendation type
-  requestData.existingRecommendations.forEach(recommendation => {
-    // Extract the product type and create a matching product
-    const productType = recommendation.productType;
-    
-    // Create 1-2 products per recommendation
-    const numProducts = Math.floor(Math.random() * 2) + 1;
-    
-    for (let i = 0; i < numProducts; i++) {
-      const productId = `gemini-${productType.toLowerCase().replace(/\s+/g, '-')}-${i+1}`;
-      
-      // Generate brand based on product type
-      let brand = 'CeraVe';
-      if (productType.includes('Acne') || productType.includes('Treatment')) {
-        brand = 'La Roche-Posay';
-      } else if (productType.includes('Moisturizer')) {
-        brand = 'Neutrogena';
-      } else if (productType.includes('Serum')) {
-        brand = 'The Ordinary';
-      } else if (i % 2 === 0) {
-        brand = 'Paula\'s Choice';
-      }
-      
-      // Generate price range based on product type
-      let priceBase = 20;
-      if (productType.includes('Serum') || productType.includes('Treatment')) {
-        priceBase = 30;
-      } else if (productType.includes('Moisturizer')) {
-        priceBase = 25;
-      } else if (productType.includes('Cleanser')) {
-        priceBase = 15;
-      }
-      
-      // Add some variation to the price
-      const price = priceBase + (Math.random() * 15).toFixed(2);
-      
-      // Use recommendation ingredients if available
-      const ingredients = recommendation.recommendedIngredients || 
-                         'Ingredients recommended for your skin type';
-      
-      // Create a product name
-      const productName = `${brand} ${skinType} ${productType}${i > 0 ? ' Plus' : ''}`;
-      
-      // Create a description that mentions skin type and concerns
-      let description = `Specially formulated for ${skinType} skin`;
-      if (concerns.length > 0) {
-        const targetConcern = concerns[Math.min(i, concerns.length - 1)];
-        description += ` targeting ${targetConcern}`;
-      }
-      
-      // Add the product
-      products.push({
-        id: productId,
-        name: productName,
-        brand,
-        category: productType,
-        price: parseFloat(price),
-        skinType: [skinType.toLowerCase(), 'all'],
-        description,
-        ingredients
-      });
-    }
-  });
-  
-  return products;
-};
+

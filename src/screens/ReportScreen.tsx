@@ -6,6 +6,7 @@ import { RootStackParamList } from '../App';
 import { TREATMENTS } from '../constants/treatments';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { useLocalization } from '../i18n/localizationContext';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 type ReportScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Report'>;
@@ -16,13 +17,14 @@ type Props = {
 };
 
 const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { t } = useLocalization();
   const { treatmentIds, beforeImage } = route.params;
   const [generating, setGenerating] = useState(false);
 
   // Format the base64 image with proper prefix if needed
   const getFormattedImageUri = (base64String: string) => {
     if (!base64String) return '';
-    
+
     // If it already has a data URI prefix, return as is
     if (base64String.startsWith('data:image')) {
       return base64String;
@@ -85,20 +87,20 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
         .join('\n');
 
       const message = `
-AIBeautyLens Treatment Plan
-Date: ${formatDate()}
+AIBeautyLens ${t('treatmentReport')}
+${t('date')} ${formatDate()}
 
-Selected Treatments:
+${t('selectedTreatments')}
 ${treatmentsList}
 
-Total: $${totalPrice}
+${t('total')} $${totalPrice}
 
-*This is a computer-generated recommendation. Please consult with a qualified specialist for personalized advice.
+*${t('disclaimer')}
 `;
 
       await Share.share({
         message,
-        title: 'AIBeautyLens Treatment Plan',
+        title: `AIBeautyLens ${t('treatmentReport')}`,
       });
     } catch (error) {
       console.error('Error sharing report:', error);
@@ -115,65 +117,65 @@ Total: $${totalPrice}
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Treatment Report</Text>
-        <Text style={styles.date}>Date: {formatDate()}</Text>
+        <Text style={styles.title}>{t('treatmentReport')}</Text>
+        <Text style={styles.date}>{t('date')} {formatDate()}</Text>
       </View>
 
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: formattedImageUri }} 
-          style={styles.image} 
+        <Image
+          source={{ uri: formattedImageUri }}
+          style={styles.image}
           resizeMode="contain"
           onError={handleImageError}
         />
         {imageError && (
           <Text style={styles.imageErrorText}>
-            Failed to load image. Please try again.
+            {t('failedToLoadImage')}
           </Text>
         )}
       </View>
 
       <View style={styles.treatmentsContainer}>
-        <Text style={styles.sectionTitle}>Recommended Treatments</Text>
-        
+        <Text style={styles.sectionTitle}>{t('recommendedTreatments')}</Text>
+
         {selectedTreatments.map(treatment => (
           <View key={treatment?.id} style={styles.treatmentItem}>
             <Text style={styles.treatmentName}>{treatment?.name}</Text>
-            <Text style={styles.treatmentArea}>Area: {treatment?.area}</Text>
+            <Text style={styles.treatmentArea}>{t('area')} {treatment?.area}</Text>
             <Text style={styles.treatmentDescription}>{treatment?.description}</Text>
             <Text style={styles.treatmentPrice}>${treatment?.price}</Text>
           </View>
         ))}
 
         <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total Estimated Cost</Text>
+          <Text style={styles.totalLabel}>{t('totalEstimatedCost')}</Text>
           <Text style={styles.totalPrice}>${totalPrice}</Text>
         </View>
       </View>
 
       <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerTitle}>Important Information</Text>
+        <Text style={styles.disclaimerTitle}>{t('importantInformation')}</Text>
         <Text style={styles.disclaimerText}>
-          This analysis is powered by advanced machine learning algorithms trained on data from thousands of aesthetic medicine cases and specialist consultations. While our AI provides comprehensive insights based on extensive medical data, individual results may vary. For optimal results, please consult with a qualified aesthetic medicine specialist who can consider your unique needs and medical history.
+          {t('disclaimer')}
         </Text>
       </View>
 
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity 
-          style={[styles.button, styles.shareButton]} 
+        <TouchableOpacity
+          style={[styles.button, styles.shareButton]}
           onPress={handleShare}
           disabled={generating}
         >
           <Text style={styles.buttonText}>
-            {generating ? 'Generating...' : 'Share Report'}
+            {generating ? t('generating') : t('shareReport')}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.button, styles.startOverButton]} 
+        <TouchableOpacity
+          style={[styles.button, styles.startOverButton]}
           onPress={handleStartOver}
         >
-          <Text style={styles.startOverButtonText}>Start Over</Text>
+          <Text style={styles.startOverButtonText}>{t('startOver')}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -336,4 +338,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ReportScreen; 
+export default ReportScreen;

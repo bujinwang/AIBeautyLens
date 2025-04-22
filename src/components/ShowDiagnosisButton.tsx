@@ -7,16 +7,20 @@ import { AnalysisResult } from '../types';
 import ShowSkincareButton from './ShowSkincareButton';
 import Button from './Button';
 import SkinMatrixHeader from './SkinMatrixHeader';
+import { useLocalization } from '../i18n/localizationContext';
 
 interface ShowDiagnosisButtonProps {
   style?: object;
   analysisResult: AnalysisResult;
+  imageUri?: string; // Optional patient image URI
 }
 
-const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({ 
-  style, 
-  analysisResult 
+const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({
+  style,
+  analysisResult,
+  imageUri
 }) => {
+  const { t } = useLocalization();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleShowReport = () => {
@@ -33,8 +37,8 @@ const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({
 
   return (
     <>
-      <TouchableOpacity 
-        style={[styles.button, style]} 
+      <TouchableOpacity
+        style={[styles.button, style]}
         onPress={handleShowReport}
         activeOpacity={0.8}
         disabled={!analysisResult}
@@ -42,13 +46,14 @@ const ShowDiagnosisButton: React.FC<ShowDiagnosisButtonProps> = ({
         <View style={styles.iconContainer}>
           <MaterialIcons name="assessment" size={20} color={COLORS.white} />
         </View>
-        <Text style={styles.buttonText}>Show Diagnosis Report</Text>
+        <Text style={styles.buttonText}>{t('showDiagnosisReport')}</Text>
       </TouchableOpacity>
 
-      <DiagnosisReportModal 
+      <DiagnosisReportModal
         visible={modalVisible}
         onClose={handleCloseModal}
         analysisResult={analysisResult}
+        imageUri={imageUri}
       />
     </>
   );

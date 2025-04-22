@@ -6,6 +6,7 @@ import { AnalysisResult } from '../types';
 import SkinMatrixHeader from './SkinMatrixHeader';
 import { getProductsForConcerns, SkincareProduct } from '../constants/skincareProducts';
 import { getGeminiProductRecommendations, getSingleProductRecommendations } from '../services/geminiService';
+import { useLocalization } from '../i18n/localizationContext';
 
 interface SkincareAdviceModalProps {
   visible: boolean;
@@ -18,11 +19,15 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
   onClose,
   analysisResult
 }) => {
+  const { t, currentLanguage } = useLocalization();
   // Extract concerns from features using useMemo to prevent recreation on every render
   const concerns = useMemo(() =>
     analysisResult.features.map(feature => feature.description.toLowerCase()),
     [analysisResult.features]
   );
+
+  // Memoize the language to prevent unnecessary renders
+  const language = useMemo(() => currentLanguage, [currentLanguage]);
 
   // State to store recommended products by category
   const [productsByCategory, setProductsByCategory] = useState<{[key: string]: SkincareProduct[]}>({});
@@ -35,10 +40,12 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
   const skinType = useMemo(() => analysisResult.skinType, [analysisResult.skinType]);
 
   // Use useMemo for the product recommendations to avoid recalculations
-  const recommendedProducts = useMemo(() =>
-    getProductsForConcerns(concerns, skinType),
-    [concerns, skinType]
-  );
+  const recommendedProducts = useMemo(() => {
+    // Make sure concerns is an array before passing it to getProductsForConcerns
+    const concernsArray = Array.isArray(concerns) ? concerns : [];
+    // Pass empty string as productType since we're not filtering by product type initially
+    return getProductsForConcerns('', concernsArray, skinType);
+  }, [concerns, skinType]);
 
   // Only run this effect when the recommendedProducts change
   useEffect(() => {
@@ -73,7 +80,8 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         const products = await getSingleProductRecommendations({
           skinType,
           concerns,
-          existingRecommendations: analysisResult.skincareRecommendations
+          existingRecommendations: analysisResult.skincareRecommendations,
+          language: currentLanguage
         });
 
         console.log("Received products:", products.length, products);
@@ -103,6 +111,8 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
   }, [visible, skinType, concerns]);
 
   const getCategoryIcon = (category: string) => {
+    if (!category) return 'science'; // Default icon if category is undefined
+
     switch (category.toLowerCase()) {
       case 'cleanser':
       case 'gentle cleanser':
@@ -136,10 +146,19 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
 
   // Function to render product recommendations for a specific category
   const renderProductRecommendations = (productType: string) => {
+    if (!productType) {
+      console.log('No product type provided to renderProductRecommendations');
+      return (
+        <View style={styles.noProductsContainer}>
+          <Text style={styles.noProductsText}>{t('noProductsFound')}</Text>
+        </View>
+      );
+    }
     console.log(`Rendering products for ${productType}`);
 
     // Map from generalized product type to specific category names in our product database
     const categoryMapping: {[key: string]: string[]} = {
+      // English categories
       'Cleanser': ['Cleanser', 'Gentle Cleanser'],
       'Gentle Cleanser': ['Cleanser', 'Gentle Cleanser'],
       'Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
@@ -148,7 +167,46 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
       'Sunscreen': ['Sunscreen'],
       'Hydrating Serum': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
       'Lightweight Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
-      'Hydrating Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer']
+      'Hydrating Moisturizer': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+
+      // Chinese categories
+      '洁面乳': ['Cleanser', 'Gentle Cleanser'],
+      '温和洁面乳': ['Cleanser', 'Gentle Cleanser'],
+      '洗面奶': ['Cleanser', 'Gentle Cleanser'],
+      '洁面': ['Cleanser', 'Gentle Cleanser'],
+      '保湿霜': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      '保湿面霜': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      '轻盈保湿霜': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      '面霜': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      '乳液': ['Moisturizer', 'Hydrator', 'Hydrating Moisturizer'],
+      '精华': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '精华液': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '精华 (抗炎/色素沉着后炎症)': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '抗炎精华': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '祛斑精华': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '美白精华': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '精华 (痘痘/质地 - 谨慎使用)': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment Serum/Spot Treatment'],
+      '祛痘精华': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment Serum/Spot Treatment'],
+      '痘痘精华': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment Serum/Spot Treatment'],
+      '抗痘精华': ['Targeted Treatment', 'Targeted Acne Treatment', 'Acne Treatment Serum/Spot Treatment'],
+      '防晒霜': ['Sunscreen'],
+      '防晒': ['Sunscreen'],
+      '防晒乳': ['Sunscreen'],
+      '保湿精华': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
+      '补水精华': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
+      '精华 (日间)': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
+      '日间精华': ['Serum', 'Hydrating & Calming Serum', 'Targeted Treatment'],
+      '精华 (夜间 - 交替使用)': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '夜间精华': ['Serum', 'Targeted Treatment', 'Hydrating & Calming Serum'],
+      '爽肤水': ['Toner'],
+      '化妆水': ['Toner'],
+      '柔肤水': ['Toner'],
+      '去角质产品': ['Exfoliator'],
+      '磨砂膏': ['Exfoliator'],
+      '去角质': ['Exfoliator'],
+      '面膜': ['Masks', 'Mask'],
+      '眼霜': ['Eye Care', 'Eye Cream'],
+      '眼部护理': ['Eye Care', 'Eye Cream']
     };
 
     // Find the matching categories from our mapping
@@ -163,21 +221,21 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         .filter(product => {
           const productCategoryLower = product.category.toLowerCase();
           const categoryLower = category.toLowerCase();
-          
+
           // Check for exact match or partial match
           const isMatch = productCategoryLower === categoryLower ||
                  productCategoryLower.includes(categoryLower) ||
                  categoryLower.includes(productCategoryLower);
-          
+
           // Also check if product is suitable for the skin type
           const skinTypes = skinType.toLowerCase().split('/').map(type => type.trim());
-          const matchesSkinType = product.skinType.some(type => 
+          const matchesSkinType = product.skinType.some(type =>
             skinTypes.includes(type.toLowerCase()) || type.toLowerCase() === 'all'
           );
-          
+
           return isMatch && matchesSkinType;
         });
-      
+
       console.log(`Found ${matchingProducts.length} products for category ${category}`);
       products = [...products, ...matchingProducts];
     });
@@ -197,7 +255,8 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         );
 
         // For cleansers, check for ceramides, glycerin, or salicylic acid
-        if (productType === 'Gentle Cleanser') {
+        const cleanserTypes = ['Gentle Cleanser', 'Cleanser', '洁面乳', '温和洁面乳', '洗面奶', '洁面'];
+        if (cleanserTypes.some(type => productType.includes(type) || type.includes(productType))) {
           return matchesSkinType && product.ingredients &&
             (product.ingredients.toLowerCase().includes('ceramide') ||
              product.ingredients.toLowerCase().includes('glycerin') ||
@@ -205,7 +264,8 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         }
 
         // For acne treatments, check for salicylic acid, benzoyl peroxide, or adapalene
-        if (productType === 'Acne Treatment Serum/Spot Treatment') {
+        const acneTreatmentTypes = ['Acne Treatment Serum/Spot Treatment', 'Targeted Acne Treatment', '精华 (痘痘/质地 - 谨慎使用)', '祛痘精华', '痘痘精华', '抗痘精华'];
+        if (acneTreatmentTypes.some(type => productType.includes(type) || type.includes(productType))) {
           return matchesSkinType && product.ingredients &&
             (product.ingredients.toLowerCase().includes('salicylic acid') ||
              product.ingredients.toLowerCase().includes('benzoyl peroxide') ||
@@ -213,7 +273,8 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
         }
 
         // For moisturizers, check for hyaluronic acid, glycerin, ceramides
-        if (productType === 'Hydrating Moisturizer') {
+        const moisturizerTypes = ['Hydrating Moisturizer', 'Moisturizer', 'Hydrator', '保湿霜', '保湿面霜', '轻盈保湿霜', '面霜', '乳液'];
+        if (moisturizerTypes.some(type => productType.includes(type) || type.includes(productType))) {
           return matchesSkinType && product.ingredients &&
             (product.ingredients.toLowerCase().includes('hyaluronic acid') ||
              product.ingredients.toLowerCase().includes('glycerin') ||
@@ -235,7 +296,7 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={COLORS.primary.main} />
-          <Text style={styles.loadingText}>Getting AI recommendations...</Text>
+          <Text style={styles.loadingText}>{t('gettingAIRecommendations')}</Text>
         </View>
       );
     }
@@ -244,7 +305,7 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
     if (products.length === 0) {
       return (
         <View style={styles.noProductsContainer}>
-          <Text style={styles.noProductsText}>No specific products found for this category</Text>
+          <Text style={styles.noProductsText}>{t('noProductsFound')}</Text>
         </View>
       );
     }
@@ -274,12 +335,15 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
               </View>
 
               <Text style={styles.productDescription}>
-                {product.description || `Specially formulated ${product.category.toLowerCase()} for ${skinType} skin`}
+                {product.description ||
+                 (product.category ?
+                  `Specially formulated ${product.category.toLowerCase()} for ${skinType} skin` :
+                  `Specially formulated product for ${skinType} skin`)}
               </Text>
 
               {product.ingredients && (
                 <View style={styles.ingredientsContainer}>
-                  <Text style={styles.ingredientsLabel}>Key Ingredients:</Text>
+                  <Text style={styles.ingredientsLabel}>{t('keyIngredients')}</Text>
                   <Text style={styles.ingredientsText}>{product.ingredients}</Text>
                 </View>
               )}
@@ -307,29 +371,28 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
 
         <View style={styles.content}>
           <SkinMatrixHeader
-            title="Personalized Skincare Advice"
-            subtitle={`Recommended regimen for ${skinType} skin`}
+            title={t('personalizedSkincareAdvice')}
+            subtitle={`${t('recommendedRegimen')} ${skinType} skin`}
           />
 
           {isLoadingGemini && (
             <View style={styles.loadingIndicatorContainer}>
               <ActivityIndicator size="small" color={COLORS.primary.main} />
-              <Text style={styles.loadingIndicatorText}>Loading recommendations...</Text>
+              <Text style={styles.loadingIndicatorText}>{t('loadingRecommendations')}</Text>
             </View>
           )}
 
           <ScrollView style={styles.scrollContainer}>
             <View style={styles.introContainer}>
-              <Text style={styles.introTitle}>Skincare Product Recommendations</Text>
+              <Text style={styles.introTitle}>{t('skincareProductRecommendations')}</Text>
               <Text style={styles.introText}>
-                The following recommendations are tailored to your {skinType} skin type
-                and specific concerns identified in your analysis. Incorporate these products
-                gradually into your routine for best results.
+                {t('tailoredRecommendations')} {skinType} {t('skinTypeAndConcerns')}
               </Text>
             </View>
 
             <View style={styles.recommendationsContainer}>
-              {analysisResult.skincareRecommendations.map((item, index) => (
+              {analysisResult.skincareRecommendations && Array.isArray(analysisResult.skincareRecommendations) ?
+                analysisResult.skincareRecommendations.map((item, index) => (
                 <View
                   key={index}
                   style={[
@@ -355,18 +418,18 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
 
                   <View style={styles.recommendationDetails}>
                     <View style={styles.recommendationRow}>
-                      <Text style={styles.recommendationLabel}>Key Ingredients:</Text>
+                      <Text style={styles.recommendationLabel}>{t('keyIngredients')}</Text>
                       <Text style={styles.recommendationValue}>{item.recommendedIngredients}</Text>
                     </View>
 
                     <View style={styles.recommendationRow}>
-                      <Text style={styles.recommendationLabel}>Usage:</Text>
+                      <Text style={styles.recommendationLabel}>{t('usage')}</Text>
                       <Text style={styles.recommendationValue}>{item.recommendedUsage}</Text>
                     </View>
 
                     {item.reason && (
                       <View style={styles.recommendationRow}>
-                        <Text style={styles.recommendationLabel}>Why:</Text>
+                        <Text style={styles.recommendationLabel}>{t('why')}</Text>
                         <Text style={styles.reasonValue}>{item.reason}</Text>
                       </View>
                     )}
@@ -374,20 +437,27 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
 
                   {renderProductRecommendations(item.productType)}
                 </View>
-              ))}
+              )) : (
+                <View style={styles.noProductsContainer}>
+                  <Text style={styles.noProductsText}>{t('noRecommendationsAvailable')}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.concernsContainer}>
-              <Text style={styles.concernsTitle}>Targeted Concerns:</Text>
-              {analysisResult.features.map((feature, index) => (
+              <Text style={styles.concernsTitle}>{t('targetedConcerns')}</Text>
+              {analysisResult.features && Array.isArray(analysisResult.features) ?
+                analysisResult.features.map((feature, index) => (
                 <Text key={index} style={styles.concernText}>
-                  • {feature.description} (Severity: {feature.severity}/5)
+                  • {feature.description} ({t('severity')} {feature.severity}/5)
                 </Text>
-              ))}
+              )) : (
+                <Text style={styles.noProductsText}>{t('noFeaturesDetected')}</Text>
+              )}
             </View>
 
             <View style={styles.disclaimer}>
-              <Text style={styles.disclaimerTitle}>Important Notes:</Text>
+              <Text style={styles.disclaimerTitle}>{t('importantNotes')}</Text>
               <Text style={styles.disclaimerText}>
                 • Patch test new products before applying to your entire face{'\n'}
                 • Introduce new products one at a time, with 1-2 weeks between additions{'\n'}

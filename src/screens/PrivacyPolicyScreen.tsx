@@ -12,6 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
+import { useLocalization } from '../i18n/localizationContext';
 
 type PrivacyPolicyScreenNavigationProp = StackNavigationProp<RootStackParamList, 'PrivacyPolicy'>;
 
@@ -20,6 +21,7 @@ type Props = {
 };
 
 const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => {
+  const { t } = useLocalization();
   console.log('PrivacyPolicyScreen: Component mounted');
   return (
     <SafeAreaView style={styles.container}>
@@ -30,55 +32,44 @@ const PrivacyPolicyScreen: React.FC<Props> = ({ navigation }) => {
         >
           <MaterialIcons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Privacy Policy</Text>
+        <Text style={styles.headerTitle}>{t('privacyPolicy')}</Text>
       </View>
       <ScrollView style={styles.content}>
-        <Text style={styles.lastUpdated}>Last Updated: {new Date().toLocaleDateString()}</Text>
+        <Text style={styles.lastUpdated}>{t('lastUpdated')} {new Date().toLocaleDateString()}</Text>
 
-        <Text style={styles.sectionTitle}>1. Information We Collect</Text>
+        <Text style={styles.sectionTitle}>{t('infoWeCollect')}</Text>
         <Text style={styles.text}>
-          AIBeautyLens collects and processes facial images solely for providing personalized skincare recommendations. Images are captured through your device camera or selected from your photo library.
+          {t('infoWeCollectText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>2. How We Use Your Information</Text>
+        <Text style={styles.sectionTitle}>{t('howWeUseInfo')}</Text>
         <Text style={styles.text}>
-          • Analyze facial features and skin conditions{'\n'}
-          • Generate personalized skincare recommendations{'\n'}
-          • Create treatment simulations{'\n'}
-          • Provide before/after comparisons
+          {t('howWeUseInfoText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>3. Data Storage and Security</Text>
+        <Text style={styles.sectionTitle}>{t('dataStorage')}</Text>
         <Text style={styles.text}>
-          • All facial images are processed with encryption{'\n'}
-          • Images are stored temporarily on your device only{'\n'}
-          • No permanent storage of facial data{'\n'}
-          • No facial recognition or biometric data collection
+          {t('dataStorageText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>4. Third-Party Services</Text>
+        <Text style={styles.sectionTitle}>{t('thirdParty')}</Text>
         <Text style={styles.text}>
-          Images are securely transmitted to Google Gemini Vision API for analysis. No data is shared with other third parties or used for identification or tracking purposes.
+          {t('thirdPartyText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>5. Data Retention</Text>
+        <Text style={styles.sectionTitle}>{t('dataRetention')}</Text>
         <Text style={styles.text}>
-          • Images are automatically deleted after analysis{'\n'}
-          • No long-term storage of facial data{'\n'}
-          • Users can manually delete images at any time
+          {t('dataRetentionText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>6. Your Rights</Text>
+        <Text style={styles.sectionTitle}>{t('yourRights')}</Text>
         <Text style={styles.text}>
-          You have the right to:{'\n'}
-          • Access your data{'\n'}
-          • Delete your data{'\n'}
-          • Opt-out of data collection
+          {t('yourRightsText')}
         </Text>
 
-        <Text style={styles.sectionTitle}>7. Contact Us</Text>
+        <Text style={styles.sectionTitle}>{t('contactUs')}</Text>
         <Text style={styles.text}>
-          For any privacy-related questions or concerns, please contact us at:
+          {t('contactUsText')}
         </Text>
         <TouchableOpacity onPress={() => Linking.openURL('mailto:support@autobebesys.com')}>
           <Text style={styles.link}>support@autobbebesys.com</Text>

@@ -8,12 +8,14 @@ interface DiagnosisReportModalProps {
   visible: boolean;
   onClose: () => void;
   analysisResult: AnalysisResult;
+  imageUri?: string; // Optional patient image URI
 }
 
 const DiagnosisReportModal: React.FC<DiagnosisReportModalProps> = ({
   visible,
   onClose,
-  analysisResult
+  analysisResult,
+  imageUri
 }) => {
   return (
     <Modal
@@ -26,8 +28,8 @@ const DiagnosisReportModal: React.FC<DiagnosisReportModalProps> = ({
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <MaterialIcons name="close" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
-        
-        <DiagnosisReport onClose={onClose} analysisResult={analysisResult} />
+
+        <DiagnosisReport onClose={onClose} analysisResult={analysisResult} imageUri={imageUri} />
       </View>
     </Modal>
   );

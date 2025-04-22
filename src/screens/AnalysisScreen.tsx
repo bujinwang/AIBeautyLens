@@ -18,6 +18,7 @@ import ShowSkincareButton from '../components/ShowSkincareButton';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TREATMENTS } from '../constants/treatments';
+import { useLocalization } from '../i18n/localizationContext';
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -28,6 +29,7 @@ type Props = {
 };
 
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { t } = useLocalization();
   const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         elevation: 0,
       },
       headerTintColor: COLORS.white,
-      headerTitle: 'ClinicalLens™ Analysis',
+      headerTitle: t('clinicalLensAnalysis'),
       headerTitleStyle: {
         fontWeight: '600',
       },
@@ -120,21 +122,21 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
           'fat-dissolution': 'belkyra',
           'aqua-needle': 'skin-booster',
         };
-        
+
         // Try direct mapping first
         if (treatmentIdMap[geminiId]) {
           return treatmentIdMap[geminiId];
         }
-        
+
         // If no direct match, try case-insensitive partial matching
         const normalizedGeminiId = geminiId.toLowerCase().replace(/[-_\s]/g, '');
-        
+
         // Check if any treatment ID in our TREATMENTS array is similar
         const matchingTreatment = TREATMENTS.find(treatment => {
           const normalizedId = treatment.id.toLowerCase().replace(/[-_\s]/g, '');
           return normalizedId.includes(normalizedGeminiId) || normalizedGeminiId.includes(normalizedId);
         });
-        
+
         return matchingTreatment ? matchingTreatment.id : geminiId;
       };
 
@@ -142,7 +144,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       const recommendedTreatments = analysisResult.recommendations
         .map(rec => mapTreatmentId(rec.treatmentId))
         .filter(id => TREATMENTS.some(t => t.id === id)); // Filter out any IDs that still don't exist
-      
+
       // Create a reasons object mapping treatmentId to reason (with ID mapping)
       const reasons: { [key: string]: string[] } = {};
       analysisResult.recommendations.forEach(rec => {
@@ -173,15 +175,15 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         <Card variant="elevated" style={styles.errorContainer}>
           <View style={styles.errorContent}>
             <MaterialIcons name="error-outline" size={40} color={COLORS.error.main} />
-            <Text style={styles.errorTitle}>Analysis Temporarily Unavailable</Text>
+            <Text style={styles.errorTitle}>{t('analysisUnavailable')}</Text>
             <Text style={styles.errorText}>
-              Our facial analysis service is currently unavailable due to high demand.
-              {isIPad ? " iPad devices may experience additional limitations with this service." : ""}
-              Your skin health is important to us, and we apologize for the inconvenience.
+              {t('highDemandMessage')}
+              {isIPad ? t('ipadLimitation') : ""}
+              {t('skinHealthImportant')}
             </Text>
             <View style={styles.quotaErrorActions}>
               <Button
-                title="Try Again Later"
+                title={t('tryAgainLater')}
                 icon="schedule"
                 onPress={analyzeImage}
                 variant="outline"
@@ -189,7 +191,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               />
               {isIPad ? (
                 <Button
-                  title="Try Different Device"
+                  title={t('tryDifferentDevice')}
                   icon="devices"
                   onPress={() => navigation.goBack()}
                   variant="primary"
@@ -197,7 +199,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 />
               ) : (
                 <Button
-                  title="Contact Clinic"
+                  title={t('contactClinic')}
                   icon="call"
                   onPress={() => Linking.openURL('tel:+15551234567')}
                   variant="primary"
@@ -215,35 +217,35 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         <Card variant="elevated" style={styles.errorContainer}>
           <View style={styles.errorContent}>
             <MaterialIcons name="tablet-mac" size={40} color={COLORS.warning.main} />
-            <Text style={styles.errorTitle}>iPad Compatibility Issue</Text>
+            <Text style={styles.errorTitle}>{t('ipadCompatibilityIssue')}</Text>
             <Text style={styles.errorText}>
               {error || "We've encountered an issue processing your request on iPad. This might be due to image size or API limitations on tablet devices."}
             </Text>
             <View style={styles.tipSection}>
-              <Text style={styles.tipTitle}>Try these solutions:</Text>
+              <Text style={styles.tipTitle}>{t('trySolutions')}</Text>
               <View style={styles.tipItem}>
                 <MaterialIcons name="photo-size-select-small" size={18} color={COLORS.info.main} />
-                <Text style={styles.tipText}>Take a photo with less background - focus closer on the face</Text>
+                <Text style={styles.tipText}>{t('lessFaceBackground')}</Text>
               </View>
               <View style={styles.tipItem}>
                 <MaterialIcons name="wb-sunny" size={18} color={COLORS.info.main} />
-                <Text style={styles.tipText}>Ensure good lighting conditions</Text>
+                <Text style={styles.tipText}>{t('goodLighting')}</Text>
               </View>
               <View style={styles.tipItem}>
                 <MaterialIcons name="smartphone" size={18} color={COLORS.info.main} />
-                <Text style={styles.tipText}>Use a phone instead of an iPad if available</Text>
+                <Text style={styles.tipText}>{t('usePhone')}</Text>
               </View>
             </View>
             <View style={styles.quotaErrorActions}>
               <Button
-                title="Try Again"
+                title={t('tryAgain')}
                 icon="refresh"
                 onPress={analyzeImage}
                 variant="outline"
                 style={styles.actionButton}
               />
               <Button
-                title="Take New Photo"
+                title={t('takeNewPhoto')}
                 icon="photo-camera"
                 onPress={() => navigation.navigate('Camera')}
                 variant="primary"
@@ -261,7 +263,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
           <MaterialIcons name="error-outline" size={40} color={COLORS.error.main} />
           <Text style={styles.errorText}>{error}</Text>
           <Button
-            title="Retry Analysis"
+            title={t('retryAnalysis')}
             icon="refresh"
             onPress={analyzeImage}
             variant="primary"
@@ -280,21 +282,21 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       <Card
         variant="elevated"
         style={styles.visitPurposeCard}
-        title="Visit Information"
-        subtitle="Details for this consultation"
+        title={t('visitInformation')}
+        subtitle={t('detailsForConsultation')}
         icon="assignment"
       >
         <View style={styles.visitInfoContainer}>
           {visitPurpose ? (
             <View style={styles.visitInfoItem}>
-              <Text style={styles.visitInfoLabel}>Purpose of Visit:</Text>
+              <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
               <Text style={styles.visitInfoValue}>{visitPurpose}</Text>
             </View>
           ) : null}
 
           {appointmentLength ? (
             <View style={styles.visitInfoItem}>
-              <Text style={styles.visitInfoLabel}>Appointment Length:</Text>
+              <Text style={styles.visitInfoLabel}>{t('appointmentLengthLabel')}</Text>
               <Text style={styles.visitInfoValue}>{appointmentLength}</Text>
             </View>
           ) : null}
@@ -332,24 +334,24 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <Card variant="elevated" style={styles.resultCard}>
               <SkinMatrixHeader
-                title="SkinMatrix™ Analysis Results"
-                subtitle="Powered by AesthetiScan™ technology"
+                title={t('skinMatrixResults')}
+                subtitle={t('poweredByAesthetiScan')}
                 icon={<AILogoIcon size="small" />}
               />
               <View style={styles.resultContent}>
                 <View style={styles.resultRow}>
                   <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>Estimated Age</Text>
+                    <Text style={styles.resultLabel}>{t('estimatedAge')}</Text>
                     <Text style={styles.resultValue}>{analysisResult.estimatedAge}</Text>
                   </View>
                   <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>Skin Type</Text>
+                    <Text style={styles.resultLabel}>{t('skinType')}</Text>
                     <Text style={styles.resultValue}>{analysisResult.skinType}</Text>
                   </View>
                 </View>
 
                 <View style={styles.genderContainer}>
-                  <Text style={styles.resultLabel}>Gender</Text>
+                  <Text style={styles.resultLabel}>{t('gender')}</Text>
                   <View style={styles.genderRow}>
                     <GenderConfidenceDisplay
                       gender={analysisResult.gender}
@@ -365,8 +367,8 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               <View style={styles.featureHeaderContainer}>
                 <AILogoIcon size="medium" style={styles.featureHeaderLogo} />
                 <View style={styles.featureHeaderTextContainer}>
-                  <Text style={styles.featureHeaderTitle}>Facial Feature Analysis</Text>
-                  <Text style={styles.featureHeaderSubtitle}>Professional-grade skin analysis in your pocket</Text>
+                  <Text style={styles.featureHeaderTitle}>{t('facialFeatureAnalysis')}</Text>
+                  <Text style={styles.featureHeaderSubtitle}>{t('professionalGradeAnalysis')}</Text>
                 </View>
                 <TouchableOpacity style={styles.infoButton}>
                   <MaterialIcons name="info-outline" size={24} color={COLORS.primary.main} />
@@ -411,11 +413,15 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <View style={styles.buttonContainer}>
               <View style={styles.reportButtonsRow}>
-                <ShowDiagnosisButton style={styles.reportButton} analysisResult={analysisResult} />
+                <ShowDiagnosisButton
+                  style={styles.reportButton}
+                  analysisResult={analysisResult}
+                  imageUri={imageUri}
+                />
                 <ShowSkincareButton style={styles.reportButton} analysisResult={analysisResult} />
               </View>
               <Button
-                title="View Treatment Plan"
+                title={t('viewTreatmentPlan')}
                 icon="healing"
                 onPress={handleNext}
                 variant="primary"
@@ -425,7 +431,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <View style={styles.footnoteContainer}>
               <Text style={styles.footnote}>
-                Analysis performed with DermaPrecision™ Technology, trained on data from thousands of clinical assessments.
+                {t('analysisFootnote')}
               </Text>
             </View>
           </>
@@ -435,7 +441,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       {loading && (
         <ProcessingIndicator
           isAnalyzing={true}
-          processingText="Your skin is being analyzed with our HydraDerm™ Multi-Spectrum Technology..."
+          processingText={t('analyzing')}
           showDetailedSteps={true}
           showTechStack={true}
         />

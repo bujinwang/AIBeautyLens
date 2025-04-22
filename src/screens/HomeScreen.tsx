@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, SafeAreaView, ScrollView, ImageBackground, Platform } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import Logo from '../components/Logo';
 import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalization } from '../i18n/localizationContext';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -14,6 +15,7 @@ type Props = {
 };
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
+  const { t } = useLocalization();
   // Add debug logging for component lifecycle
   useEffect(() => {
     console.log("HomeScreen: Component mounted");
@@ -38,6 +40,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('PrivacyPolicy');
   };
 
+  const navigateToSettings = () => {
+    console.log("HomeScreen: Navigating to Settings");
+    navigation.navigate('Settings');
+  };
+
   console.log("HomeScreen: Rendering");
 
   try {
@@ -54,6 +61,12 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.logoWrapper}>
               <Logo size="large" showTagline={true} color="white" />
             </View>
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={navigateToSettings}
+            >
+              <Ionicons name="settings-outline" size={28} color="white" />
+            </TouchableOpacity>
           </View>
         </LinearGradient>
 
@@ -81,19 +94,19 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               onPress={navigateToCamera}
             >
               <MaterialIcons name="camera-alt" size={24} color="white" />
-              <Text style={styles.actionButtonText}>Start DermaGraph™ Analysis</Text>
+              <Text style={styles.actionButtonText}>{t('startAnalysis')}</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.featuresContainer}>
-            <Text style={styles.sectionTitle}>Elite Analysis Features</Text>
+            <Text style={styles.sectionTitle}>{t('eliteAnalysisFeatures')}</Text>
 
             <View style={styles.featureCard}>
               <MaterialIcons name="face" size={24} color={COLORS.primary.main} />
               <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>DermaGraph™ Analysis</Text>
+                <Text style={styles.featureTitle}>{t('dermaGraphAnalysis')}</Text>
                 <Text style={styles.featureDescription}>
-                  AI-powered skin scanning for comprehensive assessment
+                  {t('dermaGraphDescription')}
                 </Text>
               </View>
             </View>
@@ -101,9 +114,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.featureCard}>
               <MaterialIcons name="healing" size={24} color={COLORS.primary.main} />
               <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>RejuvenationRx™</Text>
+                <Text style={styles.featureTitle}>{t('rejuvenationRx')}</Text>
                 <Text style={styles.featureDescription}>
-                  Personalized treatment recommendations from aesthetic experts
+                  {t('rejuvenationDescription')}
                 </Text>
               </View>
             </View>
@@ -111,9 +124,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.featureCard}>
               <MaterialIcons name="auto-fix-high" size={24} color={COLORS.primary.main} />
               <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>TreatmentVision™</Text>
+                <Text style={styles.featureTitle}>{t('treatmentVision')}</Text>
                 <Text style={styles.featureDescription}>
-                  Visualize potential results with our advanced simulation technology
+                  {t('treatmentVisionDescription')}
                 </Text>
               </View>
             </View>
@@ -121,9 +134,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.featureCard}>
               <MaterialIcons name="analytics" size={24} color={COLORS.primary.main} />
               <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>BeautyBlueprint™</Text>
+                <Text style={styles.featureTitle}>{t('beautyBlueprint')}</Text>
                 <Text style={styles.featureDescription}>
-                  Personalized treatment planning system for your beauty journey
+                  {t('beautyBlueprintDescription')}
                 </Text>
               </View>
             </View>
@@ -131,20 +144,20 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
           <View style={styles.taglineContainer}>
             <Text style={styles.taglineText}>
-              "The expertise of 100 aesthetic doctors in a single scan"
+              "{t('tagline')}"
             </Text>
           </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>
-              Privacy-First Design: All processing happens on-device or via secure API calls
+              {t('privacyFirstDesign')}
             </Text>
             <TouchableOpacity
               onPress={navigateToPrivacyPolicy}
               style={styles.privacyLink}
             >
               <Text style={styles.privacyLinkText}>
-                View Privacy Policy →
+                {t('viewPrivacyPolicy')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -181,12 +194,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   logoWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+  },
+  settingsButton: {
+    padding: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   logo: {
     transform: [{ scale: 1.1 }],

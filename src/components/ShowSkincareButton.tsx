@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import SkincareAdviceModal from './SkincareAdviceModal';
 import { AnalysisResult } from '../types';
+import { useLocalization } from '../i18n/localizationContext';
 
 interface ShowSkincareButtonProps {
   style?: object;
@@ -11,6 +12,7 @@ interface ShowSkincareButtonProps {
 }
 
 const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style, analysisResult }) => {
+  const { t } = useLocalization();
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleShowAdvice = () => {
@@ -27,8 +29,8 @@ const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style, analysis
 
   return (
     <>
-      <TouchableOpacity 
-        style={[styles.button, style]} 
+      <TouchableOpacity
+        style={[styles.button, style]}
         onPress={handleShowAdvice}
         activeOpacity={0.8}
         disabled={!analysisResult}
@@ -36,14 +38,16 @@ const ShowSkincareButton: React.FC<ShowSkincareButtonProps> = ({ style, analysis
         <View style={styles.iconContainer}>
           <MaterialIcons name="spa" size={20} color={COLORS.white} />
         </View>
-        <Text style={styles.buttonText}>Show Skincare Advice</Text>
+        <Text style={styles.buttonText}>{t('showSkincareAdvice')}</Text>
       </TouchableOpacity>
 
-      <SkincareAdviceModal 
-        visible={modalVisible}
-        onClose={handleCloseModal}
-        analysisResult={analysisResult}
-      />
+      {analysisResult && (
+        <SkincareAdviceModal
+          visible={modalVisible}
+          onClose={handleCloseModal}
+          analysisResult={analysisResult}
+        />
+      )}
     </>
   );
 };

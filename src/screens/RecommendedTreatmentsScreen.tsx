@@ -4,7 +4,8 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
-import { TREATMENTS } from '../constants/treatments';
+import { getLocalizedTreatments } from '../constants/treatments';
+import { useLocalization } from '../i18n/localizationContext';
 
 type RecommendedTreatmentsScreenRouteProp = RouteProp<RootStackParamList, 'RecommendedTreatments'>;
 type RecommendedTreatmentsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'RecommendedTreatments'>;
@@ -32,6 +33,7 @@ interface SimulationParams {
 }
 
 const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { t } = useLocalization();
   const {
     imageUri = "",
     base64Image = "",
@@ -43,11 +45,21 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
 
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [treatments, setTreatments] = useState<any[]>([]);
+
+  // Load localized treatments
+  useEffect(() => {
+    const loadTreatments = async () => {
+      const localizedTreatments = await getLocalizedTreatments();
+      setTreatments(localizedTreatments);
+    };
+    loadTreatments();
+  }, []);
 
   // Set up the header
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Recommended Treatments',
+      title: t('recommendedTreatments'),
       headerTintColor: '#FFFFFF',
       headerStyle: {
         backgroundColor: '#4A90E2',
@@ -61,14 +73,14 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     });
   }, [navigation]);
 
-  // Calculate total price whenever selectedTreatments changes
+  // Calculate total price whenever selectedTreatments or treatments changes
   useEffect(() => {
     const newTotal = selectedTreatments.reduce((sum, id) => {
-      const treatment = TREATMENTS.find(t => t.id === id);
+      const treatment = treatments.find(t => t.id === id);
       return sum + (treatment?.price || 0);
     }, 0);
     setTotalPrice(newTotal);
-  }, [selectedTreatments]);
+  }, [selectedTreatments, treatments]);
 
   // Toggle treatment selection
   const toggleTreatmentSelection = (treatmentId: string) => {
@@ -95,7 +107,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
 
   // Render a treatment card
   const renderTreatmentCard = (treatmentId: string) => {
-    const treatment = TREATMENTS.find(t => t.id === treatmentId);
+    const treatment = treatments.find(t => t.id === treatmentId);
     if (!treatment) return null;
 
     const isSelected = selectedTreatments.includes(treatmentId);
@@ -121,7 +133,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
         </View>
 
         <View style={styles.treatmentContent}>
-          <Text style={styles.areaLabel}>Area: {treatment.area}</Text>
+          <Text style={styles.areaLabel}>{t('area')} {treatment.area}</Text>
 
           <Text style={styles.treatmentDescription}>
             {treatment.description}
@@ -129,7 +141,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
 
           {reasonsForTreatment.length > 0 && (
             <View style={styles.reasonSection}>
-              <Text style={styles.reasonTitle}>Why it's recommended:</Text>
+              <Text style={styles.reasonTitle}>{t('whyRecommended')}</Text>
               <Text style={styles.reasonText}>{reasonsForTreatment[0]}</Text>
             </View>
           )}
@@ -144,14 +156,18 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.headingContainer}>
-          <Text style={styles.heading}>Recommended Treatments</Text>
+          <Text style={styles.heading}>{t('recommendedTreatments')}</Text>
           <Text style={styles.subheading}>
-            Based on your facial analysis, the following treatments are recommended:
+            {t('basedOnAnalysis')}
           </Text>
         </View>
 
         <View style={styles.treatmentsContainer}>
-          {recommendedTreatments.map(treatmentId => renderTreatmentCard(treatmentId))}
+          {treatments.length > 0 ? (
+            recommendedTreatments.map(treatmentId => renderTreatmentCard(treatmentId))
+          ) : (
+            <Text style={styles.loadingText}>{t('loading')}...</Text>
+          )}
         </View>
       </ScrollView>
 
@@ -159,10 +175,10 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
       <View style={styles.footer}>
         <View style={styles.summaryContainer}>
           <Text style={styles.selectedTreatmentsText}>
-            Selected Treatments: {selectedTreatments.length}
+            {t('selectedTreatments')} {selectedTreatments.length}
           </Text>
           <Text style={styles.totalPriceText}>
-            Total: <Text style={styles.totalPriceAmount}>${totalPrice}</Text>
+            {t('total')} <Text style={styles.totalPriceAmount}>${totalPrice}</Text>
           </Text>
         </View>
         <TouchableOpacity
@@ -174,7 +190,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
           disabled={selectedTreatments.length === 0}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>View Report</Text>
+          <Text style={styles.buttonText}>{t('viewReport')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -348,6 +364,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666666',
+    textAlign: 'center',
+    marginVertical: 20,
   },
 });
 

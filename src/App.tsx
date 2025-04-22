@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet } from 'react-native';
 import { setGlobalNavigationRef } from './services/geminiService';
+import { LocalizationProvider } from './i18n/localizationContext';
 
 // Import our screens
 import CameraScreen from './screens/CameraScreen';
@@ -15,6 +16,7 @@ import ReportScreen from './screens/ReportScreen';
 import HomeScreen from './screens/HomeScreen';
 import LogoGenerator from './utils/LogoGenerator';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
@@ -46,6 +48,7 @@ export type RootStackParamList = {
   };
   LogoGenerator: undefined;
   PrivacyPolicy: undefined;
+  Settings: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -113,9 +116,10 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
-          <Stack.Navigator initialRouteName="Home">
+      <LocalizationProvider>
+        <SafeAreaProvider>
+          <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
+            <Stack.Navigator initialRouteName="Home">
             <Stack.Screen
               name="Home"
               component={HomeScreen}
@@ -159,10 +163,16 @@ export default function App() {
                 headerShown: false
               }}
             />
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
+              options={{ title: 'Settings' }}
+            />
           </Stack.Navigator>
         </NavigationContainer>
         <StatusBar style="auto" />
       </SafeAreaProvider>
+      </LocalizationProvider>
     </ErrorBoundary>
   );
 }

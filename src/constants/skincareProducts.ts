@@ -30,19 +30,19 @@ export const getRecommendationsForSkinType = (
   concerns: string[] = []
 ): SkincareRecommendation[] => {
   // Get products for this skin type
-  const relevantProducts = SKINCARE_PRODUCTS.filter(product => 
+  const relevantProducts = SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes(skinType.toLowerCase()) ||
     product.skinType.includes('all')
   );
-  
+
   // Map to recommendations format
   return relevantProducts.map(product => {
     // Determine usage pattern based on category
     const usage = getRecommendedUsage(product.category);
-    
+
     // Map ingredients to recommendation format
     let ingredients = product.ingredients || getDefaultIngredients(product.category, skinType);
-    
+
     // Create reason text based on skin type match
     const reason = `Recommended for ${skinType} skin${
       concerns.length > 0 ? ` and targets ${concerns.join(', ')}` : ''
@@ -50,7 +50,7 @@ export const getRecommendationsForSkinType = (
 
     // Create full product name with brand only
     const fullProductName = `${product.brand} ${product.name}`;
-    
+
     return {
       productType: product.category,
       productName: fullProductName,
@@ -177,7 +177,7 @@ const getDefaultIngredients = (category: string, skinType: string): string => {
         return 'Balanced formulations for combination skin zones';
     }
   }
-  
+
   // Default for other skin types
   return 'Ingredients suited for your skin type';
 };
@@ -208,7 +208,7 @@ const getPrecautions = (category: string, skinType: string): string => {
         return 'Avoid cleansers with sulfates, fragrances or alcohol that can irritate sensitive skin';
       case 'exfoliator':
         return 'Use extremely gentle exfoliants no more than once weekly; avoid physical scrubs';
-      case 'serum': 
+      case 'serum':
         return 'Introduce one new serum at a time with a 2-week gap to identify potential irritants';
       case 'targeted treatment':
         return 'Avoid products with high concentrations of active ingredients like retinol or acids';
@@ -256,7 +256,7 @@ const getPrecautions = (category: string, skinType: string): string => {
         return 'Pay attention to how products affect different zones of your face, as combination skin often requires zone-specific treatments';
     }
   }
-  
+
   return 'Patch test new products before full application';
 };
 
@@ -332,7 +332,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     ingredients: 'Hyaluronic Acid, Glycerin, Ceramides',
     usage: 'AM and PM'
   },
-  
+
   // ZO Products
   {
     id: 'zo-exfoliating-cleanser',
@@ -469,7 +469,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     description: 'Intensive eye cream for all skin types',
     ingredients: 'Retinol, Peptides, Vitamin E'
   },
-  
+
   // LUXYN Products
   {
     id: 'luxyn-hydration-masque',
@@ -482,7 +482,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     description: 'Hydrating sheet mask set',
     ingredients: 'Hyaluronic Acid, Niacinamide, Peptides'
   },
-  
+
   // Additional Normal Skin Products from ecosmetic.ca
   {
     id: 'normal-gentle-cleanser',
@@ -556,7 +556,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     ingredients: 'Retinol, Peptides, Ceramides, Squalane',
     usage: 'Apply in the evening after cleansing'
   },
-  
+
   // Dry Skin Products from ecosmetic.ca
   {
     id: 'zo-illuminating-aox',
@@ -835,7 +835,7 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
     ingredients: 'Kaolin Clay, Bentonite Clay, Charcoal, Tea Tree Oil',
     usage: 'Apply to clean skin 1-2 times weekly for 10-15 minutes, then rinse thoroughly'
   },
-  
+
   // Sensitive Skin Products from ecosmetic.ca
   {
     id: 'zo-gentle-cleanser-sensitive',
@@ -940,26 +940,27 @@ export const SKINCARE_PRODUCTS: SkincareProduct[] = [
 
 // Organize products by skin type for easy access
 export const PRODUCTS_BY_SKIN_TYPE: ProductsByType = {
-  oily: SKINCARE_PRODUCTS.filter(product => 
+  oily: SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes('oily') || product.skinType.includes('all')
   ),
-  dry: SKINCARE_PRODUCTS.filter(product => 
+  dry: SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes('dry') || product.skinType.includes('all')
   ),
-  combination: SKINCARE_PRODUCTS.filter(product => 
+  combination: SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes('combination') || product.skinType.includes('all')
   ),
-  sensitive: SKINCARE_PRODUCTS.filter(product => 
+  sensitive: SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes('sensitive') || product.skinType.includes('all')
   ),
-  normal: SKINCARE_PRODUCTS.filter(product => 
+  normal: SKINCARE_PRODUCTS.filter(product =>
     product.skinType.includes('normal') || product.skinType.includes('all')
   )
 };
 
 // Function to get product recommendations based on specific concerns
 export const getProductsForConcerns = (
-  concerns: string[],
+  productType: string,
+  concerns: string[] = [],
   skinType: string = 'all'
 ): SkincareProduct[] => {
   // Map concerns to relevant product ingredients or categories
@@ -993,17 +994,71 @@ export const getProductsForConcerns = (
       categories: ['Targeted Treatment', 'Hydrator']
     }
   };
-  
+
   // Start with products for this skin type
-  let relevantProducts = skinType === 'all' 
-    ? SKINCARE_PRODUCTS 
+  let relevantProducts = skinType === 'all'
+    ? SKINCARE_PRODUCTS
     : PRODUCTS_BY_SKIN_TYPE[skinType] || [];
-  
-  // If there are concerns, filter products that match them
-  if (concerns.length > 0) {
+
+  // Filter by product type first
+  if (productType && typeof productType === 'string') {
+    console.log(`Filtering products for category ${productType}`);
+    // Create an array of possible category matches
+    // This helps with internationalization where the category might be in a different language
+    const possibleCategories = [productType];
+
+    // Add English equivalents for common Chinese categories
+    if (productType === '洁面乳' || productType === '温和洁面乳' || productType === '洗面奶' || productType === '洁面') {
+      possibleCategories.push('Cleanser', 'Gentle Cleanser');
+    } else if (productType === '保湿霜' || productType === '保湿面霜' || productType === '轻盈保湿霜' || productType === '面霜' || productType === '乳液') {
+      possibleCategories.push('Moisturizer', 'Hydrator', 'Hydrating Moisturizer');
+    } else if (productType === '精华' || productType === '精华液' || productType === '精华 (日间)' || productType === '精华 (夜间 - 交替使用)' || productType === '日间精华' || productType === '夜间精华') {
+      possibleCategories.push('Serum', 'Targeted Treatment', 'Hydrating & Calming Serum');
+    } else if (productType === '防晒霜' || productType === '防晒' || productType === '防晒乳') {
+      possibleCategories.push('Sunscreen');
+    } else if (productType === '保湿精华' || productType === '补水精华') {
+      possibleCategories.push('Serum', 'Hydrating & Calming Serum');
+    } else if (productType === '精华 (抗炎/色素沉着后炎症)' || productType === '抗炎精华' || productType === '祛斑精华' || productType === '美白精华') {
+      possibleCategories.push('Serum', 'Targeted Treatment');
+    } else if (productType === '精华 (痘痘/质地 - 谨慎使用)' || productType === '祛痘精华' || productType === '痘痘精华' || productType === '抗痘精华') {
+      possibleCategories.push('Targeted Treatment', 'Targeted Acne Treatment');
+    } else if (productType === '爽肤水' || productType === '化妆水' || productType === '柔肤水') {
+      possibleCategories.push('Toner');
+    } else if (productType === '去角质产品' || productType === '磨砂膏' || productType === '去角质') {
+      possibleCategories.push('Exfoliator');
+    } else if (productType === '面膜') {
+      possibleCategories.push('Masks', 'Mask');
+    } else if (productType === '眼霜' || productType === '眼部护理') {
+      possibleCategories.push('Eye Care', 'Eye Cream');
+    }
+
+    console.log(`Possible categories for ${productType}:`, JSON.stringify(possibleCategories));
+
+    relevantProducts = relevantProducts.filter(product => {
+      if (!product.category) return false;
+
+      const categoryMatch = possibleCategories.some(cat => {
+        if (!cat) return false;
+        const productCategoryLower = product.category.toLowerCase();
+        const catLower = cat.toLowerCase();
+
+        // Check for exact match or partial match in either direction
+        return productCategoryLower === catLower ||
+               productCategoryLower.includes(catLower) ||
+               catLower.includes(productCategoryLower);
+      });
+
+      return categoryMatch;
+    });
+
+    console.log(`Found ${relevantProducts.length} products for category ${productType}`);
+  }
+
+  // If there are concerns, further filter products that match them
+  if (concerns && Array.isArray(concerns) && concerns.length > 0) {
     const targetIngredients: string[] = [];
     const targetCategories: string[] = [];
-    
+
     // Collect all relevant ingredients and categories from concerns
     concerns.forEach(concern => {
       const lowerConcern = concern.toLowerCase();
@@ -1012,25 +1067,38 @@ export const getProductsForConcerns = (
         targetCategories.push(...concernMap[lowerConcern].categories);
       }
     });
-    
+
     // Filter products that match any of the target ingredients or categories
     if (targetCategories.length > 0 || targetIngredients.length > 0) {
       relevantProducts = relevantProducts.filter(product => {
-        const hasTargetCategory = targetCategories.length > 0 && 
-          targetCategories.some(cat => 
-            product.category.toLowerCase() === cat.toLowerCase()
-          );
-        
-        const hasTargetIngredient = targetIngredients.length > 0 && 
-          product.ingredients && 
-          targetIngredients.some(ingredient => 
+        const hasTargetCategory = targetCategories.length > 0 && product.category &&
+          targetCategories.some(cat => {
+            if (!cat) return false;
+            const productCategoryLower = product.category.toLowerCase();
+            const catLower = cat.toLowerCase();
+
+            // Check for exact match or partial match in either direction
+            return productCategoryLower === catLower ||
+                   productCategoryLower.includes(catLower) ||
+                   catLower.includes(productCategoryLower);
+          });
+
+        const hasTargetIngredient = targetIngredients.length > 0 &&
+          product.ingredients &&
+          targetIngredients.some(ingredient =>
             product.ingredients?.toLowerCase().includes(ingredient)
           );
-          
+
         return hasTargetCategory || hasTargetIngredient;
       });
     }
   }
-  
+
+  if (productType && typeof productType === 'string') {
+    console.log(`Total products found for ${productType}: ${relevantProducts.length}`);
+  } else {
+    console.log(`Total products found: ${relevantProducts.length}`);
+  }
+
   return relevantProducts;
-}; 
+};

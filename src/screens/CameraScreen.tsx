@@ -10,6 +10,7 @@ import Logo from '../components/Logo';
 import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useLocalization } from '../i18n/localizationContext';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -18,6 +19,7 @@ type Props = {
 };
 
 const CameraScreen: React.FC<Props> = ({ navigation }) => {
+  const { t } = useLocalization();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [type, setType] = useState<CameraType>(CameraType.front);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -109,7 +111,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.permissionContainer}>
         <CustomIcon name="camera" size={50} color={COLORS.primary.main} />
-        <Text style={styles.permissionText}>Requesting camera permission...</Text>
+        <Text style={styles.permissionText}>{t('requestingPermission')}</Text>
       </View>
     );
   }
@@ -118,12 +120,12 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <View style={styles.permissionContainer}>
         <CustomIcon name="no-photography" size={50} color={COLORS.error.main} />
-        <Text style={styles.permissionText}>No access to camera</Text>
+        <Text style={styles.permissionText}>{t('noAccessCamera')}</Text>
         <TouchableOpacity
           style={styles.permissionButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.permissionButtonText}>Go Back</Text>
+          <Text style={styles.permissionButtonText}>{t('goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -157,7 +159,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
       </LinearGradient>
 
       <View style={styles.subtitle}>
-        <Text style={styles.subtitleText}>Position your face within the frame for best results</Text>
+        <Text style={styles.subtitleText}>{t('positionFace')}</Text>
       </View>
 
       {previewVisible && capturedImage ? (
@@ -170,10 +172,10 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.formContainer}>
               <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Purpose of Visit</Text>
+                <Text style={styles.formLabel}>{t('purposeOfVisit')}</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Example: Reduce fine lines and improve skin elasticity..."
+                  placeholder={t('visitPurposeHint')}
                   placeholderTextColor={COLORS.gray[400]}
                   multiline
                   numberOfLines={3}
@@ -186,7 +188,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
               </View>
 
               <View style={styles.formSection}>
-                <Text style={styles.formLabel}>Appointment Length</Text>
+                <Text style={styles.formLabel}>{t('appointmentLength')}</Text>
                 <View style={styles.appointmentOptions}>
                   {['45m', '60m', '2hrs', '4hrs'].map((option) => (
                     <TouchableOpacity
@@ -199,10 +201,10 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                     >
                       <View style={styles.appointmentOptionContent}>
                         {(option === '2hrs' || option === '4hrs') && (
-                          <MaterialIcons 
-                            name="stars" 
-                            size={16} 
-                            color={appointmentLength === option ? COLORS.primary.main : COLORS.gray[400]} 
+                          <MaterialIcons
+                            name="stars"
+                            size={16}
+                            color={appointmentLength === option ? COLORS.primary.main : COLORS.gray[400]}
                             style={styles.vipIcon}
                           />
                         )}
@@ -223,14 +225,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={retakePicture}
               >
                 <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>Retake</Text>
+                <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('retake')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton]}
                 onPress={handleAnalyze}
               >
                 <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>Begin Analysis</Text>
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('beginAnalysis')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -251,7 +253,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                   <View style={[styles.cornerBorder, styles.bottomLeft]} />
                   <View style={[styles.cornerBorder, styles.bottomRight]} />
                 </View>
-                <Text style={styles.frameTip}>Center your face</Text>
+                <Text style={styles.frameTip}>{t('centerYourFace')}</Text>
               </View>
 
               <TouchableOpacity
@@ -274,14 +276,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={pickImage}
               >
                 <CustomIcon name="photo-library" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>Gallery</Text>
+                <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('gallery')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton]}
                 onPress={takePicture}
               >
                 <CustomIcon name="camera-alt" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>Capture</Text>
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('capture')}</Text>
               </TouchableOpacity>
             </View>
           </Camera>

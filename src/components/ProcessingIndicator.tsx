@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated, Easing, TextStyle } from 'react-nativ
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import CustomIcon from './CustomIcon';
 import AILogoIcon from './AILogoIcon';
+import { useLocalization } from '../i18n/localizationContext';
 
 // List of processing steps to display (in sequence)
 const PROCESSING_STEPS = [
@@ -68,6 +69,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   showDetailedSteps = true,
   showTechStack = true,
 }) => {
+  const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentTech, setCurrentTech] = useState(0);
   const spinValue = new Animated.Value(0);
@@ -104,10 +106,14 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
         ])
       ).start();
 
-      // Progress bar animation - even faster progress
+      // Progress bar animation - set to 3 minutes total duration
+      // Start from the middle (50%)
+      progressWidth.setValue(0.5);
+
+      // Animate to completion over 3 minutes (180000ms)
       Animated.timing(progressWidth, {
         toValue: 1,
-        duration: PROCESSING_STEPS.length * 600, // Reduced from 1000 to 600 for faster progress
+        duration: 180000, // 3 minutes in milliseconds
         useNativeDriver: false,
       }).start();
 
@@ -129,7 +135,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
             }).start();
             return next;
           });
-        }, 600); // Change step every 0.6 seconds (even faster)
+        }, 25000); // Change step approximately every 25 seconds to spread across 3 minutes
 
         return () => clearInterval(interval);
       }
@@ -168,7 +174,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
 
           return next;
         });
-      }, 1000); // Change tech every 1 second (even faster)
+      }, 15000); // Change tech every 15 seconds to match the slower pace
 
       return () => clearInterval(techInterval);
     }
@@ -222,6 +228,10 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
               },
             ]}
           />
+        </View>
+
+        <View style={styles.timeEstimateContainer}>
+          <Text style={styles.timeEstimateText}>{t('estimatedTime')}</Text>
         </View>
 
         {showTechStack && (
@@ -339,6 +349,16 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: COLORS.primary.main,
     borderRadius: BORDER_RADIUS.round,
+  },
+  timeEstimateContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  timeEstimateText: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
   },
   securityText: {
     fontSize: TYPOGRAPHY_STYLES.caption.fontSize,

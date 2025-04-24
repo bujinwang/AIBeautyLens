@@ -244,31 +244,31 @@ export const TREATMENT_TRANSLATIONS_EN: TreatmentTranslationsMap = {
   "splendor-x": {
     en: {
       name: "Splendor X",
-      description: "Advanced laser hair removal and skin rejuvenation"
+      description: "Advanced dual-wavelength laser technology combining Alexandrite and Nd:YAG lasers for superior hair removal and skin rejuvenation. Effectively treats all skin types and hair colors with minimal discomfort. Features patented BLEND X technology for customized treatments targeting specific areas. Provides faster, more comfortable sessions with longer-lasting results than traditional lasers."
     },
     zh: {
       name: "Splendor X 激光脱毛",
-      description: "先进的激光脱毛和皮肤焕发活力"
+      description: "先进的双波长激光技术，结合亚历山大激光和Nd:YAG激光，实现卓越的脱毛和皮肤焕发活力效果。有效治疗所有皮肤类型和毛发颜色，舒适度高。采用专利BLEND X技术，可根据特定区域定制治疗方案。与传统激光相比，提供更快、更舒适的治疗过程，效果更持久。适用于面部和身体各个部位的多余毛发，治疗快速，恢复时间短，效果显著。"
     }
   },
   "emsculpt-neo": {
     en: {
       name: "EMSculpt NEO",
-      description: "Muscle building and fat reduction treatment"
+      description: "Revolutionary body sculpting technology combining radiofrequency heating and High-Intensity Focused Electromagnetic (HIFEM) energy to simultaneously burn fat and build muscle. One 30-minute session delivers the equivalent of 20,000 muscle contractions. Clinically proven to reduce fat by 30% and increase muscle mass by 25% after a series of treatments. Non-invasive with no downtime, ideal for abdomen, buttocks, arms, calves, and thighs."
     },
     zh: {
       name: "EMSculpt NEO 肌肉塑形",
-      description: "肌肉增强和脂肪减少治疗"
+      description: "革命性身体塑形技术，结合射频加热和高强度聚焦电磁能量(HIFEM)，同时燃烧脂肪和增强肌肉。一次30分钟的治疗相当于进行20,000次肌肉收缩。临床证明在一系列治疗后可减少30%的脂肪并增加25%的肌肉质量。非侵入性，无恢复期，适用于腹部、臀部、手臂、小腿和大腿。治疗舒适，无痛，效果显著，适合希望同时减脂塑形的人士。是目前市场上唯一能同时减脂增肌的非手术治疗方案。"
     }
   },
   "body-contouring": {
     en: {
       name: "Body Contouring",
-      description: "Non-invasive body sculpting treatment"
+      description: "Comprehensive non-surgical body sculpting treatments using advanced technologies to target stubborn fat deposits, tighten skin, and enhance body shape. May include radiofrequency, ultrasound, cryolipolysis (fat freezing), or laser-based treatments depending on individual needs. Effectively reduces localized fat, improves skin texture, and creates more defined contours. Customized treatment plans address specific concerns with minimal downtime and long-lasting results."
     },
     zh: {
       name: "身体轮廓塑造",
-      description: "非侵入性身体塑形治疗"
+      description: "全面的非手术身体塑形治疗，使用先进技术靶向顽固脂肪堆积，紧致皮肤，增强身体轮廓。可能包括射频、超声波、冷冻溶脂或基于激光的治疗，根据个人需求定制。有效减少局部脂肪，改善皮肤纹理，创造更加明确的轮廓线条。定制化治疗方案针对特定问题，恢复时间短，效果持久。适用于希望改善身体线条但不想接受手术的人士，特别适合腹部、臀部、大腿和手臂等问题区域。治疗舒适，无痛，可立即恢复正常活动。"
     }
   },
 
@@ -276,31 +276,31 @@ export const TREATMENT_TRANSLATIONS_EN: TreatmentTranslationsMap = {
   "btl-emsella": {
     en: {
       name: "BTL EMSELLA",
-      description: "Non-invasive treatment for pelvic floor strengthening"
+      description: "Revolutionary non-invasive treatment for pelvic floor strengthening using High-Intensity Focused Electromagnetic (HIFEM) technology. Patients remain fully clothed during the comfortable 30-minute sessions. One session delivers the equivalent of 11,000 Kegel exercises, effectively treating urinary incontinence and improving pelvic floor strength. FDA-cleared technology with clinically proven results after a series of treatments. Ideal for women post-childbirth, during menopause, or anyone experiencing pelvic floor weakness."
     },
     zh: {
       name: "BTL EMSELLA 盆底肌修复",
-      description: "用于盆底肌加强的非侵入性治疗"
+      description: "革命性非侵入性盆底肌加强治疗，使用高强度聚焦电磁(HIFEM)技术。患者在舒适的30分钟治疗过程中保持全身着装。一次治疗相当于11,000次凯格尔运动，有效治疗尿失禁并增强盆底肌力量。FDA批准的技术，临床证明在一系列治疗后有显著效果。适合产后女性、更年期女性或任何经历盆底肌松弛的人士。治疗舒适，无痛，无恢复期，可立即恢复正常活动。被称为'幸福椅'，能有效改善盆底肌松弛并修复神经肌肉，提高生活质量。"
     }
   },
   "feminine-wellness": {
     en: {
       name: "Plus 90 Feminine Wellness",
-      description: "Comprehensive feminine wellness treatment"
+      description: "Comprehensive feminine wellness program combining multiple advanced technologies to address various intimate health concerns. Includes treatments for vaginal laxity, dryness, urinary incontinence, and overall intimate wellness. Uses radiofrequency, laser, or electromagnetic technologies to stimulate collagen production, improve blood flow, and restore vaginal tissue health. Customized treatment plans based on individual needs with minimal discomfort and no downtime. Improves both physical comfort and confidence with long-lasting results."
     },
     zh: {
       name: "Plus 90 女性健康",
-      description: "全面的女性健康治疗"
+      description: "全面的女性健康计划，结合多种先进技术解决各种私密健康问题。包括治疗阴道松弛、干燥、尿失禁和整体私密健康。使用射频、激光或电磁技术刺激胶原蛋白生成，改善血液循环，恢复阴道组织健康。根据个人需求定制治疗方案，舒适度高，无恢复期。改善身体舒适度和自信心，效果持久。适合产后女性、更年期女性或任何希望改善私密健康的女性。治疗私密，舒适，无痛，可立即恢复正常活动。全方位关注女性健康，提高生活质量。"
     }
   },
   "vaginal-rejuvenation": {
     en: {
       name: "Vaginal Rejuvenation",
-      description: "Non-surgical vaginal rejuvenation treatment"
+      description: "Advanced non-surgical treatment using radiofrequency or laser technology to restore vaginal tissue health and function. Stimulates collagen production and improves blood circulation to address vaginal laxity, dryness, and discomfort. Effectively treats symptoms related to childbirth, menopause, or natural aging. Quick, comfortable sessions with minimal discomfort and no downtime. Results include improved natural lubrication, increased sensitivity, and enhanced tissue elasticity for better intimate wellness and confidence."
     },
     zh: {
       name: "阴道焕发活力",
-      description: "非手术阴道焕发活力治疗"
+      description: "先进的非手术治疗，使用射频或激光技术恢复阴道组织健康和功能。刺激胶原蛋白生成并改善血液循环，解决阴道松弛、干燥和不适问题。有效治疗与分娩、更年期或自然老化相关的症状。快速、舒适的治疗过程，不适感最小，无恢复期。效果包括改善自然润滑，增加敏感度，增强组织弹性，提高私密健康和自信心。适合产后女性、更年期女性或任何希望改善私密健康的女性。治疗私密，舒适，无痛，可立即恢复正常活动。是一种安全有效的非侵入性选择，无需手术即可恢复私密区域健康。"
     }
   },
 
@@ -308,31 +308,31 @@ export const TREATMENT_TRANSLATIONS_EN: TreatmentTranslationsMap = {
   "eyebrows-microblading": {
     en: {
       name: "Eyebrows",
-      description: "Semi-permanent eyebrow enhancement"
+      description: "Semi-permanent eyebrow enhancement using precise manual technique to create hair-like strokes that mimic natural eyebrow hairs. Creates fuller, perfectly shaped eyebrows that frame the face and enhance facial features. Customized to match your natural brow color, face shape, and aesthetic preferences. Results last 1-3 years depending on skin type and lifestyle factors. Ideal for those with sparse brows, alopecia, or anyone seeking defined, low-maintenance eyebrows."
     },
     zh: {
       name: "眉毛",
-      description: "半永久性眉毛增强"
+      description: "半永久性眉毛增强，使用精确的手工技术创造模仿自然眉毛的发丝状纹路。打造更丰满、完美形状的眉毛，框定面部并增强面部特征。根据您的自然眉毛颜色、脸型和美学偏好进行定制。效果持续1-3年，取决于皮肤类型和生活方式因素。适合眉毛稀疏、脱发或任何寻求清晰、低维护眉毛的人士。治疗过程包括设计、麻醉和精细施术，恢复期短，效果自然逼真。是一种安全有效的半永久性美容技术，可节省日常化妆时间。"
     }
   },
   "lips-microblading": {
     en: {
       name: "Lips",
-      description: "Semi-permanent lip enhancement"
+      description: "Semi-permanent lip enhancement technique that defines lip borders, corrects asymmetry, and adds subtle color to create fuller-looking lips. Uses specialized pigments to enhance natural lip shape and color without the need for daily makeup application. Can correct uneven lip lines, add definition, and create the appearance of increased volume. Results last 1-2 years with proper aftercare. Customized to complement your natural lip color and desired aesthetic outcome."
     },
     zh: {
       name: "嘴唇",
-      description: "半永久性唇部增强"
+      description: "半永久性唇部增强技术，定义唇部轮廓，矫正不对称，并添加微妙的颜色，创造更丰满的唇部外观。使用专业色料增强自然唇形和颜色，无需每日化妆。可以矫正不均匀的唇线，增加定义，创造增加体积的外观。正确护理后效果可持续1-2年。根据您的自然唇色和期望的美学效果进行定制。治疗过程包括设计、麻醉和精细施术，恢复期短，效果自然。适合希望增强唇部外观但不想使用唇部填充剂的人士，或希望减少日常化妆时间的人士。"
     }
   },
   "hairline-microblading": {
     en: {
       name: "Hairline",
-      description: "Semi-permanent hairline enhancement"
+      description: "Semi-permanent hairline enhancement technique that creates the appearance of fuller, more defined hairlines using precise micro-strokes that mimic natural hair follicles. Effectively addresses receding hairlines, thinning areas, or uneven hairline contours. Customized to match your natural hair color and desired hairline shape. Results last 1-2 years depending on skin type and lifestyle factors. Provides immediate visual improvement with minimal downtime and a natural-looking result."
     },
     zh: {
       name: "发际线",
-      description: "半永久性发际线增强"
+      description: "半永久性发际线增强技术，使用精确的微型笔触模仿自然毛囊，创造更丰满、更清晰的发际线外观。有效解决后退的发际线、稀疏区域或不均匀的发际线轮廓。根据您的自然发色和期望的发际线形状进行定制。效果持续1-2年，取决于皮肤类型和生活方式因素。提供即时视觉改善，恢复期短，效果自然。适合发际线后退、头发稀疏或希望改善发际线外观的人士。治疗过程包括设计、麻醉和精细施术，恢复期短，效果自然逼真。是一种安全有效的半永久性美容技术，可增强自信心。"
     }
   },
 
@@ -340,61 +340,61 @@ export const TREATMENT_TRANSLATIONS_EN: TreatmentTranslationsMap = {
   "scalp-cleaning": {
     en: {
       name: "HydraFacial Scalp Cleaning",
-      description: "Deep cleansing treatment for scalp health"
+      description: "Advanced scalp treatment using patented HydraFacial technology to deeply cleanse, exfoliate, and nourish the scalp. Removes buildup, excess oil, and impurities while delivering specialized serums to improve scalp health. Helps address dandruff, dryness, oiliness, and promotes healthier hair growth. The treatment includes cleansing, exfoliation, extraction, and infusion of nutrients. Provides immediate improvement in scalp condition with no downtime. Ideal for all hair types and scalp concerns."
     },
     zh: {
       name: "HydraFacial 头皮清洁",
-      description: "用于头皮健康的深层清洁治疗"
+      description: "使用专利HydraFacial技术的先进头皮治疗，深层清洁、去角质并滋养头皮。去除堆积物、多余油脂和杂质，同时输送专业精华液改善头皮健康。有助于解决头皮屑、干燥、油腻问题，促进更健康的头发生长。治疗包括清洁、去角质、提取和营养注入。立即改善头皮状况，无恢复期。适合所有发质和头皮问题。治疗舒适，无痛，效果显著，是头皮健康和头发生长的理想选择。定期治疗可显著改善头皮健康，减少头皮问题，促进头发生长。"
     }
   },
   "hair-restoration": {
     en: {
       name: "Hair Restoration",
-      description: "Advanced treatment for hair growth and restoration"
+      description: "Comprehensive non-surgical hair restoration treatments using advanced technologies to stimulate hair growth and improve hair density. May include PRP (Platelet-Rich Plasma) therapy, low-level laser therapy, mesotherapy, or specialized topical treatments. Effectively addresses hair thinning, pattern baldness, and stress-related hair loss. Stimulates dormant hair follicles, improves blood circulation to the scalp, and enhances the health of existing hair. Customized treatment plans based on individual hair loss patterns and causes. Results develop gradually with ongoing improvement over multiple sessions."
     },
     zh: {
       name: "头发修复",
-      description: "用于头发生长和修复的先进治疗"
+      description: "全面的非手术头发修复治疗，使用先进技术刺激头发生长并改善头发密度。可能包括PRP（富血小板血浆）疗法、低能量激光疗法、美塑疗法或专业局部治疗。有效解决头发稀疏、脱发模式和压力相关的脱发问题。刺激休眠的毛囊，改善头皮血液循环，增强现有头发的健康。根据个人脱发模式和原因定制治疗方案。效果在多次治疗后逐渐显现并持续改善。适合各种脱发问题，包括雄性脱发、压力性脱发和头发稀疏。治疗舒适，无痛，无恢复期，是手术植发的理想替代方案。"
     }
   },
   "hand-treatment": {
     en: {
       name: "Hand Treatment",
-      description: "Rejuvenation treatment for hands"
+      description: "Specialized rejuvenation treatment designed specifically for hands to address signs of aging, sun damage, and volume loss. Combines multiple modalities including dermal fillers to restore volume, laser treatments to address pigmentation, and skin boosters for hydration and texture improvement. Effectively reduces the appearance of prominent veins, age spots, and crepey skin. Restores a more youthful appearance to hands with minimal downtime. Results include smoother, more even-toned skin with improved texture and volume for naturally younger-looking hands."
     },
     zh: {
       name: "手部护理",
-      description: "手部焕发活力治疗"
+      description: "专门为手部设计的焕发活力治疗，解决老化迹象、日晒损伤和体积流失。结合多种方式，包括真皮填充剂恢复体积，激光治疗解决色素沉着，以及皮肤助推剂改善水分和纹理。有效减少突出静脉、老年斑和皱纹皮肤的外观。恢复手部更年轻的外观，恢复时间短。效果包括更光滑、更均匀的肤色，改善纹理和体积，使手部自然年轻。适合手部老化明显、有色素沉着或体积流失的人士。治疗舒适，效果持久，是全面抗衰老方案的重要组成部分。"
     }
   },
   "snoring-treatment": {
     en: {
       name: "Snoring Treatment",
-      description: "Non-invasive treatment for snoring reduction"
+      description: "Innovative non-invasive treatment using laser technology to tighten and strengthen the soft palate and surrounding tissues that cause snoring. The gentle laser energy stimulates collagen production in the oral mucosa, reducing vibrations during sleep. Effectively addresses primary snoring without the need for devices, appliances, or surgery. Quick, comfortable treatments with no downtime. Most patients experience significant reduction in snoring after a series of treatments. Improves sleep quality for both the patient and their partner with long-lasting results."
     },
     zh: {
       name: "打鼾治疗",
-      description: "用于减少打鼾的非侵入性治疗"
+      description: "创新的非侵入性治疗，使用激光技术紧致和加强导致打鼾的软腭和周围组织。温和的激光能量刺激口腔粘膜中的胶原蛋白生成，减少睡眠中的振动。有效解决原发性打鼾问题，无需使用设备、器具或手术。快速、舒适的治疗，无恢复期。大多数患者在一系列治疗后打鼾显著减少。改善患者及其伴侣的睡眠质量，效果持久。适合原发性打鼾患者，不适用于睡眠呼吸暂停症患者。治疗快速，无痛，可立即恢复正常活动。是一种安全有效的非侵入性选择，无需使用不舒适的设备即可改善打鼾问题。"
     }
   },
   "massage": {
     en: {
       name: "Massage",
-      description: "Therapeutic massage treatments"
+      description: "Professional therapeutic massage treatments customized to address specific concerns including muscle tension, stress reduction, circulation improvement, and overall wellness. Techniques may include Swedish, deep tissue, sports, lymphatic drainage, or hot stone massage depending on individual needs. Benefits include reduced muscle tension, improved circulation, enhanced flexibility, stress reduction, and promotion of overall relaxation and wellbeing. Sessions are tailored to your specific needs and preferences with adjustable pressure and focus areas. Regular treatments provide cumulative benefits for both physical and mental health."
     },
     zh: {
       name: "按摩",
-      description: "治疗性按摩"
+      description: "专业治疗性按摩，根据特定问题定制，包括肌肉紧张、减压、改善循环和整体健康。技术可能包括瑞典式、深层组织、运动、淋巴引流或热石按摩，取决于个人需求。好处包括减轻肌肉紧张、改善血液循环、增强灵活性、减轻压力，促进整体放松和健康。疗程根据您的特定需求和偏好量身定制，可调节压力和重点区域。定期治疗为身心健康提供累积效益。适合各种身体不适，包括肌肉紧张、压力、疲劳和慢性疼痛。治疗舒适，放松，可立即感受到身心的改善。是一种安全有效的非药物疗法，促进整体健康和福祉。"
     }
   },
   "acupuncture": {
     en: {
       name: "Acupuncture",
-      description: "Traditional Chinese medicine treatment"
+      description: "Traditional Chinese medicine treatment involving the insertion of ultra-thin needles at specific points on the body to balance energy flow (Qi) and stimulate natural healing processes. Effectively addresses a wide range of conditions including pain management, stress, anxiety, digestive issues, headaches, allergies, and sleep disorders. Each treatment is customized based on individual diagnosis and specific health concerns. Promotes overall wellness by restoring balance to body systems and enhancing natural healing mechanisms. Sessions are gentle with minimal discomfort and provide both immediate and cumulative benefits with regular treatments."
     },
     zh: {
       name: "针灸",
-      description: "传统中医治疗"
+      description: "传统中医治疗，在身体特定穴位插入超细针，平衡能量流动（气）并刺激自然愈合过程。有效解决多种状况，包括疼痛管理、压力、焦虑、消化问题、头痛、过敏和睡眠障碍。每次治疗根据个人诊断和特定健康问题进行定制。通过恢复身体系统平衡和增强自然愈合机制促进整体健康。治疗温和，不适感最小，定期治疗提供即时和累积效益。适合各种健康问题，包括慢性疼痛、压力、失眠和身体不平衡。治疗舒适，放松，可立即感受到身心的改善。是一种安全有效的传统医学疗法，有数千年的历史和现代科学研究支持。"
     }
   }
 };

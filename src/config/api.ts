@@ -8,7 +8,7 @@ export const API_KEY_STORAGE_KEY = 'gemini_api_key';
 export const FALLBACK_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w';
 
 // API timeout in milliseconds
-export const API_TIMEOUT = 60000;
+export const API_TIMEOUT = 180000;
 
 // Validate API key format (always valid since we're using fallback)
 export const isValidApiKey = (key: string): boolean => {

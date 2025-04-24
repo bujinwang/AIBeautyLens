@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Dimensions, TextStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, TYPOGRAPHY } from '../constants/theme';
 import SkinMatrixHeader from './SkinMatrixHeader';
 import FeatureSeverityRating from './FeatureSeverityRating';
 import { AnalysisResult } from '../types';
@@ -104,7 +104,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
         <View style={styles.topContainer}>
           <View style={styles.topContainerHeader}>
             <MaterialIcons name="person" size={24} color={COLORS.primary.main} />
-            <Text style={styles.topContainerTitle}>{t('profileAnalysis')}</Text>
+            <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginLeft: SPACING.sm, flexShrink: 1 }]}>
+              {t('profileAnalysis')}
+            </Text>
           </View>
           <View style={styles.topContainerContent}>
             {/* Left column - Profile Analysis */}
@@ -113,24 +115,24 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
                 <View style={styles.profileGrid}>
                   <View style={styles.profileRow}>
                     <View style={styles.profileItem}>
-                      <Text style={styles.profileLabel}>{t('estimatedAge')}</Text>
-                      <Text style={styles.profileValue}>{analysisResult.estimatedAge}</Text>
+                      <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: 4 }]}>{t('estimatedAge')}</Text>
+                      <Text style={[TYPOGRAPHY.subtitle1, { color: COLORS.text.primary, marginTop: 2 }]}>{analysisResult.estimatedAge}</Text>
                     </View>
                     <View style={styles.profileItem}>
-                      <Text style={styles.profileLabel}>{t('skinType')}</Text>
-                      <Text style={styles.profileValue}>{analysisResult.skinType}</Text>
+                      <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: 4 }]}>{t('skinType')}</Text>
+                      <Text style={[TYPOGRAPHY.subtitle1, { color: COLORS.text.primary, marginTop: 2 }]}>{analysisResult.skinType}</Text>
                     </View>
                   </View>
                   <View style={styles.profileRow}>
                     <View style={styles.profileItem}>
-                      <Text style={styles.profileLabel}>{t('undertone')}</Text>
-                      <Text style={styles.profileValue}>{analysisResult.skinUndertone}</Text>
+                      <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: 4 }]}>{t('undertone')}</Text>
+                      <Text style={[TYPOGRAPHY.subtitle1, { color: COLORS.text.primary, marginTop: 2 }]}>{analysisResult.skinUndertone}</Text>
                     </View>
                     <View style={styles.profileItem}>
-                      <Text style={styles.profileLabel}>{t('gender')}</Text>
-                      <Text style={styles.profileValue}>
+                      <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: 4 }]}>{t('gender')}</Text>
+                      <Text style={[TYPOGRAPHY.subtitle1, { color: COLORS.text.primary, marginTop: 2 }]}>
                         {analysisResult.gender}
-                        <Text style={styles.confidenceText}>
+                        <Text style={[TYPOGRAPHY.caption, { color: COLORS.text.secondary, marginLeft: 4 }]}>
                           {` (${Math.round(analysisResult.genderConfidence * 100)}% ${t('confidence')})`}
                         </Text>
                       </Text>
@@ -168,7 +170,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
           <View style={styles.overallSection}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="health-and-safety" size={24} color={COLORS.primary.main} />
-              <Text style={styles.sectionTitle}>{t('overallSkinHealth')}</Text>
+              <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginBottom: SPACING.sm }]}>
+                {t('overallSkinHealth')}
+              </Text>
             </View>
             <Text style={styles.overallCondition}>{analysisResult.overallCondition}</Text>
           </View>
@@ -176,7 +180,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
           <View style={styles.analysisSection}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="assessment" size={24} color={COLORS.primary.main} />
-              <Text style={styles.sectionTitle}>{t('clinicalAssessment')}</Text>
+              <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginBottom: SPACING.sm }]}>
+                {t('clinicalAssessment')}
+              </Text>
             </View>
 
             {analysisResult.features.map((item, index) => (
@@ -187,7 +193,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
                     size={20}
                     color={COLORS.primary.main}
                   />
-                  <Text style={styles.featureTitle}>{item.description}</Text>
+                  <Text style={[TYPOGRAPHY.subtitle1, { color: COLORS.text.primary, marginLeft: SPACING.sm, flex: 1, flexWrap: 'wrap' }]}>
+                    {item.description}
+                  </Text>
                   <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
                     <Text style={styles.statusText}>{translateStatus(item.status)}</Text>
                   </View>
@@ -195,12 +203,12 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
 
                 <View style={styles.featureContent}>
                   <View style={styles.locationContainer}>
-                    <Text style={styles.locationLabel}>{t('location')}</Text>
-                    <Text style={styles.locationText}>{item.location}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginRight: SPACING.sm, width: 80 }]}>{t('location')}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.primary, flex: 1, flexWrap: 'wrap' }]}>{item.location}</Text>
                   </View>
 
                   <View style={styles.severityContainer}>
-                    <Text style={styles.severityLabel}>{t('severityLevel')}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: SPACING.xs }]}>{t('severityLevel')}</Text>
                     <FeatureSeverityRating
                       severity={item.severity}
                       maxSeverity={5}
@@ -212,22 +220,22 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
                   </View>
 
                   <View style={styles.causesContainer}>
-                    <Text style={styles.causesLabel}>{t('probableCauses')}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: SPACING.xs }]}>{t('probableCauses')}</Text>
                     {item.causes.map((cause, causeIndex) => (
-                      <Text key={causeIndex} style={styles.causeText}>• {cause}</Text>
+                      <Text key={causeIndex} style={[TYPOGRAPHY.body2, { color: COLORS.text.primary, marginLeft: SPACING.md, marginBottom: 2 }]}>• {cause}</Text>
                     ))}
                   </View>
 
                   <View style={styles.characteristicsContainer}>
-                    <Text style={styles.characteristicsLabel}>{t('characteristics')}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: SPACING.xs }]}>{t('characteristics')}</Text>
                     {item.characteristics.map((char, charIndex) => (
-                      <Text key={charIndex} style={styles.characteristicText}>• {char}</Text>
+                      <Text key={charIndex} style={[TYPOGRAPHY.body2, { color: COLORS.text.primary, marginLeft: SPACING.md, marginBottom: 2 }]}>• {char}</Text>
                     ))}
                   </View>
 
                   <View style={styles.priorityContainer}>
-                    <Text style={styles.priorityLabel}>{t('treatmentPriority')}</Text>
-                    <Text style={styles.priorityText}>{getPriorityLabel(item.priority)}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginRight: SPACING.sm }]}>{t('treatmentPriority')}</Text>
+                    <Text style={[TYPOGRAPHY.body2, { fontWeight: '500', color: COLORS.primary.main }]}>{getPriorityLabel(item.priority)}</Text>
                   </View>
                 </View>
               </View>
@@ -238,7 +246,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
           <View style={styles.clinicalEvaluation}>
             <View style={styles.sectionHeader}>
               <MaterialIcons name="medical-services" size={24} color={COLORS.primary.main} />
-              <Text style={styles.sectionTitle}>{t('clinicalEvaluation')}</Text>
+              <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginBottom: SPACING.sm }]}>
+                {t('clinicalEvaluation')}
+              </Text>
             </View>
             <Text style={styles.evaluationText}>{t('evaluationText')}</Text>
           </View>
@@ -246,14 +256,16 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
           <View style={styles.disclaimer}>
             <View style={styles.disclaimerHeader}>
               <MaterialIcons name="info" size={20} color={COLORS.primary.main} />
-              <Text style={styles.disclaimerTitle}>{t('analysisInformation')}</Text>
+              <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginLeft: SPACING.xs }]}>
+                {t('analysisInformation')}
+              </Text>
             </View>
-            <Text style={styles.disclaimerText}>
+            <Text style={[TYPOGRAPHY.body2, { color: COLORS.text.secondary, marginBottom: SPACING.sm }]}>
               This analysis is generated using our proprietary DermaGraph™ AI technology,
               incorporating HydraDerm™ Multi-Spectrum imaging and BeautyMatrix™ assessment algorithms.
               Results are derived from analysis of over 100,000 clinical cases and validated by board-certified dermatologists.
             </Text>
-            <Text style={styles.disclaimerNote}>
+            <Text style={[TYPOGRAPHY.caption, { color: COLORS.text.secondary, marginBottom: SPACING.sm }]}>
               {t('disclaimerNote')}
             </Text>
           </View>
@@ -266,49 +278,48 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.paper,
+    backgroundColor: COLORS.background.default,
   },
   scrollContainer: {
     flex: 1,
   },
   topContainer: {
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background.paper,
     borderRadius: BORDER_RADIUS.lg,
+    margin: SPACING.sm,
+    padding: SPACING.md,
     ...SHADOWS.medium,
   },
   topContainerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
-    paddingBottom: SPACING.sm,
-    width: '100%',
   },
   topContainerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.h5,
     color: COLORS.primary.main,
     marginLeft: SPACING.sm,
-  },
+    flexShrink: 1,
+  } as TextStyle,
   topContainerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     width: '100%',
+    flexWrap: 'wrap',
   },
   leftColumn: {
     width: '58%',
+    minWidth: 280,
+    flexShrink: 1,
   },
   fullWidthContent: {
-    padding: SPACING.md,
+    padding: SPACING.sm,
     width: '100%',
   },
   profileSection: {
     width: '100%',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -327,35 +338,36 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
+    flexWrap: 'wrap',
   },
   profileItem: {
     width: '48%',
+    minWidth: 130,
     backgroundColor: COLORS.gray[50],
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.xs,
   },
   profileLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
     marginBottom: 4,
-  },
+  } as TextStyle,
   profileValue: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1,
     color: COLORS.text.primary,
     marginTop: 2,
-  },
+  } as TextStyle,
   confidenceText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.caption,
     color: COLORS.text.secondary,
-    fontWeight: '400',
-  },
+  } as TextStyle,
   overallSection: {
     padding: SPACING.md,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     ...SHADOWS.medium,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.info.main,
@@ -369,7 +381,7 @@ const styles = StyleSheet.create({
   },
   analysisSection: {
     width: '100%',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
@@ -392,8 +404,8 @@ const styles = StyleSheet.create({
   featureCard: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     ...SHADOWS.medium,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.primary.main,
@@ -404,22 +416,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.md,
+    flexWrap: 'wrap',
   },
   featureTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1,
     color: COLORS.text.primary,
     marginLeft: SPACING.sm,
-  },
+    flex: 1,
+    flexWrap: 'wrap',
+  } as TextStyle,
   statusBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.sm,
+    marginTop: SPACING.xs,
   },
   statusText: {
+    ...TYPOGRAPHY.caption,
     color: COLORS.white,
-    fontSize: 12,
     fontWeight: '500',
   },
   featureContent: {
@@ -428,25 +442,27 @@ const styles = StyleSheet.create({
   },
   locationContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: SPACING.sm,
+    flexWrap: 'wrap',
   },
   locationLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
     marginRight: SPACING.sm,
     width: 80,
   },
   locationText: {
-    flex: 1,
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.primary,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   severityContainer: {
     marginBottom: SPACING.sm,
   },
   severityLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
   },
@@ -462,7 +478,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   causeText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.primary,
     marginLeft: SPACING.md,
     marginBottom: 2,
@@ -471,12 +487,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   characteristicsLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
   },
   characteristicText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.primary,
     marginLeft: SPACING.md,
     marginBottom: 2,
@@ -487,7 +503,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   priorityLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
     marginRight: SPACING.sm,
   },
@@ -501,7 +517,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     ...SHADOWS.medium,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.primary.dark,
@@ -517,7 +533,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     backgroundColor: COLORS.background.paper,
     borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     ...SHADOWS.medium,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.gold.main,
@@ -587,7 +603,47 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 4,
   },
-
+  visitInfoLabel: {
+    ...TYPOGRAPHY.subtitle1,
+    color: COLORS.text.secondary,
+    marginBottom: 4,
+  } as TextStyle,
+  visitInfoValue: {
+    ...TYPOGRAPHY.body1,
+    color: COLORS.text.primary,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+  } as TextStyle,
+  footnote: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  } as TextStyle,
+  confidenceLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.text.secondary,
+    marginRight: 4,
+  } as TextStyle,
+  confidenceValue: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: '600' as const,
+    color: 'white',
+  } as TextStyle,
+  tipTitle: {
+    ...TYPOGRAPHY.subtitle1,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
+  } as TextStyle,
+  tipText: {
+    ...TYPOGRAPHY.body2,
+    color: COLORS.text.primary,
+    marginLeft: SPACING.xs,
+    flex: 1,
+  } as TextStyle,
 });
 
 export default DiagnosisReport;

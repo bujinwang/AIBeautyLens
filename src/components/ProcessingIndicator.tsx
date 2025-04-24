@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, TextStyle, TouchableOpacity } from 'react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import CustomIcon from './CustomIcon';
 import AILogoIcon from './AILogoIcon';
@@ -45,6 +45,8 @@ interface ProcessingIndicatorProps {
   processingText?: string;
   showDetailedSteps?: boolean;
   showTechStack?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
 }
 
 // Define valid typography styles without string literals for fontWeight
@@ -52,14 +54,17 @@ const TYPOGRAPHY_STYLES = {
   h5: {
     fontSize: 18,
     fontWeight: '600' as TextStyle['fontWeight'],
+    lineHeight: 26,
   },
   body2: {
     fontSize: 14,
     letterSpacing: 0.25,
+    lineHeight: 22,
   },
   caption: {
     fontSize: 12,
     letterSpacing: 0.4,
+    lineHeight: 18,
   },
 };
 
@@ -68,6 +73,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   processingText = "Clinical-grade dermatological analysis in progress",
   showDetailedSteps = true,
   showTechStack = true,
+  error = null,
+  onRetry,
 }) => {
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
@@ -81,66 +88,91 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   // Rotate animation
   useEffect(() => {
     if (isAnalyzing) {
-      Animated.loop(
+      // Create the rotation animation
+      const rotateAnimation = Animated.loop(
         Animated.timing(spinValue, {
           toValue: 1,
-          duration: 1500, // Faster rotation
+          duration: 1500,
           easing: Easing.linear,
           useNativeDriver: true,
         })
-      ).start();
+      );
 
-      // Pulse animation
-      Animated.loop(
+      // Start the rotation
+      rotateAnimation.start();
+
+      // Cleanup function to stop animation when component unmounts or isAnalyzing becomes false
+      return () => {
+        rotateAnimation.stop();
+        spinValue.setValue(0); // Reset the value
+      };
+    }
+  }, [isAnalyzing, spinValue]);
+
+  // Pulse animation
+  useEffect(() => {
+    if (isAnalyzing) {
+      // Create the pulse animation
+      const pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseValue, {
             toValue: 1.1,
-            duration: 750, // Faster pulse expansion
+            duration: 750,
             useNativeDriver: true,
           }),
           Animated.timing(pulseValue, {
             toValue: 1,
-            duration: 750, // Faster pulse contraction
+            duration: 750,
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
 
-      // Progress bar animation - set to 3 minutes total duration
-      // Start from the middle (50%)
+      // Start the pulse animation
+      pulseAnimation.start();
+
+      // Cleanup function
+      return () => {
+        pulseAnimation.stop();
+        pulseValue.setValue(1); // Reset the value
+      };
+    }
+  }, [isAnalyzing, pulseValue]);
+
+  // Progress bar and other animations...
+  useEffect(() => {
+    if (isAnalyzing) {
+      // Progress bar animation
       progressWidth.setValue(0.5);
-
-      // Animate to completion over 3 minutes (180000ms)
       Animated.timing(progressWidth, {
         toValue: 1,
-        duration: 180000, // 3 minutes in milliseconds
+        duration: 180000, // 3 minutes
         useNativeDriver: false,
       }).start();
 
       // Step animation
       if (showDetailedSteps) {
-        const interval = setInterval(() => {
+        const stepInterval = setInterval(() => {
           setCurrentStep((prev) => {
             const next = prev + 1;
             if (next >= PROCESSING_STEPS.length) {
-              clearInterval(interval);
               return prev;
             }
             // Start fade-in animation
             fadeValue.setValue(0);
             Animated.timing(fadeValue, {
               toValue: 1,
-              duration: 250, // Faster fade-in for steps
+              duration: 250,
               useNativeDriver: true,
             }).start();
             return next;
           });
-        }, 25000); // Change step approximately every 25 seconds to spread across 3 minutes
+        }, 25000);
 
-        return () => clearInterval(interval);
+        return () => clearInterval(stepInterval);
       }
     }
-  }, [isAnalyzing]);
+  }, [isAnalyzing, showDetailedSteps]);
 
   // Tech stack animation
   useEffect(() => {
@@ -185,11 +217,58 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     outputRange: ['0deg', '360deg'],
   });
 
-  if (!isAnalyzing) return null;
+  if (!isAnalyzing && !error) return null;
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.innerContainer, { paddingTop: '15%' }]}>
+          <View style={styles.iconContainer}>
+            <View style={[styles.iconBackground, styles.errorBackground]}>
+              <CustomIcon
+                name="error"
+                size={40}
+                color={COLORS.error.main}
+              />
+            </View>
+          </View>
+
+          <Text style={[styles.processingText, styles.errorText]}>
+            Analysis Error
+          </Text>
+
+          <View style={styles.errorMessageContainer}>
+            <Text style={styles.errorMessage}>
+              {error.message || "An unexpected error occurred during analysis. Please try again."}
+            </Text>
+          </View>
+
+          {onRetry && (
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={onRetry}
+              activeOpacity={0.8}
+            >
+              <CustomIcon
+                name="refresh"
+                size={20}
+                color={COLORS.white}
+              />
+              <Text style={styles.retryButtonText}>Retry Analysis</Text>
+            </TouchableOpacity>
+          )}
+
+          <Text style={styles.securityText}>
+            Your data is secure and no partial analysis was stored
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.innerContainer}>
+      <View style={[styles.innerContainer, { paddingTop: '15%' }]}>
         <View style={styles.iconContainer}>
           <Animated.View
             style={[
@@ -203,7 +282,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
           </Animated.View>
         </View>
 
-        <Text style={styles.title}>{processingText}</Text>
+        <Text style={styles.processingText}>{processingText}</Text>
 
         {showDetailedSteps && PROCESSING_STEPS[currentStep] && (
           <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
@@ -235,33 +314,21 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
         </View>
 
         {showTechStack && (
-          <View style={styles.techStackContainer}>
-            <Text style={styles.techStackTitle}>Powered by cutting-edge technology</Text>
-
-            <View style={styles.techGridContainer}>
-              {TECH_STACK.map((tech, index) => (
-                <Animated.View
-                  key={index}
-                  style={[styles.techGridItem, { opacity: index === currentTech ? 1 : 0.6 }]}
-                >
-                  <View style={styles.techGridIconContainer}>
-                    <AILogoIcon size="small" />
-                  </View>
-                  <Text style={styles.techGridName} numberOfLines={1}>{tech.name}</Text>
-                </Animated.View>
-              ))}
-            </View>
-
-            <View style={styles.techItemWrapper}>
-              <Animated.View style={[styles.techItemContainer, { opacity: techFadeValue }]}>
-                <View style={styles.techIconContainer}>
-                  <AILogoIcon size="small" />
-                </View>
+          <Animated.View style={[styles.techStackContainer, { opacity: techFadeValue }]}>
+            <View style={styles.techItem}>
+              <CustomIcon
+                name={TECH_STACK[currentTech].icon}
+                size={20}
+                color={COLORS.secondary.main}
+              />
+              <View style={styles.techTextContainer}>
                 <Text style={styles.techName}>{TECH_STACK[currentTech].name}</Text>
-                <Text style={styles.techDescription}>{TECH_STACK[currentTech].description}</Text>
-              </Animated.View>
+                <Text style={styles.techDescription}>
+                  {TECH_STACK[currentTech].description}
+                </Text>
+              </View>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         <Text style={styles.securityText}>
@@ -279,76 +346,58 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
   },
   innerContainer: {
-    width: '85%',
-    backgroundColor: COLORS.background.paper,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.xl,
+    width: '100%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 8,
+    paddingHorizontal: SPACING.lg,
   },
   iconContainer: {
-    height: 80,
-    width: 80,
-    marginBottom: SPACING.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+    marginBottom: SPACING.xl,
   },
   iconBackground: {
-    height: 80,
     width: 80,
-    borderRadius: BORDER_RADIUS.round,
-    borderWidth: 2,
-    borderColor: COLORS.primary.light,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.primary.light,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(144, 97, 255, 0.1)',
   },
-  title: {
-    fontSize: TYPOGRAPHY_STYLES.h5.fontSize,
-    fontWeight: TYPOGRAPHY_STYLES.h5.fontWeight,
+  processingText: {
+    ...TYPOGRAPHY_STYLES.h5,
     color: COLORS.text.primary,
-    marginBottom: SPACING.md,
     textAlign: 'center',
+    marginBottom: SPACING.lg,
   },
   stepContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.md,
-    backgroundColor: 'rgba(144, 97, 255, 0.05)',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     width: '100%',
   },
   stepText: {
-    fontSize: TYPOGRAPHY_STYLES.body2.fontSize,
-    letterSpacing: TYPOGRAPHY_STYLES.body2.letterSpacing,
+    ...TYPOGRAPHY_STYLES.body2,
     color: COLORS.text.primary,
     marginLeft: SPACING.sm,
+    flex: 1,
   },
   progressBarContainer: {
-    height: 4,
     width: '100%',
-    backgroundColor: COLORS.gray[200],
-    borderRadius: BORDER_RADIUS.round,
-    marginVertical: SPACING.lg,
+    height: 4,
+    backgroundColor: COLORS.background.default,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
+    marginBottom: SPACING.xl,
   },
   progressBar: {
     height: '100%',
     backgroundColor: COLORS.primary.main,
-    borderRadius: BORDER_RADIUS.round,
   },
   timeEstimateContainer: {
     width: '100%',
@@ -370,106 +419,60 @@ const styles = StyleSheet.create({
   },
   techStackContainer: {
     width: '100%',
-    marginBottom: SPACING.lg,
-    padding: SPACING.md,
-    backgroundColor: COLORS.background.paper,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-    alignItems: 'center',
   },
-  techStackTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
-  },
-  techItemWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.md,
-  },
-  techItemContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 100,
-    width: '100%',
-  },
-  techMainContainer: {
+  techItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '90%',
-    alignSelf: 'center',
-    justifyContent: 'center',
-  },
-  techIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER_RADIUS.round,
-    backgroundColor: 'rgba(144, 97, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: COLORS.background.paper,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
   },
   techTextContainer: {
+    marginLeft: SPACING.sm,
     flex: 1,
-    alignItems: 'center',
   },
   techName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.primary.main,
-    marginBottom: 4,
-    textAlign: 'center',
+    ...TYPOGRAPHY_STYLES.body2,
+    color: COLORS.text.primary,
+    fontWeight: '500',
   },
   techDescription: {
-    fontSize: 12,
+    ...TYPOGRAPHY_STYLES.caption,
     color: COLORS.text.secondary,
-    textAlign: 'center',
   },
-  techGridContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: SPACING.lg,
-    flexWrap: 'wrap',
-    paddingHorizontal: SPACING.sm,
+  errorBackground: {
+    backgroundColor: COLORS.error.light,
+  },
+  errorText: {
+    color: COLORS.error.main,
+  },
+  errorMessageContainer: {
     width: '100%',
+    backgroundColor: COLORS.error.light,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.xl,
   },
-  techGridItem: {
-    alignItems: 'center',
-    width: '45%',
-    marginBottom: SPACING.md,
-    marginHorizontal: '2.5%',
-  },
-  techGridIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: BORDER_RADIUS.round,
-    backgroundColor: 'rgba(144, 97, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  techGridName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary.main,
+  errorMessage: {
+    ...TYPOGRAPHY_STYLES.body2,
+    color: COLORS.error.main,
     textAlign: 'center',
-    marginTop: 4,
   },
-
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary.main,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.xl,
+  },
+  retryButtonText: {
+    ...TYPOGRAPHY_STYLES.body2,
+    color: COLORS.white,
+    marginLeft: SPACING.sm,
+    fontWeight: '500',
+  },
 });
 
 export default ProcessingIndicator;

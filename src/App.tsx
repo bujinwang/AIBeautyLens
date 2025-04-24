@@ -6,6 +6,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet } from 'react-native';
 import { setGlobalNavigationRef } from './services/geminiService';
 import { LocalizationProvider } from './i18n/localizationContext';
+import ScreenWrapper from './components/ScreenWrapper';
+import { withFeedbackButton } from './components/withFeedbackButton';
 
 // Import our screens
 import CameraScreen from './screens/CameraScreen';
@@ -86,6 +88,61 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
+// Create wrapped screen components with feedback button
+const WrappedHomeScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <HomeScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedCameraScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <CameraScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedAnalysisScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <AnalysisScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedTreatmentScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <TreatmentScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedRecommendedTreatmentsScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <RecommendedTreatmentsScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedReportScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <ReportScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedLogoGenerator = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <LogoGenerator {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedPrivacyPolicyScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <PrivacyPolicyScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedSettingsScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <SettingsScreen {...props} />
+  </ScreenWrapper>
+));
+
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const navigationRef = useRef(null);
@@ -120,58 +177,58 @@ export default function App() {
         <SafeAreaProvider>
           <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
             <Stack.Navigator initialRouteName="Home">
-            <Stack.Screen
-              name="Home"
-              component={HomeScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Camera"
-              component={CameraScreen}
-              options={{ title: 'Take Photo', headerShown: false }}
-            />
-            <Stack.Screen
-              name="Analysis"
-              component={AnalysisScreen}
-              options={{ title: 'Analysis' }}
-            />
-            <Stack.Screen
-              name="Treatment"
-              component={TreatmentScreen}
-              options={{ title: 'Treatment Selection' }}
-            />
-            <Stack.Screen
-              name="RecommendedTreatments"
-              component={RecommendedTreatmentsScreen}
-              options={{ title: 'Recommended Treatments' }}
-            />
-            <Stack.Screen
-              name="Report"
-              component={ReportScreen}
-              options={{ title: 'Treatment Report' }}
-            />
-            <Stack.Screen
-              name="LogoGenerator"
-              component={LogoGenerator}
-              options={{ title: 'Logo Generator' }}
-            />
-            <Stack.Screen
-              name="PrivacyPolicy"
-              component={PrivacyPolicyScreen}
-              options={{
-                title: 'Privacy Policy',
-                headerShown: false
-              }}
-            />
-            <Stack.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{ title: 'Settings' }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-        <StatusBar style="auto" />
-      </SafeAreaProvider>
+              <Stack.Screen
+                name="Home"
+                component={WrappedHomeScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Camera"
+                component={WrappedCameraScreen}
+                options={{ title: 'Take Photo', headerShown: false }}
+              />
+              <Stack.Screen
+                name="Analysis"
+                component={WrappedAnalysisScreen}
+                options={{ title: 'Analysis' }}
+              />
+              <Stack.Screen
+                name="Treatment"
+                component={WrappedTreatmentScreen}
+                options={{ title: 'Treatment Selection' }}
+              />
+              <Stack.Screen
+                name="RecommendedTreatments"
+                component={WrappedRecommendedTreatmentsScreen}
+                options={{ title: 'Recommended Treatments' }}
+              />
+              <Stack.Screen
+                name="Report"
+                component={WrappedReportScreen}
+                options={{ title: 'Treatment Report' }}
+              />
+              <Stack.Screen
+                name="LogoGenerator"
+                component={WrappedLogoGenerator}
+                options={{ title: 'Logo Generator' }}
+              />
+              <Stack.Screen
+                name="PrivacyPolicy"
+                component={WrappedPrivacyPolicyScreen}
+                options={{
+                  title: 'Privacy Policy',
+                  headerShown: false
+                }}
+              />
+              <Stack.Screen
+                name="Settings"
+                component={WrappedSettingsScreen}
+                options={{ title: 'Settings' }}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+          <StatusBar style="auto" />
+        </SafeAreaProvider>
       </LocalizationProvider>
     </ErrorBoundary>
   );

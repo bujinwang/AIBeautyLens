@@ -190,7 +190,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.formSection}>
                 <Text style={styles.formLabel}>{t('appointmentLength')}</Text>
                 <View style={styles.appointmentOptions}>
-                  {['45m', '60m', '2hrs', '4hrs'].map((option) => (
+                  {['1hr', '2hrs', '4hrs', '6hrs', '8hrs'].map((option) => (
                     <TouchableOpacity
                       key={option}
                       style={[
@@ -200,7 +200,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                       onPress={() => setAppointmentLength(option)}
                     >
                       <View style={styles.appointmentOptionContent}>
-                        {(option === '2hrs' || option === '4hrs') && (
+                        {(option === '2hrs' || option === '4hrs' || option === '6hrs' || option === '8hrs') && (
                           <MaterialIcons
                             name="stars"
                             size={16}
@@ -353,8 +353,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 8,
+    marginBottom: 16,
     gap: 12,
   },
   button: {
@@ -389,18 +389,18 @@ const styles = StyleSheet.create({
     color: COLORS.primary.main,
   },
   previewScrollContainer: {
-    flex: 1,
+    flex: 0,
   },
   previewContainer: {
-    flex: 1,
-    paddingBottom: 40,
+    flex: 0,
+    paddingBottom: 0,
   },
   formContainer: {
     paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 8,
   },
   formSection: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   formLabel: {
     fontSize: 16,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   cameraPreview: {
     width: '100%',
     aspectRatio: 3/4,
-    marginTop: 20,
+    marginTop: 8,
   },
   cameraOverlay: {
     flex: 1,

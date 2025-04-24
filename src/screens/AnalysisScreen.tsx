@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking, Platform, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking, Platform, TextInput, TextStyle } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -453,7 +453,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.default,
+    backgroundColor: COLORS.background.paper,
   },
   scrollContent: {
     paddingHorizontal: SPACING.md,
@@ -545,37 +545,36 @@ const styles = StyleSheet.create({
   },
   resultCard: {
     marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
     backgroundColor: COLORS.background.paper,
     ...SHADOWS.small,
   },
   resultContent: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.sm,
   },
   resultRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   resultItem: {
     flex: 1,
-    marginHorizontal: SPACING.sm,
+    marginHorizontal: SPACING.xs,
   },
   resultLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2.style,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
-  },
+  } as TextStyle,
   resultValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1.style,
     color: COLORS.text.primary,
-  },
+  } as TextStyle,
   genderContainer: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.sm,
   },
   genderRow: {
     flexDirection: 'row',
@@ -584,8 +583,8 @@ const styles = StyleSheet.create({
   },
   featuresCard: {
     marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xl,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
     padding: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
     backgroundColor: COLORS.background.paper,
@@ -631,28 +630,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1.style,
     color: COLORS.text.primary,
-  },
+  } as TextStyle,
   featureLocation: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2.style,
     color: COLORS.text.secondary,
-    marginTop: 2,
-  },
+  } as TextStyle,
   featureRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     minWidth: 120,
     justifyContent: 'flex-end',
+    flexWrap: 'wrap',
+    marginTop: SPACING.xs,
   },
   insightContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: COLORS.secondary.dark,
     borderRadius: BORDER_RADIUS.md,
     padding: SPACING.sm,
     marginBottom: SPACING.xl,
+    flexWrap: 'wrap',
   },
   insightIconContainer: {
     width: 32,
@@ -662,11 +662,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.sm,
+    marginTop: 2,
   },
   insightText: {
     flex: 1,
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: TYPOGRAPHY.body2.fontSize,
+    lineHeight: TYPOGRAPHY.body2.lineHeight,
     fontStyle: 'italic',
   },
   nextButton: {
@@ -677,10 +679,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginTop: SPACING.md,
+    flexWrap: 'wrap',
   },
   actionButton: {
     flex: 1,
     marginHorizontal: SPACING.xs,
+    marginBottom: SPACING.xs,
   },
   visitPurposeCard: {
     marginBottom: SPACING.md,
@@ -692,13 +696,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   visitInfoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1.style,
     color: COLORS.text.secondary,
     marginBottom: 4,
   },
   visitInfoValue: {
-    fontSize: 16,
+    ...TYPOGRAPHY.body1.style,
     color: COLORS.text.primary,
     backgroundColor: COLORS.background.paper,
     padding: SPACING.sm,
@@ -714,10 +717,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: SPACING.sm,
+    flexWrap: 'wrap',
   },
   reportButton: {
     flex: 1,
     marginHorizontal: SPACING.xs,
+    marginBottom: SPACING.xs,
   },
   diagnosisButton: {
     marginBottom: SPACING.md,
@@ -727,7 +732,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   footnote: {
-    ...TYPOGRAPHY.caption,
+    ...TYPOGRAPHY.caption.style,
     color: COLORS.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -736,9 +741,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginLeft: 8,
+    flexWrap: 'wrap',
   },
   confidenceLabel: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption.style,
     color: COLORS.text.secondary,
     marginRight: 4,
   },
@@ -753,34 +759,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    marginTop: SPACING.xs,
   },
   confidenceIcon: {
     marginRight: 2,
   },
   confidenceValue: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...TYPOGRAPHY.caption.style,
+    fontWeight: '600' as const,
     color: 'white',
   },
   tipSection: {
     marginBottom: SPACING.md,
   },
   tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.subtitle1.style,
     color: COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   tipItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: SPACING.xs,
   },
   tipText: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2.style,
     color: COLORS.text.primary,
     marginLeft: SPACING.xs,
+    flex: 1,
   },
+  title: {
+    ...TYPOGRAPHY.subtitle1.style,
+    color: COLORS.text.primary,
+  } as TextStyle,
+  subtitle: {
+    ...TYPOGRAPHY.caption.style,
+    color: COLORS.text.secondary,
+  } as TextStyle,
 });
 
 export default AnalysisScreen;

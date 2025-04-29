@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking, Platform, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, ScrollView, TouchableOpacity, Linking, Platform, TextInput, Dimensions, ViewStyle, StyleProp, TextStyle, ViewProps, TextProps } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
 import { AnalysisResult } from '../types';
 import { analyzeFacialImage } from '../services/geminiService';
@@ -32,12 +32,20 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t } = useLocalization();
   const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
   const [loading, setLoading] = useState(true);
+
+  // Log loading state changes
+  useEffect(() => {
+    console.log(`AnalysisScreen: Loading state changed to: ${loading}`);
+  }, [loading]);
+
   const [error, setError] = useState<string | null>(null);
   const [isQuotaError, setIsQuotaError] = useState(false);
   const [isIpadError, setIsIpadError] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>(routeVisitPurpose || '');
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
   const isIPad = Platform.OS === 'ios' && Platform.isPad;
+  const isLargeScreen = SCREEN_WIDTH >= 768; // iPad mini width is 768pt
 
   // Replace SKIN_CONCERNS and toggleConcern with update function for visitPurpose
   const updateVisitPurpose = (text: string) => {
@@ -64,7 +72,11 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const analyzeImage = async () => {
     try {
-      setLoading(true);
+      // Ensure loading is true at the start
+      if (!loading) {
+        console.log('AnalysisScreen: Setting loading to true for analyzeImage');
+        setLoading(true);
+      }
       setError(null);
       setIsQuotaError(false);
       setIsIpadError(false);
@@ -91,6 +103,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         setError('An unexpected error occurred. Please try again.');
       }
     } finally {
+      console.log('AnalysisScreen: Setting loading to false in finally block');
       setLoading(false);
     }
   };
@@ -305,113 +318,154 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
+  // Helper function for gender confidence level
+  const getConfidenceLevel = (confidence: number): string => {
+    if (confidence >= 90) return t('highConfidence'); // Assuming 'highConfidence' key exists
+    if (confidence >= 70) return t('mediumConfidence'); // Assuming 'mediumConfidence' key exists
+    return t('lowConfidence'); // Assuming 'lowConfidence' key exists
+  };
+
   return (
     <>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={[
+          styles.scrollContent,
+          isLargeScreen && styles.scrollContentLarge
+        ]}
+      >
         {error ? (
           renderErrorContent()
         ) : analysisResult ? (
           <>
-            <Card variant="elevated" style={styles.imageContainer}>
-              <View style={styles.imageWrapper}>
+            <View style={[
+              styles.contentWrapper,
+              isLargeScreen && styles.contentWrapperLarge
+            ] as StyleProp<ViewStyle>}>
+              <View style={[
+                styles.imageWrapper,
+                isLargeScreen ? styles.imageWrapperLarge : null
+              ]}>
                 <Image
                   source={{ uri: imageUri }}
                   style={styles.image}
                   resizeMode="cover"
                 />
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.3)']}
-                  style={styles.imageGradient}
-                />
                 <View style={styles.badgeContainer}>
-                  <View style={styles.premiumBadge}>
-                    <MaterialIcons name="verified" size={14} color={COLORS.gold.main} style={styles.badgeIcon} />
-                    <Text style={styles.badgeText}>AI-Enhanced</Text>
-                  </View>
+                  <Feather name="check-circle" size={16} color={COLORS.success.main} style={styles.badgeIcon} />
+                  <Text style={styles.badgeText}>{t('aiEnhanced')}</Text>
                 </View>
               </View>
-            </Card>
 
-            <Card variant="elevated" style={styles.resultCard}>
-              <SkinMatrixHeader
-                title={t('skinMatrixResults')}
-                subtitle={t('poweredByAesthetiScan')}
-                icon={<AILogoIcon size="small" />}
-              />
-              <View style={styles.resultContent}>
-                <View style={styles.resultRow}>
-                  <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>{t('estimatedAge')}</Text>
-                    <Text style={styles.resultValue}>{analysisResult.estimatedAge}</Text>
+              <View style={[
+                styles.resultsWrapper,
+                isLargeScreen ? styles.resultsWrapperLarge : null
+              ]}>
+                <Card
+                  variant="elevated"
+                  style={{
+                    ...styles.resultCard,
+                    ...(isLargeScreen ? styles.resultCardLarge : {}),
+                  }}
+                >
+                  <View style={styles.skinMatrixHeader}>
+                    <AILogoIcon size="medium" />
+                    <View style={styles.skinMatrixTitleContainer}>
+                      <Text style={styles.skinMatrixTitle}>{t('skinMatrixResults')}</Text>
+                      <Text style={styles.skinMatrixSubtitle}>{t('poweredByAesthetiScan')}</Text>
+                    </View>
+                    <AILogoIcon size="medium" />
                   </View>
-                  <View style={styles.resultItem}>
-                    <Text style={styles.resultLabel}>{t('skinType')}</Text>
-                    <Text style={styles.resultValue}>{analysisResult.skinType}</Text>
-                  </View>
-                </View>
 
-                <View style={styles.genderContainer}>
-                  <Text style={styles.resultLabel}>{t('gender')}</Text>
-                  <View style={styles.genderRow}>
-                    <GenderConfidenceDisplay
-                      gender={analysisResult.gender}
-                      confidence={analysisResult.genderConfidence}
-                      size="medium"
-                    />
-                  </View>
-                </View>
-              </View>
-            </Card>
+                  <View style={styles.separator} />
 
-            <Card variant="elevated" style={styles.featuresCard}>
-              <View style={styles.featureHeaderContainer}>
-                <AILogoIcon size="medium" style={styles.featureHeaderLogo} />
-                <View style={styles.featureHeaderTextContainer}>
-                  <Text style={styles.featureHeaderTitle}>{t('facialFeatureAnalysis')}</Text>
-                  <Text style={styles.featureHeaderSubtitle}>{t('professionalGradeAnalysis')}</Text>
-                </View>
-                <TouchableOpacity style={styles.infoButton}>
-                  <MaterialIcons name="info-outline" size={24} color={COLORS.primary.main} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.featuresContent}>
-                {analysisResult.features.map((feature, index) => {
-                  // Extract location if present in the description
-                  const locationMatch = feature.description.match(/on ([\w\s]+)/i);
-                  const location = locationMatch ? locationMatch[1] : '';
-
-                  // Clean up the description to get just the condition name
-                  let conditionName = feature.description;
-                  if (location) {
-                    conditionName = feature.description.replace(`on ${location}`, '').trim();
-                  }
-
-                  return (
-                    <View key={index} style={styles.featureItem}>
-                      <View style={styles.featureInfo}>
-                        <Text style={styles.featureText}>{conditionName}</Text>
-                        {location && (
-                          <Text style={styles.featureLocation}>on {location}</Text>
-                        )}
+                  <View style={styles.resultContent}>
+                    <View style={styles.resultRow}>
+                      <View style={styles.resultItem}>
+                        <Text style={styles.resultLabel}>{t('estimatedAge')}</Text>
+                        <Text style={styles.resultValue}>{analysisResult.estimatedAge}</Text>
                       </View>
-                      <View style={styles.featureRatingContainer}>
-                        <FeatureSeverityRating
-                          severity={feature.severity}
-                          maxSeverity={5}
-                          colorScheme="inverted"
-                          size="medium"
-                          showText={true}
-                        />
+                      <View style={styles.resultItem}>
+                        <Text style={styles.resultLabel}>{t('skinType')}</Text>
+                        <Text style={[styles.resultValue, styles.resultValueBold]}>{analysisResult.skinType}</Text>
                       </View>
                     </View>
-                  );
-                })}
+
+                    <View style={styles.genderContainer}>
+                      <Text style={styles.resultLabel}>{t('gender')}</Text>
+                      <View style={styles.genderValueContainer}>
+                        <Text style={styles.genderValueText}>{analysisResult.gender}</Text>
+                        <View style={styles.genderConfidenceContainer}>
+                           <View style={[styles.confidenceDot, { backgroundColor: COLORS.success.main }]} />
+                          <Text style={styles.genderConfidenceText}>
+                            {analysisResult.genderConfidence}% ({getConfidenceLevel(analysisResult.genderConfidence)})
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </Card>
+
+                <Card 
+                  variant="elevated" 
+                  style={[
+                    styles.featuresCard,
+                    isLargeScreen ? styles.featuresCardLarge : null
+                  ]}
+                >
+                  <View style={styles.featureHeaderContainer}>
+                    <AILogoIcon size="medium" style={styles.featureHeaderLogo} />
+                    <View style={styles.featureHeaderTextContainer}>
+                      <Text style={styles.featureHeaderTitle}>{t('facialFeatureAnalysis')}</Text>
+                      <Text style={styles.featureHeaderSubtitle}>{t('professionalGradeAnalysis')}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.infoButton}>
+                      <MaterialIcons name="info-outline" size={24} color={COLORS.primary.main} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.featuresContent}>
+                    {analysisResult.features.map((feature, index) => {
+                      // Extract location if present in the description
+                      const locationMatch = feature.description.match(/on ([\w\s]+)/i);
+                      const location = locationMatch ? locationMatch[1] : '';
+
+                      // Clean up the description to get just the condition name
+                      let conditionName = feature.description;
+                      if (location) {
+                        conditionName = feature.description.replace(`on ${location}`, '').trim();
+                      }
+
+                      return (
+                        <View key={index} style={styles.featureItem}>
+                          <View style={styles.featureInfo}>
+                            <Text style={styles.featureText}>{conditionName}</Text>
+                            {location && (
+                              <Text style={styles.featureLocation}>on {location}</Text>
+                            )}
+                          </View>
+                          <View style={styles.featureRatingContainer}>
+                            <FeatureSeverityRating
+                              severity={feature.severity}
+                              maxSeverity={5}
+                              colorScheme="inverted"
+                              size="medium"
+                              showText={true}
+                            />
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </Card>
+
+                {renderVisitInfoSection()}
               </View>
-            </Card>
+            </View>
 
-            {renderVisitInfoSection()}
-
-            <View style={styles.buttonContainer}>
+            <View style={[
+              styles.buttonContainer,
+              isLargeScreen ? styles.buttonContainerLarge : null
+            ]}>
               <View style={styles.reportButtonsRow}>
                 <ShowDiagnosisButton
                   style={styles.reportButton}
@@ -429,8 +483,14 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               />
             </View>
 
-            <View style={styles.footnoteContainer}>
-              <Text style={styles.footnote}>
+            <View style={[
+              styles.footnoteContainer,
+              isLargeScreen ? styles.footnoteContainerLarge : null
+            ]}>
+              <Text style={[
+                styles.footnote,
+                isLargeScreen ? styles.footnoteLarge : null
+              ]}>
                 {t('analysisFootnote')}
               </Text>
             </View>
@@ -456,189 +516,227 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.default,
   },
   scrollContent: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm,
+    flexGrow: 1,
     paddingBottom: SPACING.xl,
   },
-  imageContainer: {
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
-    borderRadius: BORDER_RADIUS.lg,
-    overflow: 'hidden',
-    elevation: 0,
+  scrollContentLarge: {
+    paddingHorizontal: SPACING.xl,
+    maxWidth: 1024,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  contentWrapper: {
+    width: '100%',
+    paddingHorizontal: SPACING.md,
+  },
+  contentWrapperLarge: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: SPACING.xl,
+    maxWidth: 1024,
+    alignSelf: 'center',
   },
   imageWrapper: {
-    position: 'relative',
+    width: '100%',
+    aspectRatio: 4 / 3,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    marginBottom: SPACING.md,
+    position: 'relative',
+    backgroundColor: COLORS.gray[200],
+  },
+  imageWrapperLarge: {
+    width: '48%',
+    marginRight: '4%',
+    marginBottom: 0,
   },
   image: {
     width: '100%',
-    height: 300,
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  imageGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 80,
-    borderBottomLeftRadius: BORDER_RADIUS.lg,
-    borderBottomRightRadius: BORDER_RADIUS.lg,
+    height: '100%',
   },
   badgeContainer: {
     position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
-    zIndex: 2,
-  },
-  premiumBadge: {
+    top: SPACING.sm,
+    left: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER_RADIUS.round,
+    borderRadius: BORDER_RADIUS.xl,
   },
   badgeIcon: {
     marginRight: SPACING.xs,
   },
   badgeText: {
-    color: COLORS.gold.main,
+    color: COLORS.white,
     fontSize: 12,
     fontWeight: '600',
   },
-  errorContainer: {
-    marginVertical: SPACING.xl,
+  resultsWrapper: {
+    width: '100%',
   },
-  errorContent: {
-    padding: SPACING.lg,
-    alignItems: 'center',
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.error.main,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.error.main,
-    marginVertical: SPACING.md,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: SPACING.md,
+  resultsWrapperLarge: {
+    width: '48%',
   },
   resultCard: {
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
     marginBottom: SPACING.md,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.background.paper,
-    ...SHADOWS.small,
+    padding: 0,
+  },
+  resultCardLarge: {
+    marginBottom: SPACING.md,
+  },
+  skinMatrixHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  skinMatrixTitleContainer: {
+    flex: 1,
+    marginHorizontal: SPACING.sm,
+    alignItems: 'center',
+  },
+  skinMatrixTitle: {
+    ...TYPOGRAPHY.h3,
+    fontWeight: TYPOGRAPHY.h3.fontWeight as TextStyle['fontWeight'],
+    color: COLORS.text.primary,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  skinMatrixSubtitle: {
+    ...TYPOGRAPHY.body2,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.gray[200],
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   resultContent: {
-    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.md,
   },
   resultRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: SPACING.md,
+    flexWrap: 'wrap',
   },
   resultItem: {
     flex: 1,
-    marginHorizontal: SPACING.sm,
+    minWidth: '45%',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
   },
   resultLabel: {
-    fontSize: 14,
+    ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.xxs,
   },
   resultValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    ...TYPOGRAPHY.h4,
+    fontWeight: TYPOGRAPHY.h4.fontWeight as TextStyle['fontWeight'],
     color: COLORS.text.primary,
+    flexWrap: 'wrap',
+  },
+  resultValueBold: {
+    fontWeight: '600',
   },
   genderContainer: {
-    marginTop: SPACING.md,
+    alignItems: 'flex-start',
   },
-  genderRow: {
+  genderValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: SPACING.xs,
   },
+  genderValueText: {
+    ...TYPOGRAPHY.h4,
+    fontWeight: TYPOGRAPHY.h4.fontWeight as TextStyle['fontWeight'],
+    color: COLORS.text.primary,
+    marginRight: SPACING.sm,
+  },
+  genderConfidenceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+   confidenceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: SPACING.xs,
+  },
+  genderConfidenceText: {
+    ...TYPOGRAPHY.body2,
+    color: COLORS.text.secondary,
+  },
   featuresCard: {
     marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.xl,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.background.paper,
-    ...SHADOWS.small,
+    marginBottom: SPACING.md,
+  },
+  featuresCardLarge: {
+    marginHorizontal: 0,
   },
   featureHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
   },
   featureHeaderLogo: {
     marginRight: SPACING.sm,
   },
   featureHeaderTextContainer: {
     flex: 1,
+    marginRight: SPACING.sm,
   },
   featureHeaderTitle: {
-    fontSize: 18,
+    fontSize: Platform.select({ ios: 17, android: 16 }),
     fontWeight: '600',
     color: COLORS.text.primary,
+    flexWrap: 'wrap',
   },
   featureHeaderSubtitle: {
-    fontSize: 14,
+    fontSize: Platform.select({ ios: 13, android: 12 }),
     color: COLORS.text.secondary,
-    marginTop: SPACING.xs,
+    marginTop: 2,
+    flexWrap: 'wrap',
   },
   infoButton: {
     padding: SPACING.xs,
   },
   featuresContent: {
-    marginTop: SPACING.md,
+    padding: SPACING.md,
   },
   featureItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    borderBottomColor: COLORS.gray[100],
+    flexWrap: 'wrap',
   },
   featureInfo: {
     flex: 1,
+    marginRight: SPACING.md,
   },
   featureText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Platform.select({ ios: 16, android: 15 }),
     color: COLORS.text.primary,
+    marginBottom: 2,
+    flexWrap: 'wrap',
   },
   featureLocation: {
-    fontSize: 14,
+    fontSize: Platform.select({ ios: 14, android: 13 }),
     color: COLORS.text.secondary,
-    marginTop: 2,
+    flexWrap: 'wrap',
   },
   featureRatingContainer: {
     flexDirection: 'row',
@@ -707,30 +805,48 @@ const styles = StyleSheet.create({
     borderColor: COLORS.gray[200],
   },
   buttonContainer: {
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  buttonContainerLarge: {
+    maxWidth: 800,
+    alignSelf: 'center',
+    width: '100%',
   },
   reportButtonsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   reportButton: {
     flex: 1,
+    minWidth: '48%',
     marginHorizontal: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   diagnosisButton: {
     marginBottom: SPACING.md,
   },
   footnoteContainer: {
-    padding: SPACING.sm,
-    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  footnoteContainerLarge: {
+    maxWidth: 800,
+    alignSelf: 'center',
+    width: '100%',
   },
   footnote: {
-    ...TYPOGRAPHY.caption,
+    fontSize: Platform.select({ ios: 13, android: 12 }),
     color: COLORS.text.secondary,
     textAlign: 'center',
-    fontStyle: 'italic',
+    lineHeight: Platform.select({ ios: 18, android: 16 }),
+    flexWrap: 'wrap',
+  },
+  footnoteLarge: {
+    fontSize: Platform.select({ ios: 14, android: 13 }),
+    lineHeight: Platform.select({ ios: 20, android: 18 }),
   },
   confidenceContainer: {
     flexDirection: 'row',
@@ -780,6 +896,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.primary,
     marginLeft: SPACING.xs,
+  },
+  errorContainer: {
+    marginVertical: SPACING.xl,
+    marginHorizontal: SPACING.md,
+    maxWidth: 600,
+    width: '90%',
+    alignSelf: 'center',
+  },
+  errorContent: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.error.main,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    color: COLORS.error.dark, // Adjusted color slightly from original if needed
+    marginVertical: SPACING.md,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  retryButton: {
+    marginTop: SPACING.md,
+    minWidth: '60%',
   },
 });
 

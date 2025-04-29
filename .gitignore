@@ -72,3 +72,6 @@ ios/AIBeautyLens/Images.xcassets/SplashScreenBackground.imageset/image.png
 ios/AIBeautyLens/Supporting/Expo.plist
 ios/AIBeautyLens.xcodeproj/project.pbxproj
 ios/AIBeautyLens.xcodeproj/xcshareddata/xcschemes/AIBeautyLens.xcscheme
+
+# Google Service Account
+android/service-account/*.json

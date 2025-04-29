@@ -1,0 +1,78 @@
+# AIBeautyLens Project Rules & Guidelines for Cursor AI
+
+This file provides guidelines for the Cursor AI assistant when working on the AIBeautyLens project. Please adhere to these conventions.
+
+## 1. Core Technologies
+
+*   **Framework:** React Native with Expo SDK (~50)
+*   **Language:** TypeScript (Strict typing is encouraged)
+*   **Navigation:** React Navigation (Stack Navigator v6)
+*   **Styling:** React Native `StyleSheet` API
+*   **API Calls:** `axios`
+*   **Localization:** `i18next` with `react-i18next`
+*   **Linting:** ESLint (Refer to `.eslintrc.js`)
+
+## 2. Coding Style & Conventions
+
+*   **TypeScript:**
+    *   Use TypeScript for all new code (`.ts`, `.tsx`).
+    *   Define interfaces/types for props, state, API payloads (in `src/types/`).
+    *   Avoid `any`; use specific types or `unknown`.
+*   **React:**
+    *   Use functional components with Hooks.
+    *   Keep components small, focused, and reusable.
+*   **Naming:**
+    *   Components/Files: `PascalCase` (e.g., `AnalysisScreen.tsx`)
+    *   Services/Utilities Files: `camelCase` (e.g., `geminiService.ts`).
+    *   Variables/Functions: `camelCase`.
+    *   Constants: `UPPER_SNAKE_CASE`.
+*   **Imports:**
+    *   Organize: React/RN -> Libraries -> Absolute Paths (`src/*`) -> Relative Paths (`./`, `../`).
+*   **Comments:**
+    *   Explain complex logic, workarounds. Use `// TODO:`, `// FIXME:`.
+
+## 3. Directory Structure
+
+Follow the existing structure (`src/components/`, `src/screens/`, `src/services/`, `src/constants/`, `src/types/`, etc.).
+
+## 4. State Management
+
+*   Prefer `useState` for local state.
+*   Use React Context or lift state for simple sharing. Discuss libraries like Zustand/Redux for complex needs.
+
+## 5. Styling
+
+*   Use `StyleSheet.create`.
+*   Strictly use the theme from `src/constants/theme.ts` (COLORS, SPACING, TYPOGRAPHY, etc.).
+*   Avoid inline styles unless necessary for dynamic values.
+*   Ensure responsiveness using `Platform`, `Dimensions`, `flex`.
+
+## 6. API Calls
+
+*   Centralize in `src/services/`.
+*   Use the configured `axios` instance.
+*   Implement loading/error states in calling components.
+
+## 7. Localization
+
+*   Use the `useLocalization` hook.
+*   Define strings in `src/i18n/localizationContext.tsx`. No hardcoded UI strings.
+
+## 8. Linting & Formatting
+
+*   Adhere to ESLint rules (`npm run lint`).
+*   Follow existing formatting style (Prettier if configured).
+
+## 9. Dependencies
+
+*   Consult before adding major dependencies.
+
+## 10. General AI Instructions
+
+*   When modifying existing files, match the surrounding code style.
+*   Add necessary imports.
+*   If unsure about an approach, ask or suggest options based on these rules.
+*   Prioritize solutions that fit within the existing architecture and patterns. 
+
+## 10. No mock
+*   No mock approach in case of failing

@@ -447,7 +447,9 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
             <View style={styles.concernsContainer}>
               <Text style={styles.concernsTitle}>{t('targetedConcerns')}</Text>
               {analysisResult.features && Array.isArray(analysisResult.features) ?
-                analysisResult.features.map((feature, index) => (
+                [...analysisResult.features]
+                  .sort((a, b) => b.severity - a.severity)
+                  .map((feature, index) => (
                 <Text key={index} style={styles.concernText}>
                   • {feature.description} ({t('severity')} {feature.severity}/5)
                 </Text>

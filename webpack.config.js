@@ -8,5 +8,8 @@ module.exports = async function (env, argv) {
     config.devServer.hot = false;
   }
   
+  config.resolve.alias = {
+    crypto: require.resolve('react-native-crypto'),
+  };
   return config;
-}; 
+};

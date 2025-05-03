@@ -403,7 +403,15 @@ interface GeminiProductResponseData {
  * @param appointmentLength - Optional appointment length
  * @returns Analysis results including age, skin type, and treatment recommendations
  */
-export const analyzeFacialImage = async (base64Image: string, visitPurpose?: string, appointmentLength?: string) => {
+export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string, appointmentLength?: string) => {
+  let base64Image = '';
+  if (imageUri.startsWith('file://')) {
+    base64Image = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+  } else {
+    base64Image = imageUri;
+  }
   // Get the current language from AsyncStorage
   let currentLanguage = 'en';
   try {

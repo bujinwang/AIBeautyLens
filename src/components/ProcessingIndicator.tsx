@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, TextStyle, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, TextStyle, Dimensions, ScrollView } from 'react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import CustomIcon from './CustomIcon';
 import AILogoIcon from './AILogoIcon';
@@ -45,26 +45,21 @@ interface ProcessingIndicatorProps {
   processingText?: string;
   showDetailedSteps?: boolean;
   showTechStack?: boolean;
-  error?: Error | null;
-  onRetry?: () => void;
 }
 
-// Define valid typography styles without string literals for fontWeight
+// Define valid typography styles
 const TYPOGRAPHY_STYLES = {
   h5: {
     fontSize: 18,
     fontWeight: '600' as TextStyle['fontWeight'],
-    lineHeight: 26,
   },
   body2: {
     fontSize: 14,
     letterSpacing: 0.25,
-    lineHeight: 22,
   },
   caption: {
     fontSize: 12,
     letterSpacing: 0.4,
-    lineHeight: 18,
   },
 };
 
@@ -73,143 +68,159 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   processingText = "Clinical-grade dermatological analysis in progress",
   showDetailedSteps = true,
   showTechStack = true,
-  error = null,
-  onRetry,
 }) => {
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentTech, setCurrentTech] = useState(0);
-  const spinValue = new Animated.Value(0);
-  const fadeValue = new Animated.Value(0);
-  const techFadeValue = new Animated.Value(0);
-  const pulseValue = new Animated.Value(1);
-  const progressWidth = new Animated.Value(0);
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const fadeValue = useRef(new Animated.Value(0)).current;
+  const techFadeValue = useRef(new Animated.Value(0)).current;
+  const pulseValue = useRef(new Animated.Value(1)).current;
+  const progressWidth = useRef(new Animated.Value(0)).current;
+  const animationRefs = useRef<{
+    spin?: Animated.CompositeAnimation;
+    pulse?: Animated.CompositeAnimation;
+    progress?: Animated.CompositeAnimation;
+  }>({});
 
-  // Rotate animation
+  // Get screen width
+  const { width: SCREEN_WIDTH } = Dimensions.get('window');
+  const isVerySmallScreen = SCREEN_WIDTH < 360;
+
+  // Main animations setup
   useEffect(() => {
-    if (isAnalyzing) {
-      // Create the rotation animation
-      const rotateAnimation = Animated.loop(
-        Animated.timing(spinValue, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      );
-
-      // Start the rotation
-      rotateAnimation.start();
-
-      // Cleanup function to stop animation when component unmounts or isAnalyzing becomes false
-      return () => {
-        rotateAnimation.stop();
-        spinValue.setValue(0); // Reset the value
-      };
+    if (!isAnalyzing) {
+      // Clean up animations when not analyzing
+      animationRefs.current.spin?.stop();
+      animationRefs.current.pulse?.stop();
+      animationRefs.current.progress?.stop();
+      return;
     }
-  }, [isAnalyzing, spinValue]);
 
-  // Pulse animation
-  useEffect(() => {
-    if (isAnalyzing) {
-      // Create the pulse animation
-      const pulseAnimation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseValue, {
-            toValue: 1.1,
-            duration: 750,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseValue, {
-            toValue: 1,
-            duration: 750,
-            useNativeDriver: true,
-          }),
-        ])
-      );
+    // Stop any existing animations before starting new ones
+    animationRefs.current.spin?.stop();
+    animationRefs.current.pulse?.stop();
+    animationRefs.current.progress?.stop();
 
-      // Start the pulse animation
-      pulseAnimation.start();
-
-      // Cleanup function
-      return () => {
-        pulseAnimation.stop();
-        pulseValue.setValue(1); // Reset the value
-      };
-    }
-  }, [isAnalyzing, pulseValue]);
-
-  // Progress bar and other animations...
-  useEffect(() => {
-    if (isAnalyzing) {
-      // Progress bar animation
-      progressWidth.setValue(0.5);
-      Animated.timing(progressWidth, {
+    // Continuous rotation animation
+    animationRefs.current.spin = Animated.loop(
+      Animated.timing(spinValue, {
         toValue: 1,
-        duration: 180000, // 3 minutes
-        useNativeDriver: false,
-      }).start();
+        duration: 1500,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
 
-      // Step animation
-      if (showDetailedSteps) {
-        const stepInterval = setInterval(() => {
-          setCurrentStep((prev) => {
-            const next = prev + 1;
-            if (next >= PROCESSING_STEPS.length) {
-              return prev;
-            }
-            // Start fade-in animation
-            fadeValue.setValue(0);
-            Animated.timing(fadeValue, {
-              toValue: 1,
-              duration: 250,
-              useNativeDriver: true,
-            }).start();
-            return next;
-          });
-        }, 25000);
+    animationRefs.current.spin.start();
 
-        return () => clearInterval(stepInterval);
-      }
+    // Continuous pulse animation
+    animationRefs.current.pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseValue, {
+          toValue: 1.1,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseValue, {
+          toValue: 1,
+          duration: 750,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    animationRefs.current.pulse.start();
+
+    // Progress bar animation
+    const animateProgress = () => {
+      if (!isAnalyzing) return;
+      
+      animationRefs.current.progress = Animated.sequence([
+        Animated.timing(progressWidth, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        }),
+        Animated.timing(progressWidth, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ]);
+
+      animationRefs.current.progress.start(({ finished }) => {
+        if (finished && isAnalyzing) {
+          animateProgress();
+        }
+      });
+    };
+
+    animateProgress();
+
+    // Step animation
+    let stepInterval: NodeJS.Timeout;
+    if (showDetailedSteps) {
+      stepInterval = setInterval(() => {
+        if (!isAnalyzing) return;
+        
+        setCurrentStep((prev) => {
+          const next = (prev + 1) % PROCESSING_STEPS.length;
+          fadeValue.setValue(0);
+          Animated.timing(fadeValue, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }).start();
+          return next;
+        });
+      }, 3000);
     }
-  }, [isAnalyzing, showDetailedSteps]);
+
+    return () => {
+      if (stepInterval) clearInterval(stepInterval);
+      animationRefs.current.spin?.stop();
+      animationRefs.current.pulse?.stop();
+      animationRefs.current.progress?.stop();
+    };
+  }, [isAnalyzing]);
 
   // Tech stack animation
   useEffect(() => {
-    if (isAnalyzing && showTechStack) {
-      // Initial fade in
-      techFadeValue.setValue(0);
-      Animated.timing(techFadeValue, {
-        toValue: 1,
-        duration: 250, // Faster initial fade-in
-        useNativeDriver: true,
-      }).start();
+    if (!isAnalyzing || !showTechStack) return;
 
-      // Cycle through tech stack
-      const techInterval = setInterval(() => {
-        setCurrentTech((prev) => {
-          const next = (prev + 1) % TECH_STACK.length;
+    techFadeValue.setValue(0);
+    Animated.timing(techFadeValue, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
 
-          // Fade out and fade in
-          Animated.sequence([
-            Animated.timing(techFadeValue, {
-              toValue: 0,
-              duration: 150, // Faster fade out
-              useNativeDriver: true,
-            }),
-            Animated.timing(techFadeValue, {
-              toValue: 1,
-              duration: 150, // Faster fade in
-              useNativeDriver: true,
-            })
-          ]).start();
+    const techInterval = setInterval(() => {
+      if (!isAnalyzing) return;
+      
+      setCurrentTech((prev) => {
+        const next = (prev + 1) % TECH_STACK.length;
+        Animated.sequence([
+          Animated.timing(techFadeValue, {
+            toValue: 0,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(techFadeValue, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
+        return next;
+      });
+    }, 2000);
 
-          return next;
-        });
-      }, 15000); // Change tech every 15 seconds to match the slower pace
-
-      return () => clearInterval(techInterval);
-    }
+    return () => {
+      clearInterval(techInterval);
+    };
   }, [isAnalyzing, showTechStack]);
 
   const spin = spinValue.interpolate({
@@ -217,123 +228,88 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     outputRange: ['0deg', '360deg'],
   });
 
-  if (!isAnalyzing && !error) return null;
-
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.innerContainer, { paddingTop: '15%' }]}>
-          <View style={styles.iconContainer}>
-            <View style={[styles.iconBackground, styles.errorBackground]}>
-              <CustomIcon
-                name="error"
-                size={40}
-                color={COLORS.error.main}
-              />
-            </View>
-          </View>
-
-          <Text style={[styles.processingText, styles.errorText]}>
-            Analysis Error
-          </Text>
-
-          <View style={styles.errorMessageContainer}>
-            <Text style={styles.errorMessage}>
-              {error.message || "An unexpected error occurred during analysis. Please try again."}
-            </Text>
-          </View>
-
-          {onRetry && (
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={onRetry}
-              activeOpacity={0.8}
-            >
-              <CustomIcon
-                name="refresh"
-                size={20}
-                color={COLORS.white}
-              />
-              <Text style={styles.retryButtonText}>Retry Analysis</Text>
-            </TouchableOpacity>
-          )}
-
-          <Text style={styles.securityText}>
-            Your data is secure and no partial analysis was stored
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!isAnalyzing) return null;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.innerContainer, { paddingTop: '15%' }]}>
-        <View style={styles.iconContainer}>
-          <Animated.View
-            style={[
-              styles.iconBackground,
-              {
-                transform: [{ rotate: spin }, { scale: pulseValue }],
-              },
-            ]}
-          >
-            <AILogoIcon size="large" />
-          </Animated.View>
-        </View>
+      <View style={[
+        styles.innerContainer,
+        isVerySmallScreen && styles.innerContainerVerySmall
+      ]}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.iconContainer}>
+            <Animated.View
+              style={[
+                styles.iconBackground,
+                {
+                  transform: [{ rotate: spin }, { scale: pulseValue }],
+                },
+              ]}
+            >
+              <AILogoIcon size="large" />
+            </Animated.View>
+          </View>
 
-        <Text style={styles.processingText}>{processingText}</Text>
+          <Text style={styles.title}>{processingText}</Text>
 
-        {showDetailedSteps && PROCESSING_STEPS[currentStep] && (
-          <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
-            <CustomIcon
-              name={PROCESSING_STEPS[currentStep].icon}
-              size={20}
-              color={COLORS.secondary.main}
-            />
-            <Text style={styles.stepText}>{PROCESSING_STEPS[currentStep].text}</Text>
-          </Animated.View>
-        )}
-
-        <View style={styles.progressBarContainer}>
-          <Animated.View
-            style={[
-              styles.progressBar,
-              {
-                width: progressWidth.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
-              },
-            ]}
-          />
-        </View>
-
-        <View style={styles.timeEstimateContainer}>
-          <Text style={styles.timeEstimateText}>{t('estimatedTime')}</Text>
-        </View>
-
-        {showTechStack && (
-          <Animated.View style={[styles.techStackContainer, { opacity: techFadeValue }]}>
-            <View style={styles.techItem}>
+          {showDetailedSteps && PROCESSING_STEPS[currentStep] && (
+            <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
               <CustomIcon
-                name={TECH_STACK[currentTech].icon}
+                name={PROCESSING_STEPS[currentStep].icon}
                 size={20}
                 color={COLORS.secondary.main}
               />
-              <View style={styles.techTextContainer}>
-                <Text style={styles.techName}>{TECH_STACK[currentTech].name}</Text>
-                <Text style={styles.techDescription}>
-                  {TECH_STACK[currentTech].description}
-                </Text>
+              <Text style={styles.stepText}>{PROCESSING_STEPS[currentStep].text}</Text>
+            </Animated.View>
+          )}
+
+          <View style={styles.progressBarContainer}>
+            <Animated.View
+              style={[
+                styles.progressBar,
+                {
+                  width: progressWidth.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  }),
+                },
+              ]}
+            />
+          </View>
+
+          <View style={styles.timeEstimateContainer}>
+            <Text style={styles.timeEstimateText}>{t('estimatedTime')}</Text>
+          </View>
+
+          {showTechStack && (
+            <View style={styles.techStackContainer}>
+              <Text style={styles.techStackTitle}>Powered by cutting-edge technology</Text>
+              <View style={styles.techGridContainer}>
+                {TECH_STACK.map((tech, index) => (
+                  <Animated.View
+                    key={index}
+                    style={[styles.techGridItem, { opacity: index === currentTech ? 1 : 0.6 }]}
+                  >
+                    <View style={styles.techGridIconContainer}>
+                      <AILogoIcon size="small" />
+                    </View>
+                    <Text style={styles.techGridName} numberOfLines={2} ellipsizeMode='tail'>
+                      {tech.name}
+                    </Text>
+                  </Animated.View>
+                ))}
               </View>
             </View>
-          </Animated.View>
-        )}
+          )}
 
-        <Text style={styles.securityText}>
-          Enterprise-grade analysis with encrypted data processing
-        </Text>
+          <Text style={styles.securityText}>
+            Enterprise-grade analysis with encrypted data processing
+          </Text>
+        </ScrollView>
       </View>
     </View>
   );
@@ -341,137 +317,148 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.white,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1000,
+    padding: 0,
   },
   innerContainer: {
     width: '100%',
+    height: '100%',
+    backgroundColor: COLORS.background.paper,
+    borderRadius: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 10,
+    overflow: 'hidden',
+  },
+  innerContainerVerySmall: {},
+  scrollView: {
+    width: '100%',
+  },
+  scrollContentContainer: {
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
   },
   iconContainer: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'visible',
   },
   iconBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.primary.light,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  processingText: {
+  title: {
     ...TYPOGRAPHY_STYLES.h5,
+    fontSize: 13,
     color: COLORS.text.primary,
     textAlign: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
+    lineHeight: 18,
+    paddingHorizontal: SPACING.sm,
+    flexShrink: 1,
+    maxWidth: '80%',
   },
   stepContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.background.paper,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
     width: '100%',
+    minHeight: 35,
   },
   stepText: {
     ...TYPOGRAPHY_STYLES.body2,
-    color: COLORS.text.primary,
+    fontSize: 11,
+    color: COLORS.text.secondary,
     marginLeft: SPACING.sm,
-    flex: 1,
+    flexShrink: 1,
   },
   progressBarContainer: {
+    height: 6,
     width: '100%',
-    height: 4,
-    backgroundColor: COLORS.background.default,
-    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.gray[200],
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
-    marginBottom: SPACING.xl,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
   },
   progressBar: {
     height: '100%',
     backgroundColor: COLORS.primary.main,
+    borderRadius: BORDER_RADIUS.round,
   },
   timeEstimateContainer: {
-    width: '100%',
-    alignItems: 'center',
+    marginTop: SPACING.sm,
     marginBottom: SPACING.md,
   },
   timeEstimateText: {
-    fontSize: 12,
+    ...TYPOGRAPHY_STYLES.caption,
+    fontSize: 9,
     color: COLORS.text.secondary,
-    fontStyle: 'italic',
-  },
-  securityText: {
-    fontSize: TYPOGRAPHY_STYLES.caption.fontSize,
-    letterSpacing: TYPOGRAPHY_STYLES.caption.letterSpacing,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.md,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
   techStackContainer: {
+    marginTop: SPACING.md,
     width: '100%',
-  },
-  techItem: {
-    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+    paddingTop: SPACING.md,
     alignItems: 'center',
-    backgroundColor: COLORS.background.paper,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
   },
-  techTextContainer: {
-    marginLeft: SPACING.sm,
-    flex: 1,
-  },
-  techName: {
-    ...TYPOGRAPHY_STYLES.body2,
-    color: COLORS.text.primary,
-    fontWeight: '500',
-  },
-  techDescription: {
+  techStackTitle: {
     ...TYPOGRAPHY_STYLES.caption,
+    fontSize: 9,
     color: COLORS.text.secondary,
-  },
-  errorBackground: {
-    backgroundColor: COLORS.error.light,
-  },
-  errorText: {
-    color: COLORS.error.main,
-  },
-  errorMessageContainer: {
-    width: '100%',
-    backgroundColor: COLORS.error.light,
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.xl,
-  },
-  errorMessage: {
-    ...TYPOGRAPHY_STYLES.body2,
-    color: COLORS.error.main,
     textAlign: 'center',
+    marginBottom: SPACING.sm,
+    fontWeight: '600',
   },
-  retryButton: {
+  techGridContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary.main,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.xl,
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: SPACING.xs,
   },
-  retryButtonText: {
-    ...TYPOGRAPHY_STYLES.body2,
-    color: COLORS.white,
-    marginLeft: SPACING.sm,
-    fontWeight: '500',
+  techGridItem: {
+    width: '48%',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  },
+  techGridIconContainer: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  techGridName: {
+    ...TYPOGRAPHY_STYLES.caption,
+    fontSize: 8,
+    color: COLORS.text.primary,
+    textAlign: 'center',
+    minHeight: 24,
+  },
+  securityText: {
+    ...TYPOGRAPHY_STYLES.caption,
+    fontSize: 9,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

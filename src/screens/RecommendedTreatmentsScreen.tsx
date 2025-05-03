@@ -101,7 +101,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
 
     navigation.navigate('Report', {
       treatmentIds: selectedTreatments,
-      beforeImage: base64Image,
+      beforeImage: imageUri,
     });
   };
 

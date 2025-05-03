@@ -137,6 +137,7 @@ export const translations: Record<string, Record<string, string>> = {
     shareReport: 'Share Report',
     startOver: 'Start Over',
     failedToLoadImage: 'Failed to load image. Please try again.',
+    noImageAvailable: 'No image available',
 
     // Diagnosis Report Screen
     diagnosisReport: 'Diagnosis Report',

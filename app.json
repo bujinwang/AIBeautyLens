@@ -2,7 +2,7 @@
   "expo": {
     "name": "AIBeautyLens",
     "slug": "AIBeautyLens",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.autobebesys.aibeautylens",
-      "buildNumber": "9",
+      "buildNumber": "11",
       "infoPlist": {
         "NSCameraUsageDescription": "AIBeautyLens uses your camera to capture facial images for personalized skincare analysis. We analyze specific skin features such as texture, tone, and blemishes to identify conditions like acne, hyperpigmentation, or dryness. For example, if we detect signs of dehydration, we'll recommend appropriate moisturizing treatments. Your images are processed securely, not shared with third parties, and automatically deleted after analysis.",
         "NSPhotoLibraryUsageDescription": "AIBeautyLens needs access to your photos to analyze existing facial images for skincare assessment. You can select photos to receive personalized skin analysis and treatment simulations showing potential improvements.",

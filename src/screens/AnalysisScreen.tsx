@@ -30,7 +30,7 @@ type Props = {
 
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t } = useLocalization();
-  const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
+  const { imageUri, base64Image = '', visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
   const [loading, setLoading] = useState(true);
 
   // Log loading state changes
@@ -80,7 +80,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setError(null);
       setIsQuotaError(false);
       setIsIpadError(false);
-      const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
+      const result = await analyzeFacialImage(imageUri, visitPurpose, appointmentLength);
       setAnalysisResult(result);
     } catch (error) {
       console.error('Error in analysis:', error);
@@ -106,6 +106,14 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       console.log('AnalysisScreen: Setting loading to false in finally block');
       setLoading(false);
     }
+  };
+
+  // Navigate to the new ReportScreen
+  const handleReport = () => {
+    navigation.navigate('Report', {
+      treatmentIds: analysisResult?.recommendations.map(rec => rec.treatmentId) || [],
+      beforeImage: imageUri,
+    });
   };
 
   // Navigate to the new RecommendedTreatmentsScreen
@@ -408,10 +416,10 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
                 <Card 
                   variant="elevated" 
-                  style={[
+                  style={([
                     styles.featuresCard,
                     isLargeScreen ? styles.featuresCardLarge : null
-                  ]}
+                  ].filter(Boolean) as import('react-native').StyleProp<import('react-native').ViewStyle>)}
                 >
                   <View style={styles.featureHeaderContainer}>
                     <AILogoIcon size="medium" style={styles.featureHeaderLogo} />
@@ -424,7 +432,9 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                     </TouchableOpacity>
                   </View>
                   <View style={styles.featuresContent}>
-                    {analysisResult.features.map((feature, index) => {
+                    {(analysisResult.features
+                      ? [...analysisResult.features].sort((a, b) => b.severity - a.severity)
+                      : []).map((feature, index) => {
                       // Extract location if present in the description
                       const locationMatch = feature.description.match(/on ([\w\s]+)/i);
                       const location = locationMatch ? locationMatch[1] : '';
@@ -635,7 +645,7 @@ const styles = StyleSheet.create({
   resultLabel: {
     ...TYPOGRAPHY.body2,
     color: COLORS.text.secondary,
-    marginBottom: SPACING.xxs,
+    marginBottom: SPACING.xs, 
   },
   resultValue: {
     ...TYPOGRAPHY.h4,

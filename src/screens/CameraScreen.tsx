@@ -53,17 +53,33 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [3, 4],
         quality: 0.7,
-        base64: true,
       });
 
       if (!result.canceled) {
         const selectedAsset = result.assets?.[0];
         if (selectedAsset) {
-          setPreviewVisible(true);
-          setCapturedImage(selectedAsset);
+          // Check if the URI is a file and not a directory
+          if (selectedAsset.uri.startsWith('file://')) {
+            const imagesDir = FileSystem.cacheDirectory + 'images';
+            // Ensure the directory exists
+            const dirInfo = await FileSystem.getInfoAsync(imagesDir);
+            if (!dirInfo.exists) {
+              await FileSystem.makeDirectoryAsync(imagesDir, { intermediates: true });
+            }
+
+            const newUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
+            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newUri });
+
+            setPreviewVisible(true);
+            setCapturedImage({...selectedAsset, uri: newUri});
+          } else {
+            console.error('Error: Selected asset URI is not a file:', selectedAsset.uri);
+            // Handle the error appropriately, e.g., show an alert to the user
+            return;
+          }
         }
       }
     } catch (error) {
@@ -80,21 +96,9 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     if (!capturedImage || !capturedImage.uri) return;
 
     try {
-      let base64Image = capturedImage.base64;
-      if (!base64Image) {
-        const fileUri = capturedImage.uri;
-        const fileInfo = await FileSystem.getInfoAsync(fileUri);
-        if (fileInfo.exists) {
-          const base64Content = await FileSystem.readAsStringAsync(fileUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          base64Image = base64Content;
-        }
-      }
-
       navigation.navigate('Analysis', {
         imageUri: capturedImage.uri,
-        base64Image: base64Image,
+        base64Image: '',
         visitPurpose: visitPurpose,
         appointmentLength: appointmentLength
       });

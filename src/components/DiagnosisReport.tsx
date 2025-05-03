@@ -179,7 +179,9 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
               <Text style={styles.sectionTitle}>{t('clinicalAssessment')}</Text>
             </View>
 
-            {analysisResult.features.map((item, index) => (
+            {[...analysisResult.features]
+              .sort((a, b) => b.severity - a.severity)
+              .map((item, index) => (
               <View key={index} style={styles.featureCard}>
                 <View style={styles.featureHeader}>
                   <MaterialIcons

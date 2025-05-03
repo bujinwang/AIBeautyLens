@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewProps, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewProps, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
@@ -19,7 +19,7 @@ interface CardProps extends ViewProps {
   bordered?: boolean;
   gradientBorder?: boolean;
   children?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 const Card: React.FC<CardProps> = ({

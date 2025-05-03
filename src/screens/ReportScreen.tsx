@@ -23,15 +23,13 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Format the base64 image with proper prefix if needed
   const getFormattedImageUri = (base64String: string) => {
-    if (!base64String) return '';
-
-    // If it already has a data URI prefix, return as is
-    if (base64String.startsWith('data:image')) {
-      return base64String;
+    if (!base64String) {
+      console.error('Empty image URI received in ReportScreen');
+      return '';
     }
 
-    // Check if it starts with a file:// URI
-    if (base64String.startsWith('file://')) {
+    // If it already has a data URI prefix or is a file URI, return as is
+    if (base64String.startsWith('data:image') || base64String.startsWith('file://')) {
       return base64String;
     }
 
@@ -122,12 +120,20 @@ ${t('total')} $${totalPrice}
       </View>
 
       <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: formattedImageUri }}
-          style={styles.image}
-          resizeMode="contain"
-          onError={handleImageError}
-        />
+        {formattedImageUri ? (
+          <Image
+            source={{ uri: formattedImageUri }}
+            style={styles.image}
+            resizeMode="contain"
+            onError={handleImageError}
+          />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={styles.imagePlaceholderText}>
+              {t('noImageAvailable')}
+            </Text>
+          </View>
+        )}
         {imageError && (
           <Text style={styles.imageErrorText}>
             {t('failedToLoadImage')}
@@ -215,6 +221,16 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 12,
     backgroundColor: '#f5f5f5',
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+  },
+  imagePlaceholderText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   treatmentsContainer: {
     backgroundColor: 'white',

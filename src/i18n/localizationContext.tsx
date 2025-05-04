@@ -228,6 +228,7 @@ export const translations: Record<string, Record<string, string>> = {
     wrinkleReduction: 'Wrinkle Reduction:',
     moistureLevel: 'Moisture Level:',
     recommendations: 'Recommendations',
+    improvementAreas: 'Treatment Improvement Areas',
     beforeImageLabel: 'Before',
     afterImageLabel: 'After',
     shareProgressReport: 'Share Report',
@@ -453,10 +454,12 @@ export const translations: Record<string, Record<string, string>> = {
     wrinkleReduction: '皱纹减少:',
     moistureLevel: '水分水平:',
     recommendations: '建议',
+    improvementAreas: '治疗改善区域',
     beforeImageLabel: '治疗前',
     afterImageLabel: '治疗后',
     shareProgressReport: '分享报告',
     returnToHome: '返回首页',
+    resultsFallbackWarning: '使用估计的分析结果。AI无法完全分析您的图像。',
   }
 };
 

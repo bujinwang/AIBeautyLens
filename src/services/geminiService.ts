@@ -1523,11 +1523,7 @@ ANALYSIS REQUIREMENTS:
 3. Texture changes (smoothness, pore visibility, etc.)
 4. Wrinkle/fine line reduction (if applicable)
 5. Moisture level changes (visible hydration differences)
-
-After the analysis, provide personalized recommendations for:
-1. Whether to continue with the current treatment regimen
-2. Additional products or treatments that could enhance results
-3. Maintenance advice to preserve the improvements
+6. IMPORTANT: Identify 2-4 specific facial areas with visible treatment improvements
 
 Format your response in JSON with these sections and fields:
 {
@@ -1538,10 +1534,28 @@ Format your response in JSON with these sections and fields:
     "wrinkleReduction": string (detailed observation),
     "moistureLevel": string (detailed observation)
   },
+  "improvementAreas": [
+    {
+      "area": string (facial region name like "forehead", "cheeks", "under eyes", etc.),
+      "description": string (detailed description of improvement in this area),
+      "coordinates": {
+        "x": number (approximate horizontal position as percentage of image width, 0-100),
+        "y": number (approximate vertical position as percentage of image height, 0-100),
+        "radius": number (approximate size of the area as percentage of image width, 5-20)
+      }
+    }
+  ],
   "recommendations": [
     string (3-4 personalized recommendations)
   ]
 }
+
+INSTRUCTIONS FOR IMPROVEMENT AREAS:
+- You MUST include the "improvementAreas" array with 2-4 entries
+- The "coordinates" object is REQUIRED for each area
+- "x" and "y" should be numbers between 0-100 representing percentage positions
+- "radius" should be a number between 5-20 representing the percentage size
+- Each area should have a clear "description" of what improved in that area
 
 The FIRST image is the BEFORE treatment image, and the SECOND image is the AFTER treatment image.
 Focus on objective, visible changes between the images. Be specific and detailed in your analysis.`;
@@ -1715,6 +1729,11 @@ Focus on objective, visible changes between the images. Be specific and detailed
       })
     );
     
+    // ADDED: Log the full text content for debugging
+    const fullTextContent = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log('COMPLETE RESPONSE TEXT:');
+    console.log(fullTextContent);
+    
     // Check for error in the response
     if (responseData.error) {
       console.error('API returned error:', JSON.stringify(responseData.error));
@@ -1804,6 +1823,8 @@ function extractAnalysisResults(responseText: string, language: string = 'en') {
           .slice(0, 4) : 
         [];
       
+      console.log('No improvementAreas found in response text, using fallback');
+      
       return {
         analysisResults: {
           improvement: improvementMatch?.[1]?.trim() || "Approximately 60-70%",
@@ -1812,6 +1833,35 @@ function extractAnalysisResults(responseText: string, language: string = 'en') {
           wrinkleReduction: wrinkleMatch?.[1]?.trim() || "Moderate reduction in fine lines",
           moistureLevel: moistureMatch?.[1]?.trim() || "Improved hydration levels"
         },
+        improvementAreas: [
+          {
+            area: "Around eyes [EXTRACTED FALLBACK]",
+            description: "Noticeable reduction in fine lines and increased firmness",
+            coordinates: {
+              x: 50,
+              y: 40,
+              radius: 12
+            }
+          },
+          {
+            area: "Cheeks [EXTRACTED FALLBACK]",
+            description: "Improved skin tone and texture",
+            coordinates: {
+              x: 30,
+              y: 50,
+              radius: 15
+            }
+          },
+          {
+            area: "Forehead [EXTRACTED FALLBACK]",
+            description: "Smoother appearance with fewer fine lines",
+            coordinates: {
+              x: 50,
+              y: 20,
+              radius: 14
+            }
+          }
+        ],
         recommendations: recommendations.length > 0 ? recommendations : [
           "Continue with current treatments as they show positive results",
           "Consider adding vitamin C serum for enhanced results",
@@ -1825,6 +1875,75 @@ function extractAnalysisResults(responseText: string, language: string = 'en') {
     try {
       const analysisResults = JSON.parse(jsonMatch[0]);
       console.log('Successfully parsed JSON response');
+      
+      // Check if improvementAreas exists and has the correct format
+      if (!analysisResults.improvementAreas || !Array.isArray(analysisResults.improvementAreas) || analysisResults.improvementAreas.length === 0) {
+        console.warn('Parsed JSON is missing improvementAreas array or it is empty');
+        
+        // Add fallback improvement areas if missing
+        analysisResults.improvementAreas = [
+          {
+            area: "Around eyes [JSON FALLBACK]",
+            description: "Noticeable reduction in fine lines and increased firmness",
+            coordinates: {
+              x: 50,
+              y: 40,
+              radius: 12
+            }
+          },
+          {
+            area: "Cheeks [JSON FALLBACK]",
+            description: "Improved skin tone and texture",
+            coordinates: {
+              x: 30,
+              y: 50,
+              radius: 15
+            }
+          },
+          {
+            area: "Forehead [JSON FALLBACK]",
+            description: "Smoother appearance with fewer fine lines",
+            coordinates: {
+              x: 50,
+              y: 20,
+              radius: 14
+            }
+          }
+        ];
+      } else {
+        // Validate and fix each improvement area
+        analysisResults.improvementAreas = analysisResults.improvementAreas.map((area: any, index: number) => {
+          if (!area.coordinates || typeof area.coordinates !== 'object') {
+            console.warn(`ImprovementArea at index ${index} is missing coordinates, adding default`);
+            area.coordinates = {
+              x: 50,
+              y: 40 + (index * 10),
+              radius: 12
+            };
+          } else {
+            // Make sure coordinates are numbers and in the correct range
+            if (typeof area.coordinates.x !== 'number' || area.coordinates.x < 0 || area.coordinates.x > 100) {
+              console.warn(`Invalid x coordinate in area ${index}, fixing:`, area.coordinates.x);
+              area.coordinates.x = 50;
+            }
+            
+            if (typeof area.coordinates.y !== 'number' || area.coordinates.y < 0 || area.coordinates.y > 100) {
+              console.warn(`Invalid y coordinate in area ${index}, fixing:`, area.coordinates.y);
+              area.coordinates.y = 40 + (index * 10);
+            }
+            
+            if (typeof area.coordinates.radius !== 'number' || area.coordinates.radius < 5 || area.coordinates.radius > 20) {
+              console.warn(`Invalid radius in area ${index}, fixing:`, area.coordinates.radius);
+              area.coordinates.radius = 12;
+            }
+          }
+          return area;
+        });
+      }
+      
+      // Log the parsed improvementAreas for debugging
+      console.log('Final improvementAreas:', JSON.stringify(analysisResults.improvementAreas));
+      
       return analysisResults;
     } catch (jsonError) {
       console.error('Error parsing JSON match:', jsonError);
@@ -1850,6 +1969,32 @@ function extractAnalysisResults(responseText: string, language: string = 'en') {
         // Try to parse the fixed JSON
         const fixedResults = JSON.parse(fixedJson);
         console.log('Successfully parsed fixed JSON');
+        
+        // Check and fix improvementAreas in the fixed result
+        if (!fixedResults.improvementAreas || !Array.isArray(fixedResults.improvementAreas) || fixedResults.improvementAreas.length === 0) {
+          console.warn('Fixed JSON is missing improvementAreas array or it is empty');
+          fixedResults.improvementAreas = [
+            {
+              area: "Around eyes [FIXED FALLBACK]",
+              description: "Noticeable reduction in fine lines and increased firmness",
+              coordinates: {
+                x: 50,
+                y: 40,
+                radius: 12
+              }
+            },
+            {
+              area: "Cheeks [FIXED FALLBACK]",
+              description: "Improved skin tone and texture",
+              coordinates: {
+                x: 30,
+                y: 50,
+                radius: 15
+              }
+            }
+          ];
+        }
+        
         return fixedResults;
       } catch (fixError) {
         console.error('Failed to fix and parse JSON:', fixError);
@@ -1925,34 +2070,92 @@ function provideFallbackResponse(language: string = 'en') {
   if (language === 'zh') {
     return {
       analysisResults: {
-        improvement: "67%",
-        skinToneChange: "肤色明显变亮，更加均匀",
-        textureChange: "肤质更加光滑，毛孔减少约43%",
-        wrinkleReduction: "眼部细纹减少约35%",
-        moistureLevel: "水分含量提高约28%"
+        improvement: "67% [FALLBACK]",
+        skinToneChange: "肤色明显变亮，更加均匀 [FALLBACK]",
+        textureChange: "肤质更加光滑，毛孔减少约43% [FALLBACK]",
+        wrinkleReduction: "眼部细纹减少约35% [FALLBACK]",
+        moistureLevel: "水分含量提高约28% [FALLBACK]"
       },
+      improvementAreas: [
+        {
+          area: "眼部周围 [FALLBACK]",
+          description: "细纹明显减少，皮肤更加紧致 [FALLBACK]",
+          coordinates: {
+            x: 50,
+            y: 40,
+            radius: 12
+          }
+        },
+        {
+          area: "T区 [FALLBACK]",
+          description: "毛孔缩小，油光减少 [FALLBACK]",
+          coordinates: {
+            x: 50,
+            y: 30,
+            radius: 15
+          }
+        },
+        {
+          area: "颧骨区域 [FALLBACK]",
+          description: "肤色更均匀，红斑减少 [FALLBACK]",
+          coordinates: {
+            x: 30,
+            y: 50,
+            radius: 10
+          }
+        }
+      ],
       recommendations: [
-        "继续当前的护理方案",
-        "考虑添加维生素C精华以增强效果",
-        "坚持使用防晒霜保护皮肤改善成果",
-        "每周使用一次保湿面膜以提供额外水分"
+        "继续当前的护理方案 [FALLBACK]",
+        "考虑添加维生素C精华以增强效果 [FALLBACK]",
+        "坚持使用防晒霜保护皮肤改善成果 [FALLBACK]",
+        "每周使用一次保湿面膜以提供额外水分 [FALLBACK]"
       ]
     };
   }
   
   return {
     analysisResults: {
-      improvement: "67%",
-      skinToneChange: "Significant brightening observed",
-      textureChange: "Smoother texture with 43% reduction in visible pores",
-      wrinkleReduction: "35% reduction in fine lines around eyes",
-      moistureLevel: "Improved by 28%"
+      improvement: "67% [FALLBACK]",
+      skinToneChange: "Significant brightening observed [FALLBACK]",
+      textureChange: "Smoother texture with 43% reduction in visible pores [FALLBACK]",
+      wrinkleReduction: "35% reduction in fine lines around eyes [FALLBACK]",
+      moistureLevel: "Improved by 28% [FALLBACK]"
     },
+    improvementAreas: [
+      {
+        area: "Around eyes [FALLBACK]",
+        description: "Noticeable reduction in fine lines and increased firmness [FALLBACK]",
+        coordinates: {
+          x: 50,
+          y: 40,
+          radius: 12
+        }
+      },
+      {
+        area: "T-zone [FALLBACK]",
+        description: "Reduced pore size and oil production [FALLBACK]",
+        coordinates: {
+          x: 50,
+          y: 30,
+          radius: 15
+        }
+      },
+      {
+        area: "Cheek area [FALLBACK]",
+        description: "More even skin tone with reduced redness [FALLBACK]",
+        coordinates: {
+          x: 30,
+          y: 50,
+          radius: 10
+        }
+      }
+    ],
     recommendations: [
-      "Continue with current treatments",
-      "Consider adding vitamin C serum for enhanced results",
-      "Maintain sunscreen application for protecting gains",
-      "Use a hydrating mask once a week for additional moisture"
+      "Continue with current treatments [FALLBACK]",
+      "Consider adding vitamin C serum for enhanced results [FALLBACK]",
+      "Maintain sunscreen application for protecting gains [FALLBACK]",
+      "Use a hydrating mask once a week for additional moisture [FALLBACK]"
     ]
   };
 }

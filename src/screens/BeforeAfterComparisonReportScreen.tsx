@@ -27,11 +27,29 @@ const BeforeAfterComparisonReportScreen: React.FC<Props> = ({ route, navigation 
 
   // Verify data integrity on mount
   useEffect(() => {
-    if (!analysisResults || 
-        !analysisResults.analysisResults ||
-        !analysisResults.recommendations) {
-      console.warn('Incomplete analysis results received:', analysisResults);
+    console.log("Checking analysis results integrity:", JSON.stringify({
+      hasResults: !!analysisResults,
+      hasAnalysisResults: !!analysisResults?.analysisResults,
+      hasRecommendations: !!analysisResults?.recommendations,
+      hasImprovementAreas: !!analysisResults?.improvementAreas,
+      improvementAreasLength: analysisResults?.improvementAreas?.length || 0
+    }));
+    
+    if (!analysisResults) {
+      console.warn('No analysis results received');
       setHasDataError(true);
+    } else if (!analysisResults.analysisResults) {
+      console.warn('Missing analysisResults field in response');
+      setHasDataError(true);
+    } else if (!analysisResults.recommendations) {
+      console.warn('Missing recommendations field in response');
+      setHasDataError(true);
+    } else if (!analysisResults.improvementAreas || analysisResults.improvementAreas.length === 0) {
+      console.warn('Missing or empty improvementAreas field in response:', analysisResults.improvementAreas);
+      setHasDataError(true);
+    } else {
+      console.log('Analysis results integrity check passed');
+      console.log('Received improvement areas:', JSON.stringify(analysisResults.improvementAreas));
     }
   }, [analysisResults]);
 
@@ -51,6 +69,84 @@ const BeforeAfterComparisonReportScreen: React.FC<Props> = ({ route, navigation 
     "Maintain sunscreen application for best results",
     "Use a hydrating mask once a week for additional moisture"
   ];
+  
+  // Extract improvement areas from analysis results
+  const improvementAreas = analysisResults?.improvementAreas || [
+    {
+      area: "Around eyes",
+      description: "Noticeable reduction in fine lines and increased firmness",
+      coordinates: {
+        x: 50,
+        y: 40,
+        radius: 12
+      }
+    },
+    {
+      area: "T-zone",
+      description: "Reduced pore size and oil production",
+      coordinates: {
+        x: 50,
+        y: 30,
+        radius: 15
+      }
+    },
+    {
+      area: "Cheek area",
+      description: "More even skin tone with reduced redness",
+      coordinates: {
+        x: 30,
+        y: 50,
+        radius: 10
+      }
+    }
+  ];
+  
+  // Component to render improvement area markers
+  const ImprovementMarker = ({ x, y, radius, index }: { 
+    x: number, 
+    y: number, 
+    radius: number, 
+    index: number
+  }) => {
+    // Use different colors for different markers
+    const colors = [COLORS.primary.main, COLORS.success.main, '#FF9800', '#9C27B0', '#2196F3'];
+    const color = colors[index % colors.length];
+    
+    return (
+      <View 
+        style={{
+          position: 'absolute', 
+          left: `${x}%`, 
+          top: `${y}%`, 
+          width: `${radius*2}%`,
+          height: `${radius*2}%`,
+          marginLeft: `-${radius}%` as any,
+          marginTop: `-${radius}%` as any,
+          borderRadius: 100,
+          borderWidth: 2,
+          borderColor: color,
+          backgroundColor: `${color}20`, // 20% opacity
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10
+        }}
+      >
+        <Text style={{ 
+          fontSize: 10, 
+          fontWeight: 'bold',
+          color: color,
+          textAlign: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          paddingHorizontal: 4,
+          paddingVertical: 2,
+          borderRadius: 10,
+          overflow: 'hidden'
+        }}>
+          {index + 1}
+        </Text>
+      </View>
+    );
+  };
 
   // Format the base64 image with proper prefix if needed
   const getFormattedImageUri = (base64String: string) => {
@@ -176,12 +272,23 @@ ${recommendations.map((rec: string) => `- ${rec}`).join('\n')}
           <Text style={styles.imageLabel}>{t('afterImageLabel')}</Text>
           <View style={styles.imageWrapper}>
             {formattedAfterImageUri ? (
-              <Image
-                source={{ uri: formattedAfterImageUri }}
-                style={styles.image}
-                resizeMode="cover"
-                onError={() => setAfterImageError(true)}
-              />
+              <View style={{ width: '100%', height: '100%', position: 'relative' }}>
+                <Image
+                  source={{ uri: formattedAfterImageUri }}
+                  style={styles.image}
+                  resizeMode="cover"
+                  onError={() => setAfterImageError(true)}
+                />
+                {improvementAreas.map((area: any, index: number) => (
+                  <ImprovementMarker
+                    key={index}
+                    x={area.coordinates.x}
+                    y={area.coordinates.y}
+                    radius={area.coordinates.radius}
+                    index={index}
+                  />
+                ))}
+              </View>
             ) : (
               <View style={[styles.image, styles.imagePlaceholder]}>
                 <Text style={styles.imagePlaceholderText}>
@@ -233,6 +340,30 @@ ${recommendations.map((rec: string) => `- ${rec}`).join('\n')}
           <View key={index} style={styles.recommendationItem}>
             <MaterialIcons name="check-circle" size={20} color={COLORS.primary.main} style={styles.recommendationIcon} />
             <Text style={styles.recommendationText}>{recommendation}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.improvementAreasContainer}>
+        <Text style={styles.sectionTitle}>{t('improvementAreas')}</Text>
+        {improvementAreas.map((area: any, index: number) => (
+          <View key={index} style={styles.improvementAreaItem}>
+            <View style={styles.areaMarkerContainer}>
+              <View 
+                style={[
+                  styles.areaMarker, 
+                  { 
+                    backgroundColor: [COLORS.primary.main, COLORS.success.main, '#FF9800', '#9C27B0', '#2196F3'][index % 5] 
+                  }
+                ]}
+              >
+                <Text style={styles.areaMarkerText}>{index + 1}</Text>
+              </View>
+            </View>
+            <View style={styles.areaDetails}>
+              <Text style={styles.areaName}>{area.area}</Text>
+              <Text style={styles.areaDescription}>{area.description}</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -319,6 +450,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: COLORS.gray[200],
+    position: 'relative',
   },
   image: {
     width: '100%',
@@ -363,7 +495,7 @@ const styles = StyleSheet.create({
   },
   resultItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[100],
@@ -372,13 +504,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text.primary,
-    flex: 1,
+    width: '40%',
   },
   resultValue: {
     fontSize: 16,
     color: COLORS.text.secondary,
     flex: 1,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   recommendationsContainer: {
     padding: 16,
@@ -406,6 +538,55 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     flex: 1,
     lineHeight: 22,
+  },
+  improvementAreasContainer: {
+    padding: 16,
+    backgroundColor: COLORS.background.paper,
+    marginBottom: 16,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  improvementAreaItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  areaMarkerContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: 8,
+  },
+  areaMarker: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  areaMarkerText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  areaDetails: {
+    flex: 1,
+  },
+  areaName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: 4,
+  },
+  areaDescription: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    lineHeight: 20,
   },
   disclaimerContainer: {
     padding: 16,

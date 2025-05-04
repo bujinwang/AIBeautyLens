@@ -1,6 +1,6 @@
 {
   "name": "AIBeautyLens",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "index.js",
   "scripts": {
     "start": "expo start --localhost",
@@ -27,6 +27,7 @@
     "expo-image-picker": "~14.7.1",
     "expo-linear-gradient": "~12.7.2",
     "expo-mail-composer": "~12.7.1",
+    "expo-media-library": "^17.1.6",
     "expo-sharing": "~11.10.0",
     "expo-status-bar": "~1.11.1",
     "expo-web-browser": "~12.8.2",

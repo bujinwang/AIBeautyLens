@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { FeedbackModal } from './FeedbackModal';
+import FeedbackModal from './FeedbackModal';
 
 export const FeedbackButton: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);

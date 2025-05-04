@@ -1,6 +1,5 @@
 import React from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { Modal, View, StyleSheet, TouchableOpacity, Text, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface FeedbackModalProps {
@@ -9,6 +8,12 @@ interface FeedbackModalProps {
 }
 
 const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }) => {
+  const feedbackUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScncSKnzYw8sN1ZE5ZQja-vX8yd5DJdCCyic1WEa6zpxzGoCA/viewform?embedded=true';
+  
+  const openBrowser = () => {
+    Linking.openURL(feedbackUrl);
+  };
+
   return (
     <Modal
       visible={visible}
@@ -24,10 +29,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ visible, onClose }) => {
               <Ionicons name="close" size={24} color="#000" />
             </TouchableOpacity>
           </View>
-          <WebView
-            source={{ uri: 'https://docs.google.com/forms/d/e/1FAIpQLScncSKnzYw8sN1ZE5ZQja-vX8yd5DJdCCyic1WEa6zpxzGoCA/viewform?embedded=true' }}
-            style={styles.webview}
-          />
+          <View style={styles.webview}>
+            <Text style={styles.message}>
+              To provide feedback, please tap the button below to open the feedback form in your browser.
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={openBrowser}>
+              <Text style={styles.buttonText}>Open Feedback Form</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -65,7 +74,27 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
+  message: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#1E3A8A',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
 });
 
 export default FeedbackModal; 

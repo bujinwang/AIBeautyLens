@@ -19,6 +19,8 @@ import HomeScreen from './screens/HomeScreen';
 import LogoGenerator from './utils/LogoGenerator';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import BeforeAfterAnalysisScreen from './screens/BeforeAfterAnalysisScreen';
+import BeforeAfterComparisonReportScreen from './screens/BeforeAfterComparisonReportScreen';
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
@@ -48,9 +50,15 @@ export type RootStackParamList = {
     treatmentIds: string[];
     beforeImage: string;
   };
+  BeforeAfterComparisonReport: {
+    beforeImage: string;
+    afterImage: string;
+    analysisResults: any;
+  };
   LogoGenerator: undefined;
   PrivacyPolicy: undefined;
   Settings: undefined;
+  BeforeAfterAnalysis: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -143,6 +151,18 @@ const WrappedSettingsScreen = withFeedbackButton((props: any) => (
   </ScreenWrapper>
 ));
 
+const WrappedBeforeAfterAnalysisScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <BeforeAfterAnalysisScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedBeforeAfterComparisonReportScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <BeforeAfterComparisonReportScreen {...props} />
+  </ScreenWrapper>
+));
+
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const navigationRef = useRef(null);
@@ -224,6 +244,16 @@ export default function App() {
                 name="Settings"
                 component={WrappedSettingsScreen}
                 options={{ title: 'Settings' }}
+              />
+              <Stack.Screen
+                name="BeforeAfterAnalysis"
+                component={WrappedBeforeAfterAnalysisScreen}
+                options={{ title: 'Before/After Analysis' }}
+              />
+              <Stack.Screen
+                name="BeforeAfterComparisonReport"
+                component={WrappedBeforeAfterComparisonReportScreen}
+                options={{ title: 'ProgressScan™ Results' }}
               />
             </Stack.Navigator>
           </NavigationContainer>

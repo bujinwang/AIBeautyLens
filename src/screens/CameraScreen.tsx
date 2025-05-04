@@ -41,7 +41,11 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
         quality: 0.7,
+        exif: false, // Don't need EXIF data
       });
+      
+      console.log('Photo captured, has base64:', !!photo.base64);
+      
       setPreviewVisible(true);
       setCapturedImage(photo);
     } catch (error) {
@@ -56,6 +60,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
         allowsEditing: false,
         aspect: [3, 4],
         quality: 0.7,
+        base64: true,
       });
 
       if (!result.canceled) {
@@ -72,9 +77,22 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
 
             const newUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
             await FileSystem.copyAsync({ from: selectedAsset.uri, to: newUri });
+            
+            // If we don't have base64 from the image picker, try to read it
+            let base64Data = selectedAsset.base64;
+            if (!base64Data) {
+              try {
+                base64Data = await FileSystem.readAsStringAsync(newUri, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                console.log('Successfully read base64 data from selected image');
+              } catch (readError) {
+                console.error('Error reading selected image as base64:', readError);
+              }
+            }
 
             setPreviewVisible(true);
-            setCapturedImage({...selectedAsset, uri: newUri});
+            setCapturedImage({...selectedAsset, uri: newUri, base64: base64Data});
           } else {
             console.error('Error: Selected asset URI is not a file:', selectedAsset.uri);
             // Handle the error appropriately, e.g., show an alert to the user
@@ -96,9 +114,24 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     if (!capturedImage || !capturedImage.uri) return;
 
     try {
+      // If capturedImage already has base64, use it
+      let base64Data = capturedImage.base64 || '';
+      
+      // If no base64 data, try to read it from the file
+      if (!base64Data && capturedImage.uri) {
+        try {
+          base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log('Successfully loaded base64 data from image file');
+        } catch (readError) {
+          console.error('Error reading image as base64:', readError);
+        }
+      }
+
       navigation.navigate('Analysis', {
         imageUri: capturedImage.uri,
-        base64Image: '',
+        base64Image: base64Data,
         visitPurpose: visitPurpose,
         appointmentLength: appointmentLength
       });

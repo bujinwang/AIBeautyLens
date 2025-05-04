@@ -17,9 +17,14 @@ export const translations: Record<string, Record<string, string>> = {
     version: 'Version',
     privacyPolicy: 'Privacy Policy',
     loading: 'Loading',
+    error: 'Error',
+    shareError: 'Failed to share report',
+    results: 'Results',
 
     // Home Screen
     startAnalysis: 'Start DermaGraph™ Analysis',
+    beforeAfterAnalysis: 'Start ProgressScan™ Analysis',
+    beforeAfterDescription: 'Compare your skin progress with AI-powered comparison',
     eliteAnalysisFeatures: 'Elite Analysis Features',
     dermaGraphAnalysis: 'DermaGraph™ Analysis',
     dermaGraphDescription: 'AI-powered skin scanning for comprehensive assessment',
@@ -194,6 +199,40 @@ export const translations: Record<string, Record<string, string>> = {
 
     // Settings Screen
     back: 'Back',
+
+    // Before/After Analysis Screen
+    beforeAfterTitle: 'ProgressScan™ Analysis',
+    beforeAfterInstructions: 'Select or capture before and after treatment images for AI analysis',
+    beforeTreatment: 'Before Treatment',
+    afterTreatment: 'After Treatment',
+    addBeforeImage: 'Add Before Image',
+    addAfterImage: 'Add After Image',
+    camera: 'Camera',
+    gallery: 'Gallery',
+    reset: 'Reset',
+    analyzeChanges: 'Analyze Changes',
+    capturingBeforeImage: 'Capture Before Image',
+    capturingAfterImage: 'Capture After Image',
+    cancel: 'Cancel',
+    missingImagesTitle: 'Missing Images',
+    missingImagesMessage: 'Please provide both before and after images for analysis.',
+    analysisFailedTitle: 'Analysis Failed',
+    analysisFailedMessage: 'There was a problem analyzing your images. Please try again.',
+
+    // Before/After Comparison Report Screen
+    progressScanResults: 'ProgressScan™ Results',
+    analysisResults: 'Analysis Results',
+    overallImprovement: 'Overall Improvement:',
+    skinToneChange: 'Skin Tone Change:',
+    textureChange: 'Texture Change:',
+    wrinkleReduction: 'Wrinkle Reduction:',
+    moistureLevel: 'Moisture Level:',
+    recommendations: 'Recommendations',
+    beforeImageLabel: 'Before',
+    afterImageLabel: 'After',
+    shareProgressReport: 'Share Report',
+    returnToHome: 'Return to Home',
+    resultsFallbackWarning: 'Using estimated analysis results. The AI was unable to fully analyze your images.',
   },
   zh: {
     // General
@@ -203,9 +242,14 @@ export const translations: Record<string, Record<string, string>> = {
     version: '版本',
     privacyPolicy: '隐私政策',
     loading: '加载中',
+    error: '错误',
+    shareError: '分享报告失败',
+    results: '结果',
 
     // Home Screen
     startAnalysis: '开始 DermaGraph™ 分析',
+    beforeAfterAnalysis: '开始 ProgressScan™ 分析',
+    beforeAfterDescription: '使用AI助力比较您的皮肤进展情况',
     eliteAnalysisFeatures: '精英分析功能',
     dermaGraphAnalysis: 'DermaGraph™ 分析',
     dermaGraphDescription: 'AI驱动的皮肤扫描，全面评估',
@@ -323,6 +367,7 @@ export const translations: Record<string, Record<string, string>> = {
     shareReport: '分享报告',
     startOver: '重新开始',
     failedToLoadImage: '图片加载失败。请重试。',
+    noImageAvailable: '无可用图像',
 
     // Diagnosis Report Screen
     diagnosisReport: '诊断报告',
@@ -379,6 +424,39 @@ export const translations: Record<string, Record<string, string>> = {
 
     // Settings Screen
     back: '返回',
+
+    // Before/After Analysis Screen
+    beforeAfterTitle: 'ProgressScan™ 分析',
+    beforeAfterInstructions: '选择或拍摄治疗前后的图像进行AI分析',
+    beforeTreatment: '治疗前',
+    afterTreatment: '治疗后',
+    addBeforeImage: '添加治疗前图像',
+    addAfterImage: '添加治疗后图像',
+    camera: '相机',
+    gallery: '相册',
+    reset: '重置',
+    analyzeChanges: '分析变化',
+    capturingBeforeImage: '拍摄治疗前图像',
+    capturingAfterImage: '拍摄治疗后图像',
+    cancel: '取消',
+    missingImagesTitle: '图像缺失',
+    missingImagesMessage: '请提供治疗前和治疗后的图像进行分析。',
+    analysisFailedTitle: '分析失败',
+    analysisFailedMessage: '分析您的图像时出现问题。请重试。',
+
+    // Before/After Comparison Report Screen
+    progressScanResults: 'ProgressScan™ 结果',
+    analysisResults: '分析结果',
+    overallImprovement: '整体改善:',
+    skinToneChange: '肤色变化:',
+    textureChange: '肌理变化:',
+    wrinkleReduction: '皱纹减少:',
+    moistureLevel: '水分水平:',
+    recommendations: '建议',
+    beforeImageLabel: '治疗前',
+    afterImageLabel: '治疗后',
+    shareProgressReport: '分享报告',
+    returnToHome: '返回首页',
   }
 };
 

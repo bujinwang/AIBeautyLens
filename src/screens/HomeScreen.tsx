@@ -45,6 +45,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Settings');
   };
 
+  const navigateToBeforeAfterAnalysis = () => {
+    console.log("HomeScreen: Navigating to Before/After Analysis");
+    navigation.navigate('BeforeAfterAnalysis');
+  };
+
   console.log("HomeScreen: Rendering");
 
   try {
@@ -95,6 +100,14 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             >
               <MaterialIcons name="camera-alt" size={24} color="white" />
               <Text style={styles.actionButtonText}>{t('startAnalysis')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.primaryButton, styles.marginTopButton]}
+              onPress={navigateToBeforeAfterAnalysis}
+            >
+              <MaterialIcons name="compare" size={24} color="white" />
+              <Text style={styles.actionButtonText}>{t('beforeAfterAnalysis')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -263,11 +276,22 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: COLORS.primary.main,
   },
+  secondaryButton: {
+    backgroundColor: COLORS.background.paper,
+    borderWidth: 1,
+    borderColor: COLORS.primary.main,
+  },
   actionButtonText: {
     fontSize: 18,
     fontWeight: '600',
     color: 'white',
     marginLeft: 12,
+  },
+  secondaryButtonText: {
+    color: COLORS.primary.main,
+  },
+  marginTopButton: {
+    marginTop: 12,
   },
   featuresContainer: {
     paddingHorizontal: 24,

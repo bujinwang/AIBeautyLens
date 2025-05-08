@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView, Alert } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -7,10 +7,12 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
 import CustomIcon from '../components/CustomIcon';
 import Logo from '../components/Logo';
+import ProcessingIndicator from '../components/ProcessingIndicator'; // Added import
 import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalization } from '../i18n/localizationContext';
+import { analyzeEyeArea } from '../services/geminiService'; // Added import
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -25,7 +27,8 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>('');
-  const [appointmentLength, setAppointmentLength] = useState<string>('60m');
+  const [appointmentLength, setAppointmentLength] = useState<string>('1hr'); // Defaulting to a value, adjust if needed
+  const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false); // Added state for eye analysis loading
   const cameraRef = useRef<Camera>(null);
 
   useEffect(() => {
@@ -94,8 +97,12 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
             setPreviewVisible(true);
             setCapturedImage({...selectedAsset, uri: newUri, base64: base64Data});
           } else {
-            console.error('Error: Selected asset URI is not a file:', selectedAsset.uri);
-            // Handle the error appropriately, e.g., show an alert to the user
+            // Show an alert to the user instead of rendering/logging a string in the UI
+            Alert.alert(
+              t('invalidImageTitle'),
+              t('invalidImageMessage'),
+              [{ text: t('ok') }]
+            );
             return;
           }
         }
@@ -140,6 +147,57 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleEyeAnalyze = async () => {
+    if (!capturedImage || !capturedImage.uri) return;
+    setIsEyeAnalyzing(true); // Start loading
+
+    try {
+      // If capturedImage already has base64, use it
+      let base64Data = capturedImage.base64 || '';
+      
+      // If no base64 data, try to read it from the file
+      if (!base64Data && capturedImage.uri) {
+        try {
+          base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          console.log('Successfully loaded base64 data for eye analysis');
+        } catch (readError) {
+          console.error('Error reading image as base64 for eye analysis:', readError);
+          // Optionally show an error to the user
+          return; 
+        }
+      }
+
+      // Call the actual eye analysis service
+      const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+
+      // Check if analysis was successful before navigating
+      if (analysisResult) {
+        // Navigate to ReportScreen with eye analysis results
+        navigation.navigate('Report', {
+          analysisType: 'eye', // Indicate this is an eye analysis report
+          imageUri: capturedImage.uri,
+          // base64Image: base64Data, // ReportScreen might not need base64
+          eyeAnalysisResult: analysisResult, // Pass the eye results
+          // Pass other relevant params if ReportScreen needs them for eye context
+          visitPurpose: visitPurpose,
+          appointmentLength: appointmentLength
+        });
+      } else {
+        // Handle case where analysisResult is null or undefined (error handled in service)
+        Alert.alert(t('error'), t('eyeAnalysisFailed')); 
+      }
+    } catch (error: any) { // Catch specific error type if possible
+      console.error('Error during eye analysis process:', error);
+      // Use a more specific error message if available from the error object
+      const errorMessage = error?.message || t('eyeAnalysisFailed');
+      Alert.alert(t('error'), errorMessage); // Show specific error to user
+    } finally {
+      setIsEyeAnalyzing(false); // Stop loading
+    }
+  };
+
   const navigateToHome = () => {
     navigation.navigate('Home');
   };
@@ -171,6 +229,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+      
+      <ProcessingIndicator 
+        isAnalyzing={isEyeAnalyzing} 
+        processingText={t('analyzingEyeArea')} // Corrected localization key
+        analysisType="eye" // Specify eye analysis type
+        showDetailedSteps={true} // Assuming we want to show steps for eye analysis too
+        showTechStack={true} // Assuming we want to show tech stack for eye analysis
+      />
 
       <LinearGradient
         colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
@@ -237,14 +303,14 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                       onPress={() => setAppointmentLength(option)}
                     >
                       <View style={styles.appointmentOptionContent}>
-                        {(option === '2hrs' || option === '4hrs' || option === '6hrs' || option === '8hrs') && (
+                        {(option === '2hrs' || option === '4hrs' || option === '6hrs' || option === '8hrs') ? (
                           <MaterialIcons
                             name="stars"
                             size={16}
                             color={appointmentLength === option ? COLORS.primary.main : COLORS.gray[400]}
                             style={styles.vipIcon}
                           />
-                        )}
+                        ) : null}
                         <Text style={[
                           styles.appointmentOptionText,
                           appointmentLength === option && styles.appointmentOptionTextSelected
@@ -261,15 +327,21 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 style={[styles.button, styles.secondaryButton]}
                 onPress={retakePicture}
               >
-                <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
+                {/* <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} /> */}
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('retake')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton]}
                 onPress={handleAnalyze}
               >
-                <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} />
+                {/* <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} /> */}
                 <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('beginAnalysis')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton, styles.eyeButton]} // Added eyeButton style for potential adjustments
+                onPress={handleEyeAnalyze} // New handler needed
+              >
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('startEyeAnalysis')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -363,6 +435,10 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
   },
+  eyeButton: {
+    // Add specific styles for the eye analysis button if needed
+    // e.g., marginLeft: 10,
+  },
   cameraContainer: {
     flex: 1,
     overflow: 'hidden',
@@ -426,10 +502,10 @@ const styles = StyleSheet.create({
     color: COLORS.primary.main,
   },
   previewScrollContainer: {
-    flex: 0,
+    flex: 1, // Allow the View to take up space
   },
   previewContainer: {
-    flex: 0,
+    flex: 1, // Allow inner content to potentially grow
     paddingBottom: 0,
   },
   formContainer: {
@@ -453,7 +529,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.text.primary,
     backgroundColor: COLORS.background.paper,
-    minHeight: 100,
+    minHeight: 80, // Reduced from 100
     textAlignVertical: 'top',
   },
   appointmentOptions: {
@@ -499,123 +575,111 @@ const styles = StyleSheet.create({
   cameraOverlay: {
     flex: 1,
     backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
+    justifyContent: 'space-between',
+    padding: 20,
   },
   faceFrameContainer: {
+    position: 'absolute',
+    top: '15%', // Adjust as needed
+    left: '10%',
+    right: '10%',
+    bottom: '25%', // Adjust as needed
     alignItems: 'center',
+    justifyContent: 'center',
   },
   faceFrame: {
-    width: 250,
-    height: 330,
+    width: '100%',
+    height: '100%',
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 2,
+    borderRadius: 10, // Optional: adds rounded corners
     position: 'relative',
   },
   cornerBorder: {
     position: 'absolute',
-    width: 20,
-    height: 20,
-    borderColor: 'white',
+    width: 30,
+    height: 30,
+    borderColor: COLORS.primary.main, // Use a distinct color
+    borderWidth: 4,
   },
   topLeft: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: 10,
+    top: -2,
+    left: -2,
+    borderBottomWidth: 0,
+    borderRightWidth: 0,
   },
   topRight: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: 10,
+    top: -2,
+    right: -2,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
   },
   bottomLeft: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: 10,
+    bottom: -2,
+    left: -2,
+    borderTopWidth: 0,
+    borderRightWidth: 0,
   },
   bottomRight: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: 10,
+    bottom: -2,
+    right: -2,
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
   },
   frameTip: {
+    position: 'absolute',
+    bottom: -30, // Position below the frame
     color: 'white',
     fontSize: 14,
-    marginTop: 10,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20,
-    overflow: 'hidden',
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    borderRadius: 4,
   },
   flipButton: {
     position: 'absolute',
-    bottom: 90,
-    right: 30,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 30,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
-  },
-  subtitle: {
-    padding: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f8f9fa',
-    marginBottom: 0,
-  },
-  subtitleText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    top: 10,
+    right: 10,
+    padding: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 50,
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
     padding: 20,
+    backgroundColor: COLORS.background.default,
   },
   permissionText: {
+    marginTop: 16,
     fontSize: 18,
-    color: '#333',
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    color: COLORS.text.primary,
   },
   permissionButton: {
+    marginTop: 24,
     backgroundColor: COLORS.primary.main,
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    paddingHorizontal: 30,
+    borderRadius: 8,
   },
   permissionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  subtitle: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.background.paper, // Or a slightly different shade
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  subtitleText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
   },
 });
 

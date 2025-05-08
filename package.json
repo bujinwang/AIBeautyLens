@@ -36,6 +36,7 @@
     "react-dom": "18.2.0",
     "react-i18next": "^15.4.1",
     "react-native": "0.73.6",
+    "react-native-crypto": "^2.2.0",
     "react-native-gesture-handler": "~2.14.0",
     "react-native-keychain": "^10.0.0",
     "react-native-localize": "^3.4.1",

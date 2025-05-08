@@ -5,7 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
 import { AnalysisResult } from '../types';
-import { analyzeFacialImage } from '../services/geminiService';
+import { analyzeFacialImage, analyzeEyeArea } from '../services/geminiService';
 import GenderConfidenceDisplay from '../components/GenderConfidenceDisplay';
 import FeatureSeverityRating from '../components/FeatureSeverityRating';
 import SkinMatrixHeader from '../components/SkinMatrixHeader';
@@ -36,7 +36,9 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const [isQuotaError, setIsQuotaError] = useState(false);
   const [isIpadError, setIsIpadError] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [eyeAnalysisResult, setEyeAnalysisResult] = useState<any | null>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>(routeVisitPurpose || '');
+  const [isEyeAnalysis, setIsEyeAnalysis] = useState<boolean>(false);
   const isIPad = Platform.OS === 'ios' && Platform.isPad;
 
   // Replace SKIN_CONCERNS and toggleConcern with update function for visitPurpose
@@ -62,14 +64,21 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
     analyzeImage();
   }, []);
 
-  const analyzeImage = async () => {
+  const analyzeImage = async (type: 'facial' | 'eye' = 'facial') => {
     try {
       setLoading(true);
       setError(null);
       setIsQuotaError(false);
       setIsIpadError(false);
-      const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
-      setAnalysisResult(result);
+      setIsEyeAnalysis(type === 'eye');
+      
+      if (type === 'facial') {
+        const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
+        setAnalysisResult(result);
+      } else {
+        const result = await analyzeEyeArea(base64Image, visitPurpose, appointmentLength);
+        setEyeAnalysisResult(result);
+      }
     } catch (error) {
       console.error('Error in analysis:', error);
       if (error instanceof Error) {
@@ -168,6 +177,19 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       });
     }
   };
+  
+  // Navigate to the EyeAnalysisScreen
+  const handleEyeAnalysis = () => {
+    if (eyeAnalysisResult) {
+      navigation.navigate('EyeAnalysis', {
+        imageUri,
+        base64Image,
+        eyeAnalysisResult,
+        visitPurpose,
+        appointmentLength,
+      });
+    }
+  };
 
   const renderErrorContent = () => {
     if (isQuotaError) {
@@ -185,7 +207,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               <Button
                 title={t('tryAgainLater')}
                 icon="schedule"
-                onPress={analyzeImage}
+                onPress={() => analyzeImage()}
                 variant="outline"
                 style={styles.actionButton}
               />
@@ -240,7 +262,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               <Button
                 title={t('tryAgain')}
                 icon="refresh"
-                onPress={analyzeImage}
+                onPress={() => analyzeImage()}
                 variant="outline"
                 style={styles.actionButton}
               />
@@ -265,7 +287,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
           <Button
             title={t('retryAnalysis')}
             icon="refresh"
-            onPress={analyzeImage}
+            onPress={() => analyzeImage()}
             variant="primary"
             style={styles.retryButton}
           />
@@ -427,6 +449,8 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 variant="primary"
                 style={styles.nextButton}
               />
+              {/* Analyze Eye Area Button Removed */}
+              {/* View Eye Analysis Button Removed */}
             </View>
 
             <View style={styles.footnoteContainer}>
@@ -441,9 +465,10 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       {loading && (
         <ProcessingIndicator
           isAnalyzing={true}
-          processingText={t('analyzing')}
+          processingText={isEyeAnalysis ? t('analyzingEyeArea') : t('analyzing')}
           showDetailedSteps={true}
           showTechStack={true}
+          analysisType={isEyeAnalysis ? 'eye' : 'facial'}
         />
       )}
     </>
@@ -565,12 +590,15 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.xs,
   },
   resultLabel: {
-    ...TYPOGRAPHY.body2.style,
+    fontSize: TYPOGRAPHY.body2.fontSize,
+    letterSpacing: TYPOGRAPHY.body2.letterSpacing,
     color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
   } as TextStyle,
   resultValue: {
-    ...TYPOGRAPHY.subtitle1.style,
+    fontSize: TYPOGRAPHY.subtitle1.fontSize,
+    fontWeight: '500',
+    letterSpacing: TYPOGRAPHY.subtitle1.letterSpacing,
     color: COLORS.text.primary,
   } as TextStyle,
   genderContainer: {
@@ -603,7 +631,7 @@ const styles = StyleSheet.create({
   },
   featureHeaderTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as TextStyle['fontWeight'],
     color: COLORS.text.primary,
   },
   featureHeaderSubtitle: {
@@ -630,11 +658,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureText: {
-    ...TYPOGRAPHY.subtitle1.style,
+    fontSize: TYPOGRAPHY.subtitle1.fontSize,
+    fontWeight: '500' as TextStyle['fontWeight'],
+    letterSpacing: TYPOGRAPHY.subtitle1.letterSpacing,
     color: COLORS.text.primary,
   } as TextStyle,
   featureLocation: {
-    ...TYPOGRAPHY.body2.style,
+    fontSize: TYPOGRAPHY.body2.fontSize,
+    letterSpacing: TYPOGRAPHY.body2.letterSpacing,
     color: COLORS.text.secondary,
   } as TextStyle,
   featureRatingContainer: {
@@ -668,7 +699,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body2.fontSize,
-    lineHeight: TYPOGRAPHY.body2.lineHeight,
+    lineHeight: 20,
     fontStyle: 'italic',
   },
   nextButton: {
@@ -696,12 +727,15 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   visitInfoLabel: {
-    ...TYPOGRAPHY.subtitle1.style,
+    fontSize: TYPOGRAPHY.subtitle1.fontSize,
+    fontWeight: '500',
+    letterSpacing: TYPOGRAPHY.subtitle1.letterSpacing,
     color: COLORS.text.secondary,
     marginBottom: 4,
   },
   visitInfoValue: {
-    ...TYPOGRAPHY.body1.style,
+    fontSize: TYPOGRAPHY.body1.fontSize,
+    letterSpacing: TYPOGRAPHY.body1.letterSpacing,
     color: COLORS.text.primary,
     backgroundColor: COLORS.background.paper,
     padding: SPACING.sm,
@@ -732,7 +766,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   footnote: {
-    ...TYPOGRAPHY.caption.style,
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    letterSpacing: TYPOGRAPHY.caption.letterSpacing,
     color: COLORS.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -744,7 +779,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   confidenceLabel: {
-    ...TYPOGRAPHY.caption.style,
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    letterSpacing: TYPOGRAPHY.caption.letterSpacing,
     color: COLORS.text.secondary,
     marginRight: 4,
   },
@@ -765,7 +801,8 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   confidenceValue: {
-    ...TYPOGRAPHY.caption.style,
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    letterSpacing: TYPOGRAPHY.caption.letterSpacing,
     fontWeight: '600' as const,
     color: 'white',
   },
@@ -773,7 +810,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   tipTitle: {
-    ...TYPOGRAPHY.subtitle1.style,
+    fontSize: TYPOGRAPHY.subtitle1.fontSize,
+    fontWeight: '500' as TextStyle['fontWeight'],
+    letterSpacing: TYPOGRAPHY.subtitle1.letterSpacing,
     color: COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
@@ -783,17 +822,21 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   tipText: {
-    ...TYPOGRAPHY.body2.style,
+    fontSize: TYPOGRAPHY.body2.fontSize,
+    letterSpacing: TYPOGRAPHY.body2.letterSpacing,
     color: COLORS.text.primary,
     marginLeft: SPACING.xs,
     flex: 1,
   },
   title: {
-    ...TYPOGRAPHY.subtitle1.style,
+    fontSize: TYPOGRAPHY.subtitle1.fontSize,
+    fontWeight: '500',
+    letterSpacing: TYPOGRAPHY.subtitle1.letterSpacing,
     color: COLORS.text.primary,
   } as TextStyle,
   subtitle: {
-    ...TYPOGRAPHY.caption.style,
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    letterSpacing: TYPOGRAPHY.caption.letterSpacing,
     color: COLORS.text.secondary,
   } as TextStyle,
 });

@@ -45,14 +45,15 @@ export const translations: Record<string, Record<string, string>> = {
     purposeOfVisit: 'Purpose of Visit',
     appointmentLength: 'Appointment Length',
     positionFace: 'Position your face within the frame for best results',
-    centerYourFace: 'Center your face',
+    centerYourFace: 'Ensure eyes and forehead are centered in the frame',
     gallery: 'Gallery',
     capture: 'Capture',
-    beginAnalysis: 'Begin Analysis',
+    beginAnalysis: 'Full Face Analysis', // Updated text
     requestingPermission: 'Requesting camera permission...',
     noAccessCamera: 'No access to camera',
     goBack: 'Go Back',
     visitPurposeHint: 'Example: Reduce fine lines and improve skin elasticity...',
+    startEyeAnalysis: 'Eye Analysis', // Updated text
 
     // Analysis Screen
     analyzing: 'Analyzing your skin... Our AI is processing 500+ data points from your image, analyzing texture, tone, pores, and specific conditions. This advanced analysis requires significant computing power and references thousands of clinical cases to provide personalized insights equivalent to multiple specialist consultations.',
@@ -109,20 +110,23 @@ export const translations: Record<string, Record<string, string>> = {
     usePhone: 'Use a phone instead of an iPad if available',
     tryAgain: 'Try Again',
     takeNewPhoto: 'Take New Photo',
+    analyzeEyeArea: 'Analyze Eye Area',
+    viewEyeAnalysis: 'View Eye Analysis',
+    analyzingEyeArea: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.', // More detailed text
 
     // Treatment Screen
-    recommendedTreatments: 'Recommended Treatments',
+    // recommendedTreatments: 'Recommended Treatments', // Duplicate key removed
     basedOnAnalysis: 'Based on your facial analysis, the following treatments are recommended:',
     skinMatrixSummary: 'SkinMatrix™ Analysis Summary',
     age: 'Age:',
-    gender: 'Gender:',
-    skinType: 'Skin Type:',
+    // gender: 'Gender:', // Duplicate key removed
+    // skinType: 'Skin Type:', // Duplicate key removed
     features: 'Features:',
     identified: 'identified',
     years: 'years',
-    visitInformation: 'Visit Information',
-    purposeOfVisitLabel: 'Purpose of Visit:',
-    appointmentLengthLabel: 'Appointment Length:',
+    // visitInformation: 'Visit Information', // Duplicate key removed
+    // purposeOfVisitLabel: 'Purpose of Visit:', // Duplicate key removed
+    // appointmentLengthLabel: 'Appointment Length:', // Duplicate key removed
     area: 'Area:',
     whyRecommended: 'Why it\'s recommended:',
     benefits: 'Benefits:',
@@ -133,8 +137,8 @@ export const translations: Record<string, Record<string, string>> = {
     // Report Screen
     treatmentReport: 'Treatment Report',
     date: 'Date:',
-    recommendedTreatments: 'Recommended Treatments',
-    area: 'Area:',
+    // recommendedTreatments: 'Recommended Treatments', // Duplicate key removed
+    // area: 'Area:', // Duplicate key removed
     totalEstimatedCost: 'Total Estimated Cost',
     importantInformation: 'Important Information',
     disclaimer: 'This analysis is powered by advanced machine learning algorithms trained on data from thousands of aesthetic medicine cases and specialist consultations. While our AI provides comprehensive insights based on extensive medical data, individual results may vary. For optimal results, please consult with a qualified aesthetic medicine specialist who can consider your unique needs and medical history.',
@@ -148,10 +152,10 @@ export const translations: Record<string, Record<string, string>> = {
     diagnosisReport: 'Diagnosis Report',
     showDiagnosisReport: 'Show Diagnosis Report',
     profileAnalysis: 'Profile Analysis',
-    estimatedAge: 'Estimated Age',
-    skinType: 'Skin Type',
+    // estimatedAge: 'Estimated Age', // Duplicate key removed
+    // skinType: 'Skin Type', // Duplicate key removed
     undertone: 'Undertone',
-    gender: 'Gender',
+    // gender: 'Gender', // Duplicate key removed
     confidence: 'confidence',
     overallSkinHealth: 'Overall Skin Health',
     clinicalAssessment: 'Clinical Assessment',
@@ -180,7 +184,7 @@ export const translations: Record<string, Record<string, string>> = {
     notSpecified: 'Not specified',
 
     // Privacy Policy Screen
-    privacyPolicy: 'Privacy Policy',
+    // privacyPolicy: 'Privacy Policy', // Duplicate key removed
     lastUpdated: 'Last Updated:',
     infoWeCollect: '1. Information We Collect',
     infoWeCollectText: 'AIBeautyLens collects and processes facial images solely for providing personalized skincare recommendations. Images are captured through your device camera or selected from your photo library.',
@@ -208,7 +212,7 @@ export const translations: Record<string, Record<string, string>> = {
     addBeforeImage: 'Add Before Image',
     addAfterImage: 'Add After Image',
     camera: 'Camera',
-    gallery: 'Gallery',
+    // gallery: 'Gallery', // Duplicate key removed
     reset: 'Reset',
     analyzeChanges: 'Analyze Changes',
     capturingBeforeImage: 'Capture Before Image',
@@ -234,6 +238,35 @@ export const translations: Record<string, Record<string, string>> = {
     shareProgressReport: 'Share Report',
     returnToHome: 'Return to Home',
     resultsFallbackWarning: 'Using estimated analysis results. The AI was unable to fully analyze your images.',
+
+    // Eye Analysis Screen
+    eyeAreaAnalysis: 'Eye Area Analysis',
+    noAnalysisResults: 'No analysis results available.',
+    eyeAreaOverview: 'Eye Area Overview',
+    eyeAreaConditions: 'Eye Area Conditions',
+    recommendedEyeCare: 'Recommended Eye Care',
+    backToAnalysis: 'Back to Analysis',
+    personalizedEyeCareAdvice: 'Personalized Eye Care Advice', // Added key
+    // Report Screen (Eye Analysis additions)
+    eyeAnalysisReportTitle: 'Eye Analysis Report',
+    eyeAnalysisSummaryTitle: 'Eye Analysis Summary',
+    noTreatmentsSelected: 'No treatments were selected.', // Added for clarity in treatment report case
+    viewDetailedEyeReport: 'Detailed Eye Report', // Removed "View"
+    viewEyeSkincare: 'Eye Skincare Advice', // Removed "View"
+    viewEyeTreatments: 'Recommended Eye Treatments', // Removed "View"
+    noAnalysisDataAvailable: 'No analysis data available to proceed.', // Error message
+    eyeAnalysisFailed: 'Eye analysis failed. Please try again.', // Error message
+    // Eye Treatments Screen
+    recommendedEyeTreatments: 'Recommended Eye Treatments', // Title
+    basedOnYourEyeAnalysis: 'Based on your eye area analysis:', // Subtitle
+    noTreatmentsAvailable: 'No specific eye treatments were recommended based on this analysis.', // Empty state
+    confirmSelection: 'Confirm Selection', // Button text
+    // Eye Skincare Modal Disclaimer Points
+    eyePatchTest: '• Patch test new products before applying around the eyes',
+    eyeIntroduceNewProducts: '• Introduce new products one at a time, with 1-2 weeks between additions',
+    eyeConsistencyIsKey: '• Consistency is key - results typically take 4-6 weeks to become visible',
+    eyeNotSubstitute: '• These recommendations are based on AI analysis and not a substitute for professional advice',
+    eyeDiscontinueUse: '• Discontinue use of any product that causes irritation or discomfort',
   },
   zh: {
     // General
@@ -271,14 +304,15 @@ export const translations: Record<string, Record<string, string>> = {
     purposeOfVisit: '访问目的',
     appointmentLength: '预约时长',
     positionFace: '将您的脸放在框内以获得最佳效果',
-    centerYourFace: '将脸部居中',
+    centerYourFace: '确保眼睛和额头在框内居中',
     gallery: '相册',
     capture: '拍摄',
-    beginAnalysis: '开始分析',
+    beginAnalysis: '全脸分析', // Updated text
     requestingPermission: '请求相机权限...',
     noAccessCamera: '无法访问相机',
     goBack: '返回',
     visitPurposeHint: '例如：减少细纹并改善皮肤弹性...',
+    startEyeAnalysis: '眼部分析', // Updated text
 
     // Analysis Screen
     analyzing: '正在分析您的皮肤... 我们的AI正在处理您图像中的500多个数据点，分析纹理、肤色、毛孔和特定皮肤状况。这种高级分析需要强大的计算能力，并参考了数千个临床案例，为您提供相当于多次专家咨询的个性化见解。',
@@ -335,20 +369,23 @@ export const translations: Record<string, Record<string, string>> = {
     usePhone: '如果可能，使用手机而不是 iPad',
     tryAgain: '再试一次',
     takeNewPhoto: '拍摄新照片',
+    analyzeEyeArea: '分析眼部区域',
+    viewEyeAnalysis: '查看眼部分析',
+    analyzingEyeArea: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。', // Added Chinese translation
 
     // Treatment Screen
-    recommendedTreatments: '推荐的治疗方案',
+    recommendedTreatments: '推荐的治疗方案', // Uncommented and verified translation
     basedOnAnalysis: '根据您的面部分析，推荐以下治疗方案：',
     skinMatrixSummary: 'SkinMatrix™ 分析摘要',
     age: '年龄:',
-    gender: '性别:',
-    skinType: '皮肤类型:',
+    // gender: '性别:', // Duplicate key removed
+    // skinType: '皮肤类型:', // Duplicate key removed
     features: '特征:',
     identified: '已识别',
     years: '岁',
-    visitInformation: '访问信息',
-    purposeOfVisitLabel: '访问目的:',
-    appointmentLengthLabel: '预约时长:',
+    // visitInformation: '访问信息', // Duplicate key removed
+    // purposeOfVisitLabel: '访问目的:', // Duplicate key removed
+    // appointmentLengthLabel: '预约时长:', // Duplicate key removed
     area: '区域:',
     whyRecommended: '为什么推荐:',
     benefits: '好处:',
@@ -359,8 +396,7 @@ export const translations: Record<string, Record<string, string>> = {
     // Report Screen
     treatmentReport: '治疗报告',
     date: '日期:',
-    recommendedTreatments: '推荐的治疗方案',
-    area: '区域:',
+    // area: '区域:', // Duplicate key removed
     totalEstimatedCost: '总估计费用',
     importantInformation: '重要信息',
     disclaimer: '此分析由先进的机器学习算法提供支持，该算法基于数千个美容医学案例和专家咨询的数据进行训练。尽管我们的人工智能基于广泛的医学数据提供全面的见解，但个人结果可能会有所不同。为了获得最佳效果，请咨询合格的美容医学专家，他们可以考虑您的独特需求和病史。',
@@ -374,10 +410,10 @@ export const translations: Record<string, Record<string, string>> = {
     diagnosisReport: '诊断报告',
     showDiagnosisReport: '显示诊断报告',
     profileAnalysis: '概况分析',
-    estimatedAge: '估计皮肤年龄',
-    skinType: '皮肤类型',
+    // estimatedAge: '估计皮肤年龄', // Duplicate key removed
+    // skinType: '皮肤类型', // Duplicate key removed
     undertone: '肤色基调',
-    gender: '性别',
+    // gender: '性别', // Duplicate key removed
     confidence: '置信度',
     overallSkinHealth: '整体皮肤健康状况',
     clinicalAssessment: '临床评估',
@@ -406,7 +442,7 @@ export const translations: Record<string, Record<string, string>> = {
     notSpecified: '未指定',
 
     // Privacy Policy Screen
-    privacyPolicy: '隐私政策',
+    // privacyPolicy: '隐私政策', // Duplicate key removed
     lastUpdated: '最后更新：',
     infoWeCollect: '1. 我们收集的信息',
     infoWeCollectText: 'AIBeautyLens收集和处理面部图像仅用于提供个性化的护肤建议。图像通过您的设备相机或从您的相册中选择。',
@@ -434,7 +470,7 @@ export const translations: Record<string, Record<string, string>> = {
     addBeforeImage: '添加治疗前图像',
     addAfterImage: '添加治疗后图像',
     camera: '相机',
-    gallery: '相册',
+    // gallery: '相册', // Duplicate key removed
     reset: '重置',
     analyzeChanges: '分析变化',
     capturingBeforeImage: '拍摄治疗前图像',
@@ -460,6 +496,40 @@ export const translations: Record<string, Record<string, string>> = {
     shareProgressReport: '分享报告',
     returnToHome: '返回首页',
     resultsFallbackWarning: '使用估计的分析结果。AI无法完全分析您的图像。',
+
+    // Eye Analysis Screen
+    eyeAreaAnalysis: '眼部区域分析',
+    noAnalysisResults: '无可用分析结果。',
+    eyeAreaOverview: '眼部区域概览',
+    eyeAreaConditions: '眼部区域状况',
+    recommendedEyeCare: '推荐的眼部护理',
+    backToAnalysis: '返回分析',
+    personalizedEyeCareAdvice: '个性化眼部护理建议', // Added key
+    // Report Screen (Eye Analysis additions) - Chinese
+    eyeAnalysisReportTitle: '眼部分析报告',
+    eyeAnalysisSummaryTitle: '眼部分析摘要',
+    noTreatmentsSelected: '未选择任何治疗方案。',
+    viewDetailedEyeReport: '详细眼部分析报告', // Removed "查看"
+    viewEyeSkincare: '眼部护肤建议', // Removed "查看"
+    viewEyeTreatments: '推荐眼部治疗', // Removed "查看"
+    noAnalysisDataAvailable: '无可用分析数据。', // Error message
+    eyeAnalysisFailed: '眼部分析失败，请重试。', // Error message
+    // Eye Treatments Screen - Chinese
+    recommendedEyeTreatments: '推荐的眼部治疗', // Title
+    basedOnYourEyeAnalysis: '根据您的眼部分析：', // Subtitle
+    noTreatmentsAvailable: '根据本次分析，没有推荐特定的眼部治疗。', // Empty state
+    confirmSelection: '确认选择', // Button text
+    // Eye Skincare Modal Disclaimer Points - Chinese
+    eyePatchTest: '• 在眼周使用新产品前进行小范围测试',
+    eyeIntroduceNewProducts: '• 一次引入一种新产品，间隔1-2周',
+    eyeConsistencyIsKey: '• 坚持是关键 - 效果通常需要4-6周才能显现',
+    eyeNotSubstitute: '• 这些建议基于AI分析，不能替代专业建议',
+    eyeDiscontinueUse: '• 如果产品引起刺激或不适，请停止使用',
+    // Eye Health Section - Chinese
+    eyeHealthObservations: '眼部健康观察',
+    eyeHealthWarningIntro: '观察到以下情况。这些并非诊断，但可能需要咨询眼科医生：',
+    eyeHealthDisclaimer: '这不是医疗诊断。如有任何眼部健康问题，请咨询眼科医生。',
+    eyeHealthWarningNote: '注意：观察到潜在的眼部健康问题。请查看详细报告并在需要时咨询眼科医生。',
   }
 };
 

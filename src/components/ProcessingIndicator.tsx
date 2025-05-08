@@ -40,11 +40,36 @@ const TECH_STACK = [
   }
 ];
 
+// Eye area specific tech stack
+const EYE_TECH_STACK = [
+  {
+    name: "OptiScan™ HD",
+    description: "Precision eye area imaging system",
+    icon: "visibility"
+  },
+  {
+    name: "PeriOrbital™ Analyzer",
+    description: "Advanced eye contour assessment technology",
+    icon: "center_focus_strong"
+  },
+  {
+    name: "OcuMatrix™",
+    description: "Clinically-validated eye area assessment platform",
+    icon: "remove_red_eye"
+  },
+  {
+    name: "MicroVision™ Scanner",
+    description: "High-resolution periocular tissue mapping",
+    icon: "loupe"
+  }
+];
+
 interface ProcessingIndicatorProps {
   isAnalyzing?: boolean;
   processingText?: string;
   showDetailedSteps?: boolean;
   showTechStack?: boolean;
+  analysisType?: 'facial' | 'eye';
 }
 
 // Define valid typography styles
@@ -68,6 +93,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   processingText = "Clinical-grade dermatological analysis in progress",
   showDetailedSteps = true,
   showTechStack = true,
+  analysisType = 'facial',
 }) => {
   const { t } = useLocalization();
   const [currentStep, setCurrentStep] = useState(0);
@@ -201,7 +227,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
       if (!isAnalyzing) return;
       
       setCurrentTech((prev) => {
-        const next = (prev + 1) % TECH_STACK.length;
+        const techStack = analysisType === 'eye' ? EYE_TECH_STACK : TECH_STACK;
+        const next = (prev + 1) % techStack.length;
         Animated.sequence([
           Animated.timing(techFadeValue, {
             toValue: 0,
@@ -289,7 +316,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
             <View style={styles.techStackContainer}>
               <Text style={styles.techStackTitle}>Powered by cutting-edge technology</Text>
               <View style={styles.techGridContainer}>
-                {TECH_STACK.map((tech, index) => (
+                {(analysisType === 'eye' ? EYE_TECH_STACK : TECH_STACK).map((tech, index) => (
                   <Animated.View
                     key={index}
                     style={[styles.techGridItem, { opacity: index === currentTech ? 1 : 0.6 }]}

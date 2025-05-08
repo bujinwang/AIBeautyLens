@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Share, Platform, Alert } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { TREATMENTS } from '../constants/treatments';
+// Remove static import: import { TREATMENTS } from '../constants/treatments';
+import { getLocalizedTreatments } from '../constants/treatments'; // Import the async function
+import { Treatment } from '../constants/treatmentTypes'; // Import the Treatment type
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { COLORS, SPACING } from '../constants/theme'; // Import theme constants
 import { useLocalization } from '../i18n/localizationContext';
+import EyeSkincareAdviceModal from '../components/EyeSkincareAdviceModal'; // Import the new modal
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 type ReportScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Report'>;
@@ -18,8 +22,45 @@ type Props = {
 
 const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t } = useLocalization();
-  const { treatmentIds, beforeImage } = route.params;
+  // Destructure all potential params
+  const {
+    analysisType,
+    imageUri,
+    eyeAnalysisResult,
+    analysisResult, // Assuming this might be passed for full face
+    // beforeAfterAnalysisResult, // Add if needed for before/after flow
+    treatmentIds = [], // Default to empty array if not passed
+    beforeImage, // Keep for now, might be same as imageUri
+    // afterImage // Add if needed for before/after flow
+    visitPurpose,
+    appointmentLength
+  } = route.params;
+
   const [generating, setGenerating] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isEyeSkincareModalVisible, setEyeSkincareModalVisible] = useState(false); // State for the modal
+  const [localizedTreatments, setLocalizedTreatments] = useState<Treatment[]>([]); // State for localized treatments
+  const [isLoadingTreatments, setIsLoadingTreatments] = useState(true); // Loading state for treatments
+
+  // Fetch localized treatments on mount
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      setIsLoadingTreatments(true);
+      try {
+        const treatments = await getLocalizedTreatments();
+        setLocalizedTreatments(treatments);
+      } catch (err) {
+        console.error("Failed to load localized treatments:", err);
+        // Optionally set an error state
+      } finally {
+        setIsLoadingTreatments(false);
+      }
+    };
+    fetchTreatments();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // Determine the primary image URI to display
+  const displayImageUri = imageUri || beforeImage || '';
 
   // Format the base64 image with proper prefix if needed
   const getFormattedImageUri = (base64String: string) => {
@@ -46,24 +87,23 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   // Add debug logging
-  console.log('ReportScreen - original beforeImage:', beforeImage?.substring(0, 50) + '...');
-  const formattedImageUri = getFormattedImageUri(beforeImage);
+  console.log('ReportScreen - displayImageUri:', displayImageUri?.substring(0, 50) + '...');
+  const formattedImageUri = getFormattedImageUri(displayImageUri);
   console.log('ReportScreen - formatted image URI prefix:', formattedImageUri.substring(0, 50) + '...');
 
+  // --- Logic for Treatment Report (Existing) ---
+  // Use localizedTreatments state instead of static TREATMENTS
   const selectedTreatments = treatmentIds
-    .map(id => TREATMENTS.find(t => t.id === id))
-    .filter(Boolean);
-
-  // Add error handling for image loading
-  const [imageError, setImageError] = useState(false);
+    .map(id => localizedTreatments.find(t => t.id === id))
+    .filter((t): t is Treatment => t !== undefined); // Type guard for filtering
+  const totalPrice = selectedTreatments.reduce((sum, treatment) => sum + (treatment?.price || 0), 0);
+  // --- End of Treatment Report Logic ---
 
   const handleImageError = () => {
     console.error('Failed to load image. Original:', beforeImage?.substring(0, 50));
     console.error('Failed to load image. Formatted:', formattedImageUri.substring(0, 50));
     setImageError(true);
   };
-
-  const totalPrice = selectedTreatments.reduce((sum, treatment) => sum + (treatment?.price || 0), 0);
 
   const formatDate = () => {
     const date = new Date();
@@ -112,79 +152,190 @@ ${t('total')} $${totalPrice}
     navigation.popToTop();
   };
 
+  // --- Navigation Handlers for Eye Report Buttons ---
+  const handleViewDetailedEyeReport = () => {
+    if (eyeAnalysisResult) {
+      navigation.navigate('EyeAnalysis', {
+        imageUri: displayImageUri,
+        base64Image: '', // Assuming EyeAnalysisScreen doesn't need base64 directly
+        eyeAnalysisResult: eyeAnalysisResult,
+        visitPurpose: visitPurpose || '',
+        appointmentLength: appointmentLength
+      });
+    }
+  };
+
+  const handleViewEyeSkincare = () => {
+    if (eyeAnalysisResult?.skincareRecommendations) {
+      setEyeSkincareModalVisible(true); // Open the modal
+    } else {
+      Alert.alert(t('error'), t('noRecommendationsAvailable')); // Or a more specific eye message
+    }
+  };
+
+  const handleViewEyeTreatments = () => {
+    if (eyeAnalysisResult) {
+      navigation.navigate('EyeTreatments', {
+        eyeAnalysisResult: eyeAnalysisResult,
+        imageUri: displayImageUri, // Pass image if needed by EyeTreatmentsScreen
+        visitPurpose: visitPurpose,
+        appointmentLength: appointmentLength
+      });
+    } else {
+       Alert.alert(t('error'), t('noAnalysisDataAvailable')); // Add new i18n key if needed
+    }
+  };
+  // --- End of Navigation Handlers ---
+
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('treatmentReport')}</Text>
-        <Text style={styles.date}>{t('date')} {formatDate()}</Text>
-      </View>
-
-      <View style={styles.imageContainer}>
-        {formattedImageUri ? (
-          <Image
-            source={{ uri: formattedImageUri }}
-            style={styles.image}
-            resizeMode="contain"
-            onError={handleImageError}
-          />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]}>
-            <Text style={styles.imagePlaceholderText}>
-              {t('noImageAvailable')}
-            </Text>
-          </View>
-        )}
-        {imageError && (
-          <Text style={styles.imageErrorText}>
-            {t('failedToLoadImage')}
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          {/* Conditional Title */}
+          <Text style={styles.title}>
+            {analysisType === 'eye' ? t('eyeAnalysisReportTitle') : t('treatmentReport')}
           </Text>
-        )}
-      </View>
-
-      <View style={styles.treatmentsContainer}>
-        <Text style={styles.sectionTitle}>{t('recommendedTreatments')}</Text>
-
-        {selectedTreatments.map(treatment => (
-          <View key={treatment?.id} style={styles.treatmentItem}>
-            <Text style={styles.treatmentName}>{treatment?.name}</Text>
-            <Text style={styles.treatmentArea}>{t('area')} {treatment?.area}</Text>
-            <Text style={styles.treatmentDescription}>{treatment?.description}</Text>
-            <Text style={styles.treatmentPrice}>${treatment?.price}</Text>
-          </View>
-        ))}
-
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>{t('totalEstimatedCost')}</Text>
-          <Text style={styles.totalPrice}>${totalPrice}</Text>
+          <Text style={styles.date}>{t('date')} {formatDate()}</Text>
         </View>
-      </View>
 
-      <View style={styles.disclaimerContainer}>
-        <Text style={styles.disclaimerTitle}>{t('importantInformation')}</Text>
-        <Text style={styles.disclaimerText}>
-          {t('disclaimer')}
-        </Text>
-      </View>
+        <View style={styles.imageContainer}>
+          {formattedImageUri ? (
+            <Image
+              source={{ uri: formattedImageUri }}
+              style={styles.image}
+              resizeMode="contain"
+              onError={handleImageError}
+            />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]}>
+              <Text style={styles.imagePlaceholderText}>
+                {t('noImageAvailable')}
+              </Text>
+            </View>
+          )}
+          {imageError && (
+            <Text style={styles.imageErrorText}>
+              {t('failedToLoadImage')}
+            </Text>
+          )}
+        </View>
 
-      <View style={styles.buttonsContainer}>
-        <TouchableOpacity
-          style={[styles.button, styles.shareButton]}
-          onPress={handleShare}
-          disabled={generating}
-        >
-          <Text style={styles.buttonText}>
-            {generating ? t('generating') : t('shareReport')}
+        {/* --- Conditional Content Area --- */}
+        {analysisType === 'eye' && eyeAnalysisResult ? (
+          // --- Eye Analysis Summary ---
+          <View style={styles.summaryContainer}>
+             <Text style={styles.sectionTitle}>{t('eyeAnalysisSummaryTitle')}</Text>
+             {/* Display Top Concerns */}
+             {eyeAnalysisResult.eyeFeatures?.slice(0, 3).map((feature: any, index: number) => (
+               <View key={index} style={styles.featureRow}>
+                 <Text style={styles.featureName}>{feature.description}</Text>
+                 {/* Basic Severity Dots - Consider using FeatureSeverityRating component if available */}
+                 <View style={styles.severityDots}>
+                   {[...Array(5)].map((_, i) => (
+                     <View key={i} style={[styles.severityDot, i < feature.severity ? styles.severityDotActive : styles.severityDotInactive]} />
+                   ))}
+                 </View>
+                 <Text style={styles.severityScore}>{feature.severity}/5</Text>
+               </View>
+             ))}
+             <Text style={styles.summaryText}>{eyeAnalysisResult.overallCondition}</Text>
+             {/* Add warning if eye health concerns were noted */}
+             {eyeAnalysisResult.eyeHealthConcerns && eyeAnalysisResult.eyeHealthConcerns.length > 0 && (
+               <Text style={styles.healthWarningText}>{t('eyeHealthWarningNote')}</Text> // Add new i18n key
+             )}
+          </View>
+        ) : (
+          // --- Treatment Summary (Existing) ---
+          <View style={styles.treatmentsContainer}>
+            <Text style={styles.sectionTitle}>{t('recommendedTreatments')}</Text>
+            {isLoadingTreatments ? (
+              <Text style={styles.loadingText}>{t('loading')}...</Text> // Show loading indicator
+            ) : selectedTreatments.length > 0 ? selectedTreatments.map(treatment => (
+              <View key={treatment.id} style={styles.treatmentItem}>
+                <Text style={styles.treatmentName}>{treatment.name}</Text>
+                <Text style={styles.treatmentArea}>{t('area')} {treatment?.area}</Text>
+                <Text style={styles.treatmentDescription}>{treatment?.description}</Text>
+                <Text style={styles.treatmentPrice}>${treatment?.price}</Text>
+              </View>
+            )) : <Text style={styles.noTreatmentsText}>{t('noTreatmentsSelected')}</Text>}
+            {selectedTreatments.length > 0 && (
+               <View style={styles.totalContainer}>
+                 <Text style={styles.totalLabel}>{t('totalEstimatedCost')}</Text>
+                 <Text style={styles.totalPrice}>${totalPrice}</Text>
+               </View>
+            )}
+          </View>
+        )}
+        {/* --- End Conditional Content Area --- */}
+
+        {/* --- Conditional Buttons --- */}
+        <View style={styles.buttonsContainer}>
+          {analysisType === 'eye' ? (
+            <>
+              {/* Row for first two buttons */}
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]} // Use halfButton style
+                  onPress={handleViewDetailedEyeReport}
+                >
+                  <Text style={styles.buttonText}>{t('viewDetailedEyeReport')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.secondaryPurpleButton]} // Use halfButton and new purple style
+                  onPress={handleViewEyeSkincare}
+                >
+                  <Text style={styles.secondaryPurpleButtonText}>{t('viewEyeSkincare')}</Text>
+                </TouchableOpacity>
+              </View>
+              {/* Full width button below */}
+               <TouchableOpacity
+                style={[styles.button, styles.primaryButton]} // Full width primary button
+                onPress={handleViewEyeTreatments}
+              >
+                <Text style={styles.buttonText}>{t('viewEyeTreatments')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* Existing Treatment Report Buttons */}
+              <TouchableOpacity
+                style={[styles.button, styles.shareButton]}
+                onPress={handleShare}
+                disabled={generating}
+              >
+                <Text style={styles.buttonText}>
+                  {generating ? t('generating') : t('shareReport')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.startOverButton]}
+                onPress={handleStartOver}
+              >
+                <Text style={styles.startOverButtonText}>{t('startOver')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+
+        {/* Disclaimer moved to bottom */}
+        <View style={styles.disclaimerContainer}>
+          <Text style={styles.disclaimerTitle}>{t('importantInformation')}</Text>
+          <Text style={styles.disclaimerText}>
+            {t('disclaimer')}
           </Text>
-        </TouchableOpacity>
+        </View>
+      </ScrollView>
 
-        <TouchableOpacity
-          style={[styles.button, styles.startOverButton]}
-          onPress={handleStartOver}
-        >
-          <Text style={styles.startOverButtonText}>{t('startOver')}</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      {/* Render the Eye Skincare Modal */}
+      {eyeAnalysisResult?.skincareRecommendations && (
+        <EyeSkincareAdviceModal
+          visible={isEyeSkincareModalVisible}
+          onClose={() => setEyeSkincareModalVisible(false)}
+          recommendations={eyeAnalysisResult.skincareRecommendations}
+        />
+      )}
+    </>
   );
 };
 
@@ -230,6 +381,80 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+  },
+  summaryContainer: { // Style for eye analysis summary
+    backgroundColor: 'white',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  summaryText: { // Style for eye analysis summary text
+    fontSize: 15,
+    color: '#444',
+    lineHeight: 22,
+  },
+// Styles for Eye Analysis Summary Features
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  featureName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    marginRight: 8,
+  },
+  severityDots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  severityDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 2,
+  },
+  severityDotActive: {
+    backgroundColor: COLORS.warning.main, // Or another appropriate color
+  },
+  severityDotInactive: {
+    backgroundColor: COLORS.gray[300],
+  },
+  severityScore: {
+    fontSize: 14,
+    color: '#666',
+    minWidth: 30, // Ensure alignment
+    textAlign: 'right',
+ },
+ loadingText: { // Style for loading indicator
+   textAlign: 'center',
+   paddingVertical: SPACING.lg,
+   color: COLORS.text.secondary,
+   fontSize: 16,
+ },
+ noTreatmentsText: { // Style for when no treatments are selected
+     textAlign: 'center',
+     color: '#666',
+     marginTop: 10,
+     marginBottom: 10,
+     fontStyle: 'italic',
+  },
+  healthWarningText: { // Style for the warning note on the report summary
+    fontSize: 13,
+    color: COLORS.warning.dark, // Use warning color
+    marginTop: SPACING.sm,
+    fontStyle: 'italic',
     textAlign: 'center',
   },
   treatmentsContainer: {
@@ -322,11 +547,43 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  buttonRow: { // Container for side-by-side buttons
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12, // Add gap between buttons in the row
+    marginBottom: 12, // Add space below the row
+  },
   button: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  halfButton: { // Style for buttons taking half width
+    flex: 1, // Make buttons share space equally
+  },
+  primaryButton: { // Style for primary action buttons (like View Detailed Report)
+    backgroundColor: '#4361ee', // Match shareButton
+  },
+  secondaryButton: { // Style for secondary action buttons
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  secondaryPurpleButton: { // Style for the purple secondary button
+    backgroundColor: '#EDE7F6', // Light purple background
+    borderWidth: 1,
+    borderColor: '#7E57C2', // Purple border
+  },
+  secondaryPurpleButtonText: { // Style for text in purple secondary button
+     color: '#5E35B1', // Darker purple text
+     fontSize: 16,
+     fontWeight: '600',
+  },
+  secondaryButtonText: { // Style for text in standard secondary buttons
+     color: '#333',
+     fontSize: 16,
+     fontWeight: '600',
   },
   shareButton: {
     backgroundColor: '#4361ee',

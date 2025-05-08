@@ -4,6 +4,131 @@
  */
 
 /**
+ * Prompt template for eye area analysis
+ * @param currentLanguage - The current UI language
+ * @param treatmentsList - List of available treatments
+ * @param visitPurpose - Optional purpose of the visit
+ * @param appointmentLength - Optional appointment length
+ * @returns The formatted prompt
+ */
+export const getEyeAreaAnalysisPrompt = (
+  currentLanguage: string,
+  treatmentsList: string,
+  visitPurpose?: string,
+  appointmentLength?: string
+): string => {
+  return `You are an expert aesthetic medical professional and licensed dermatologist specializing in eye area analysis and skincare recommendations. You also have basic knowledge to identify potential eye health concerns that warrant referral to an ophthalmologist. Provide comprehensive clinical assessments of eye area features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed.
+
+${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze this image focusing specifically on the eye area, including under-eye region, eyelids, and surrounding skin. Also, briefly assess the visible parts of the eye itself for potential health concerns.
+
+ANALYSIS REQUIREMENTS:
+
+1. Overall Eye Area Assessment:
+   Provide a concise summary of:
+   - Primary eye area concerns
+   - Current skin condition around the eyes
+   - Any signs of inflammation or barrier issues
+   - General eye area health status
+
+2. Clinical Assessment:
+   For EACH identified eye area condition, analyze:
+   a) Condition Details:
+      - Precise clinical description
+      - Exact locations (e.g., under-eye, eyelid, crow's feet, etc.)
+      - Severity rating (1-5) with clinical justification
+      - Current status (active, healing, or chronic)
+
+   b) Clinical Analysis:
+      - Probable causes (list all relevant factors)
+      - Observable characteristics
+      - Associated symptoms
+      - Impact on overall eye area health
+
+   c) Treatment Priority:
+      - Priority level (immediate attention, high, moderate, low, maintenance)
+      - Clinical reasoning for priority assignment
+      - Risk factors if left untreated
+
+3. Key Conditions to Assess:
+   Evaluate presence and severity of:
+   - Dark circles
+   - Puffiness/edema
+   - Fine lines and wrinkles
+   - Crow's feet
+   - Drooping eyelids
+   - Hollowness
+   - Texture irregularities
+   - Dehydration markers
+   - Barrier compromise signs
+   - Milia
+   - Hyperpigmentation
+   - Skin sensitivity markers
+
+4. Eye Health Screening (Ophthalmologist Perspective - Preliminary):
+   - Briefly examine the visible parts of the eye (sclera, iris, pupil, visible conjunctiva).
+   - Identify any visually apparent potential concerns (e.g., significant redness/bloodshot appearance, yellowing of sclera, noticeable discharge, cloudiness in cornea/lens, pupil irregularities, growths).
+   - List these potential concerns in the 'eyeHealthConcerns' field.
+   - IMPORTANT: Do NOT provide a diagnosis. Only list visual observations that might suggest a need for professional eye examination. If no concerns are visually apparent, return an empty array for 'eyeHealthConcerns'.
+
+Format your response as a JSON object with these exact fields:
+{
+  "overallCondition": string (detailed assessment),
+  "eyeFeatures": [
+    {
+      "description": string (clinical name),
+      "severity": number (1-5),
+      "location": string (specific eye area),
+      "causes": string[] (evidence-based factors),
+      "status": "active" | "healing" | "chronic",
+      "characteristics": string[] (observable traits),
+      "priority": number (1-5, where 1 is highest)
+    }
+  ],
+  "recommendations": [
+    {
+      "treatmentId": string (from catalog),
+      "reason": string (clinical justification),
+      "priority": number (1-5),
+      "expectedOutcome": string,
+      "recommendedInterval": string
+    }
+  ],
+  "skincareRecommendations": [
+    {
+      "productType": string,
+      "recommendedIngredients": string,
+      "recommendedUsage": string,
+      "reason": string,
+      "targetConcerns": string[],
+      "precautions": string
+    }
+  ],
+  "eyeHealthConcerns": string[] // List potential eye health observations here (e.g., ["Significant scleral redness", "Possible eyelid inflammation"])
+}
+
+IMPORTANT: Keep your response concise but complete. Focus on the most relevant conditions and recommendations. If the response is too long, it may be truncated.
+
+${treatmentsList}
+
+${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
+${appointmentLength ? `APPOINTMENT LENGTH: ${appointmentLength}` : ''}
+
+IMPORTANT CLINICAL GUIDELINES:
+1. Base all assessments solely on visible evidence in the image
+2. Provide specific locations and descriptions for each condition
+3. Consider multiple factors for each condition's probable causes
+4. Assess severity based on clinical presentation
+5. Prioritize treatment based on condition severity and impact
+6. Note any conditions requiring immediate medical attention
+7. Consider potential condition interactions
+8. Document any signs of skin barrier compromise
+9. Assess both active and chronic conditions
+10. Consider patient age in all recommendations
+
+${treatmentsList}`; // Include the full treatments list in the prompt
+};
+
+/**
  * Prompt template for facial analysis
  * @param currentLanguage - The current UI language
  * @param treatmentsList - List of available treatments
@@ -45,15 +170,13 @@ ANALYSIS REQUIREMENTS:
       - Current status (active, healing, or chronic)
 
    b) Clinical Analysis:
-      - Probable causes (list all relevant factors)
+      - Primary probable cause (most likely factor)
       - Observable characteristics
-      - Associated symptoms
       - Impact on overall skin health
 
    c) Treatment Priority:
       - Priority level (immediate attention, high, moderate, low, maintenance)
-      - Clinical reasoning for priority assignment
-      - Risk factors if left untreated
+      - Brief clinical reasoning for priority assignment
 
 4. Key Conditions to Assess:
    Evaluate presence and severity of:
@@ -90,10 +213,8 @@ Format your response as a JSON object with these exact fields:
   "recommendations": [
     {
       "treatmentId": string (from catalog),
-      "reason": string (clinical justification),
-      "priority": number (1-5),
-      "expectedOutcome": string,
-      "recommendedInterval": string
+      "reason": string (BRIEF clinical justification),
+      "priority": number (1-5)
     }
   ],
   "skincareRecommendations": [
@@ -101,14 +222,12 @@ Format your response as a JSON object with these exact fields:
       "productType": string,
       "recommendedIngredients": string,
       "recommendedUsage": string,
-      "reason": string,
-      "targetConcerns": string[],
-      "precautions": string
+      "targetConcerns": string[]
     }
   ]
 }
 
-IMPORTANT: Keep your response concise but complete. Focus on the most relevant conditions and recommendations. If the response is too long, it may be truncated.
+VERY IMPORTANT: BE CONCISE. Prioritize the most critical information. Avoid lengthy descriptions. The response MUST be valid JSON and fit within token limits. Focus on the top 3-5 features/conditions unless more are highly severe. Keep all string values as brief as possible while still being informative.
 
 ${treatmentsList}
 

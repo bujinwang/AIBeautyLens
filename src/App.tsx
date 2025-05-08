@@ -21,6 +21,8 @@ import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import BeforeAfterAnalysisScreen from './screens/BeforeAfterAnalysisScreen';
 import BeforeAfterComparisonReportScreen from './screens/BeforeAfterComparisonReportScreen';
+import EyeAnalysisScreen from './screens/EyeAnalysisScreen';
+import EyeTreatmentsScreen from './screens/EyeTreatmentsScreen'; // Import the new screen
 
 // Define the type for our stack navigator params
 export type RootStackParamList = {
@@ -47,8 +49,16 @@ export type RootStackParamList = {
     appointmentLength?: string;
   };
   Report: {
-    treatmentIds: string[];
-    beforeImage: string;
+    analysisType?: 'eye' | 'fullFace' | 'beforeAfter'; // Indicate report type
+    imageUri?: string; // General image URI
+    eyeAnalysisResult?: any; // Result from eye analysis
+    analysisResult?: any; // Result from full face analysis
+    beforeAfterAnalysisResult?: any; // Result from before/after analysis
+    treatmentIds?: string[]; // For treatment reports
+    beforeImage?: string; // For treatment reports or before/after
+    afterImage?: string; // For before/after reports
+    visitPurpose?: string;
+    appointmentLength?: string;
   };
   BeforeAfterComparisonReport: {
     beforeImage: string;
@@ -59,6 +69,19 @@ export type RootStackParamList = {
   PrivacyPolicy: undefined;
   Settings: undefined;
   BeforeAfterAnalysis: undefined;
+  EyeAnalysis: {
+    imageUri: string;
+    base64Image: string;
+    eyeAnalysisResult: any;
+    visitPurpose: string;
+    appointmentLength?: string;
+  };
+  EyeTreatments: { // Add definition for the new screen
+    eyeAnalysisResult: any; // Use the specific EyeAreaAnalysisResult type if imported here
+    imageUri?: string;
+    visitPurpose?: string;
+    appointmentLength?: string;
+  };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -151,6 +174,12 @@ const WrappedSettingsScreen = withFeedbackButton((props: any) => (
   </ScreenWrapper>
 ));
 
+const WrappedEyeAnalysisScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <EyeAnalysisScreen {...props} />
+  </ScreenWrapper>
+));
+
 const WrappedBeforeAfterAnalysisScreen = withFeedbackButton((props: any) => (
   <ScreenWrapper>
     <BeforeAfterAnalysisScreen {...props} />
@@ -160,6 +189,12 @@ const WrappedBeforeAfterAnalysisScreen = withFeedbackButton((props: any) => (
 const WrappedBeforeAfterComparisonReportScreen = withFeedbackButton((props: any) => (
   <ScreenWrapper>
     <BeforeAfterComparisonReportScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedEyeTreatmentsScreen = withFeedbackButton((props: any) => ( // Wrap the new screen
+  <ScreenWrapper>
+    <EyeTreatmentsScreen {...props} />
   </ScreenWrapper>
 ));
 
@@ -254,6 +289,16 @@ export default function App() {
                 name="BeforeAfterComparisonReport"
                 component={WrappedBeforeAfterComparisonReportScreen}
                 options={{ title: 'ProgressScan™ Results' }}
+              />
+              <Stack.Screen
+                name="EyeAnalysis"
+                component={WrappedEyeAnalysisScreen}
+                options={{ title: 'Eye Area Analysis' }}
+              />
+              <Stack.Screen // Add the new screen to the navigator
+                name="EyeTreatments"
+                component={WrappedEyeTreatmentsScreen}
+                options={{ title: 'Recommended Eye Treatments' }} // Set a default title
               />
             </Stack.Navigator>
           </NavigationContainer>

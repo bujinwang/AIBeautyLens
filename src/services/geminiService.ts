@@ -8,7 +8,7 @@ import {
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations } from '../i18n/localizationContext';
-import { getFacialAnalysisPrompt, getProductRecommendationsPrompt, generateTreatmentsList } from './promptTemplates';
+import { getFacialAnalysisPrompt, getProductRecommendationsPrompt, generateTreatmentsList, getEyeAreaAnalysisPrompt } from './promptTemplates';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 import { SkincareRecommendation } from '../types';
@@ -833,6 +833,168 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
 
     throw error;
   }
+};
+
+/**
+ * Analyzes eye area in an image and returns recommendations
+ * @param base64Image - Base64 encoded image string
+ * @param visitPurpose - Optional purpose of the visit
+ * @param appointmentLength - Optional appointment length
+ * @returns Analysis results including eye area conditions and treatment recommendations
+ */
+export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, appointmentLength?: string) => {
+  let base64Image = '';
+  if (imageUri.startsWith('file://')) {
+    base64Image = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+  } else {
+    base64Image = imageUri;
+  }
+  
+  // Get the current language from AsyncStorage
+  let currentLanguage = 'en';
+  try {
+    const savedLanguage = await AsyncStorage.getItem('language');
+    if (savedLanguage) {
+      currentLanguage = savedLanguage;
+    }
+  } catch (error) {
+    console.error('Error loading language preference:', error);
+  }
+  
+  let retryCount = 0;
+  const MAX_RETRIES = Math.min(2, Platform.OS === 'ios' && Platform.isPad ? 2 : 1);
+  const isIPad = Platform.OS === 'ios' && Platform.isPad;
+
+  // Function for retry logic
+  const executeWithRetry = async () => {
+    try {
+      // Get the API key from storage
+      const apiKey = await getApiKey();
+
+      // Make sure the API key is valid
+      if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+        throw new Error('Invalid or missing API key. Please enter a valid Gemini API key in the settings.');
+      }
+
+      // For iPad: process large images to reduce API issues
+      let processedBase64 = base64Image;
+      if (isIPad) {
+        try {
+          processedBase64 = await preprocessImage(base64Image);
+        } catch (compressionError) {
+          console.error('Error during image compression:', compressionError);
+          throw compressionError;
+        }
+      }
+
+      // Clean the base64 string
+      processedBase64 = processedBase64.replace(/[\r\n\t]/g, '').trim();
+
+      // Get the mime type
+      const mimeType = getImageMimeType(processedBase64);
+
+      // Generate the treatments list
+      const treatmentsList = generateTreatmentsList(TREATMENTS);
+
+      // Prepare the request body for Gemini
+      const requestBody = {
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: getEyeAreaAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, appointmentLength)
+              },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: processedBase64
+                }
+              }
+            ]
+          }
+        ],
+        generation_config: {
+          temperature: 0.6,
+          max_output_tokens: 8192,
+          response_mime_type: "application/json",
+          top_p: 0.8,
+          top_k: 40
+        }
+      };
+
+      // Make the API call
+      const apiUrl = `${GEMINI_VISION_API}?key=${apiKey}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT + (isIPad ? 5000 : 0));
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          logAPIResponse('Eye Area Analysis', response.status, errorText);
+          throw new Error(`API request failed with status ${response.status}: ${errorText}`);
+        }
+
+        const responseData = await response.json();
+        
+        if (!responseData.candidates || responseData.candidates.length === 0) {
+          throw new Error('No response candidates returned from API');
+        }
+
+        const textResponse = responseData.candidates[0].content.parts[0].text;
+        console.log("Attempting to parse textResponse:", textResponse); // Log the response before parsing
+        // Attempt to parse directly, assuming valid JSON based on user confirmation
+        return JSON.parse(textResponse);
+      } catch (fetchError: any) {
+        if (fetchError.name === 'AbortError') {
+          throw new Error('API request timed out. Please try again with a smaller image or better connection.');
+        }
+        throw fetchError;
+      }
+    } catch (error) {
+      console.error('Error in eye area analysis:', error);
+      
+      // Handle iPad-specific errors
+      if (isIPad && error instanceof Error && (
+        error.message.includes('iPad') ||
+        error.message.includes('timeout') ||
+        error.message.includes('large') ||
+        error.message.includes('too large') ||
+        error.message.includes('reduce')
+      )) {
+        throw new Error(`iPad compatibility issue: ${error.message}`);
+      }
+      
+      // Handle quota errors
+      if (error instanceof Error && error.message.includes('quota')) {
+        throw new Error('API_QUOTA_EXCEEDED: You have reached your API quota limit.');
+      }
+      
+      // Retry logic
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        console.log(`Retrying eye area analysis (${retryCount}/${MAX_RETRIES})...`);
+        return executeWithRetry();
+      }
+      
+      throw error;
+    }
+  };
+
+  return executeWithRetry();
 };
 
 /**
@@ -2159,5 +2321,3 @@ function provideFallbackResponse(language: string = 'en') {
     ]
   };
 }
-
-

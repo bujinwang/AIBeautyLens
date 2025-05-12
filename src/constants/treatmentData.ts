@@ -542,6 +542,86 @@ export const BASE_TREATMENTS: BaseTreatment[] = [
       "Neutropenia or thrombocytopenia"
     ],
     restrictions: "Series of treatments may be recommended"
+  },
+  {
+    id: "minifx",
+    category: "Body Treatment",
+    area: "Body",
+    price: 499,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "bodyfx",
+    category: "Body Treatment",
+    area: "Body",
+    price: 499,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "gentlemax-laser-facial-lift",
+    category: "Laser",
+    area: "Face",
+    price: 399,
+    contraindications: [],
+    restrictions: "Windermere Clinic ONLY."
+  },
+  {
+    id: "rmd-structural-remodeling",
+    category: "Laser",
+    area: "Face",
+    price: 399,
+    contraindications: [],
+    restrictions: "University & North Clinic ONLY."
+  },
+  {
+    id: "brightening-skin-booster",
+    category: "Skin Med Care",
+    area: "Face",
+    price: 349,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "luxury-head-spa",
+    category: "Others",
+    area: "Scalp",
+    price: 299,
+    contraindications: [],
+    restrictions: "90min session."
+  },
+  {
+    id: "hydra-lift",
+    category: "Skin Med Care",
+    area: "Face",
+    price: 249,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "evergreen-cosmetic-facial",
+    category: "Skin Med Care",
+    area: "Face",
+    price: 199,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "acne-treatment",
+    category: "Skin Med Care",
+    area: "Face",
+    price: 199,
+    contraindications: [],
+    restrictions: "Consultation required."
+  },
+  {
+    id: "laser-hair-removal-two-areas",
+    category: "Body Treatment",
+    area: "Body",
+    price: 0, // Price varies
+    contraindications: [],
+    restrictions: "Options include both lower legs, both forearms, back, face, underarms. Price varies."
   }
 ];
 

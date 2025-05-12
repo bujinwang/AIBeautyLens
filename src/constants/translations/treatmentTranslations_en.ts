@@ -396,6 +396,106 @@ export const TREATMENT_TRANSLATIONS_EN: TreatmentTranslationsMap = {
       name: "针灸",
       description: "传统中医治疗，在身体特定穴位插入超细针，平衡能量流动（气）并刺激自然愈合过程。有效解决多种状况，包括疼痛管理、压力、焦虑、消化问题、头痛、过敏和睡眠障碍。每次治疗根据个人诊断和特定健康问题进行定制。通过恢复身体系统平衡和增强自然愈合机制促进整体健康。治疗温和，不适感最小，定期治疗提供即时和累积效益。适合各种健康问题，包括慢性疼痛、压力、失眠和身体不平衡。治疗舒适，放松，可立即感受到身心的改善。是一种安全有效的传统医学疗法，有数千年的历史和现代科学研究支持。"
     }
+  },
+  "minifx": {
+    en: {
+      name: "MiniFx",
+      description: "Non-invasive body contouring treatment using radiofrequency and vacuum to reduce fat and improve skin texture. Effective for small areas such as arms, neck, and under the chin."
+    },
+    zh: {
+      name: "MiniFx 脂肪塑形",
+      description: "非侵入性身体塑形治疗，利用射频和负压技术减少脂肪并改善皮肤质地。适用于手臂、颈部和下巴等小面积部位。"
+    }
+  },
+  "bodyfx": {
+    en: {
+      name: "BodyFx",
+      description: "Advanced body contouring and cellulite reduction using radiofrequency energy, deep tissue heating, and suction-coupled negative pressure. Treats larger areas such as abdomen, thighs, and flanks."
+    },
+    zh: {
+      name: "BodyFx 身体塑形",
+      description: "先进的身体塑形和橘皮组织减少治疗，结合射频能量、深层加热和负压吸力。适用于腹部、大腿和侧腰等大面积部位。"
+    }
+  },
+  "gentlemax-laser-facial-lift": {
+    en: {
+      name: "GentleMax Laser Facial Lift",
+      description: "Facial rejuvenation using GentleMax Pro laser to stimulate collagen, tighten skin, and improve tone and texture. Non-invasive, minimal downtime."
+    },
+    zh: {
+      name: "GentleMax 激光面部提升",
+      description: "使用 GentleMax Pro 激光进行面部焕肤，刺激胶原蛋白生成，紧致皮肤，改善肤色和质地。非侵入性，恢复期短。"
+    }
+  },
+  "rmd-structural-remodeling": {
+    en: {
+      name: "RMD Structural Remodeling",
+      description: "Non-surgical facial lifting and skin tightening using radiofrequency and microcurrent technology. Improves facial contours and reduces wrinkles."
+    },
+    zh: {
+      name: "RMD 结构重塑",
+      description: "利用射频和微电流技术进行非手术面部提升和紧致，改善面部轮廓并减少皱纹。"
+    }
+  },
+  "brightening-skin-booster": {
+    en: {
+      name: "Brightening Skin Booster",
+      description: "Specialized injectable or topical treatment to brighten skin tone, reduce pigmentation, and enhance radiance. Often contains antioxidants and vitamins."
+    },
+    zh: {
+      name: "亮肤助推剂",
+      description: "专门用于提亮肤色、减少色素沉着和增强光泽的注射或外用治疗。通常含有抗氧化剂和维生素。"
+    }
+  },
+  "luxury-head-spa": {
+    en: {
+      name: "Luxury Head Spa (90min)",
+      description: "Premium scalp and head spa treatment including deep cleansing, massage, hydration, and relaxation techniques. Promotes scalp health and stress relief."
+    },
+    zh: {
+      name: "奢华头部水疗（90分钟）",
+      description: "高端头皮和头部水疗护理，包括深层清洁、按摩、补水和放松技术。促进头皮健康，缓解压力。"
+    }
+  },
+  "hydra-lift": {
+    en: {
+      name: "Hydra Lift",
+      description: "Hydrating and lifting facial treatment combining advanced serums and lifting massage techniques. Improves skin firmness, moisture, and glow."
+    },
+    zh: {
+      name: "水润提升护理",
+      description: "结合高效精华和提升按摩技术的补水提拉面部护理。提升皮肤紧致度、水润度和光泽感。"
+    }
+  },
+  "evergreen-cosmetic-facial": {
+    en: {
+      name: "EverGreen Cosmetic Facial",
+      description: "Signature facial treatment for cleansing, exfoliation, hydration, and skin nourishment. Customized to individual skin needs for a refreshed, healthy look."
+    },
+    zh: {
+      name: "EverGreen 定制美容护理",
+      description: "EverGreen 特色面部护理，包含清洁、去角质、补水和营养。根据个人肤质定制，令肌肤焕发健康光彩。"
+    }
+  },
+  "acne-treatment": {
+    en: {
+      name: "Acne Treatment",
+      description: "Targeted facial or topical treatment to reduce acne, inflammation, and prevent breakouts. May include extractions, LED therapy, or medicated products."
+    },
+    zh: {
+      name: "祛痘护理",
+      description: "针对性面部或外用治疗，减少痘痘和炎症，预防新生痘痘。可包括清洁、LED 光疗或药物产品。"
+    }
+  },
+  "laser-hair-removal-two-areas": {
+    en: {
+      name: "Laser Hair Removal (Two Areas)",
+      description: "Permanent hair reduction using medical-grade laser technology. Treats two body areas (e.g., legs, arms, underarms, face, back). Safe, effective, and long-lasting results."
+    },
+    zh: {
+      name: "激光脱毛（两部位）",
+      description: "采用医用级激光技术实现永久性脱毛。可同时治疗两个身体部位（如腿、手臂、腋下、面部、背部）。安全高效，效果持久。"
+    }
   }
 };
 

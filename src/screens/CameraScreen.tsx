@@ -4,6 +4,7 @@ import { Camera, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import CustomIcon from '../components/CustomIcon';
 import Logo from '../components/Logo';
@@ -15,12 +16,14 @@ import { useLocalization } from '../i18n/localizationContext';
 import { analyzeEyeArea } from '../services/geminiService'; // Added import
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
+type CameraScreenRouteProp = RouteProp<RootStackParamList, 'Camera'>;
 
 type Props = {
   navigation: CameraScreenNavigationProp;
+  route: CameraScreenRouteProp;
 };
 
-const CameraScreen: React.FC<Props> = ({ navigation }) => {
+const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const { t } = useLocalization();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [type, setType] = useState<CameraType>(CameraType.front);
@@ -30,6 +33,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
   const [appointmentLength, setAppointmentLength] = useState<string>('1hr'); // Defaulting to a value, adjust if needed
   const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false); // Added state for eye analysis loading
   const cameraRef = useRef<Camera>(null);
+  const analysisType: 'facial' | 'eye' = route?.params?.analysisType || 'facial';
 
   useEffect(() => {
     (async () => {
@@ -121,10 +125,7 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     if (!capturedImage || !capturedImage.uri) return;
 
     try {
-      // If capturedImage already has base64, use it
       let base64Data = capturedImage.base64 || '';
-      
-      // If no base64 data, try to read it from the file
       if (!base64Data && capturedImage.uri) {
         try {
           base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
@@ -136,12 +137,36 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
         }
       }
 
-      navigation.navigate('Analysis', {
-        imageUri: capturedImage.uri,
-        base64Image: base64Data,
-        visitPurpose: visitPurpose,
-        appointmentLength: appointmentLength
-      });
+      if (analysisType === 'eye') {
+        setIsEyeAnalyzing(true);
+        try {
+          const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+          if (analysisResult) {
+            navigation.navigate('Report', {
+              analysisType: 'eye',
+              imageUri: capturedImage.uri,
+              eyeAnalysisResult: analysisResult,
+              visitPurpose: visitPurpose,
+              appointmentLength: appointmentLength
+            });
+          } else {
+            Alert.alert(t('error'), t('eyeAnalysisFailed'));
+          }
+        } catch (error: any) {
+          console.error('Error during eye analysis process:', error);
+          const errorMessage = error?.message || t('eyeAnalysisFailed');
+          Alert.alert(t('error'), errorMessage);
+        } finally {
+          setIsEyeAnalyzing(false);
+        }
+      } else {
+        navigation.navigate('Analysis', {
+          imageUri: capturedImage.uri,
+          base64Image: base64Data,
+          visitPurpose: visitPurpose,
+          appointmentLength: appointmentLength
+        });
+      }
     } catch (error) {
       console.error('Error preparing image for analysis:', error);
     }
@@ -230,13 +255,15 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
-      <ProcessingIndicator 
-        isAnalyzing={isEyeAnalyzing} 
-        processingText={t('analyzingEyeArea')} // Corrected localization key
-        analysisType="eye" // Specify eye analysis type
-        showDetailedSteps={true} // Assuming we want to show steps for eye analysis too
-        showTechStack={true} // Assuming we want to show tech stack for eye analysis
-      />
+      {analysisType === 'eye' && (
+        <ProcessingIndicator 
+          isAnalyzing={isEyeAnalyzing} 
+          processingText={t('analyzingEyeArea')}
+          analysisType="eye"
+          showDetailedSteps={true}
+          showTechStack={true}
+        />
+      )}
 
       <LinearGradient
         colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
@@ -327,22 +354,23 @@ const CameraScreen: React.FC<Props> = ({ navigation }) => {
                 style={[styles.button, styles.secondaryButton]}
                 onPress={retakePicture}
               >
-                {/* <CustomIcon name="refresh" size={20} color={COLORS.primary.main} style={styles.buttonIcon} /> */}
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('retake')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton]}
-                onPress={handleAnalyze}
-              >
-                {/* <CustomIcon name="analytics" size={20} color="white" style={styles.buttonIcon} /> */}
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('beginAnalysis')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton, styles.eyeButton]} // Added eyeButton style for potential adjustments
-                onPress={handleEyeAnalyze} // New handler needed
-              >
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('startEyeAnalysis')}</Text>
-              </TouchableOpacity>
+              {analysisType === 'eye' ? (
+                <TouchableOpacity
+                  style={[styles.button, styles.primaryButton]}
+                  onPress={handleAnalyze}
+                >
+                  <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('startEyeAnalysis')}</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.button, styles.primaryButton]}
+                  onPress={handleAnalyze}
+                >
+                  <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('beginAnalysis')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </ScrollView>

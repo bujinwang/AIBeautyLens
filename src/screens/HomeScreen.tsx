@@ -25,9 +25,9 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     };
   }, []);
 
-  const navigateToCamera = () => {
-    console.log("HomeScreen: Navigating to Camera");
-    navigation.navigate('Camera');
+  const navigateToCamera = (analysisType: 'facial' | 'eye' = 'facial') => {
+    console.log(`HomeScreen: Navigating to Camera for ${analysisType} analysis`);
+    navigation.navigate('Camera', { analysisType });
   };
 
   const navigateToLogoGenerator = () => {
@@ -96,10 +96,18 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.actionContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton]}
-              onPress={navigateToCamera}
+              onPress={() => navigateToCamera('facial')}
             >
               <MaterialIcons name="camera-alt" size={24} color="white" />
               <Text style={styles.actionButtonText}>{t('startAnalysis')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.primaryButton, styles.marginTopButton]}
+              onPress={() => navigateToCamera('eye')}
+            >
+              <MaterialIcons name="visibility" size={24} color="white" />
+              <Text style={styles.actionButtonText}>{t('startEyeAnalysis')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

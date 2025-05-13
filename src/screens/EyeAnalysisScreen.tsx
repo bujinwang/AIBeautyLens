@@ -80,20 +80,24 @@ const EyeAnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
           <Text style={styles.overallConditionText}>{eyeAnalysisResult.overallCondition}</Text>
         </View>
 
-        {/* Clinical Assessment of Eye Features (Simplified for Debugging) */}
-        <View style={[styles.sectionContainer, { borderLeftColor: COLORS.primary.main }]}>
+        {/* Clinical Assessment of Eye Features (Full Details) */}
+        <View style={[styles.sectionContainer, { borderLeftColor: COLORS.primary.main }]}> 
           <View style={styles.sectionHeader}>
             <MaterialIcons name="assessment" size={24} color={COLORS.primary.main} />
             <Text style={styles.sectionTitle}>{t('eyeAreaConditions')}</Text>
           </View>
 
-          {/* --- Simplified Content for Debugging --- */}
           {Array.isArray(eyeAnalysisResult.eyeFeatures) && eyeAnalysisResult.eyeFeatures.map((item: EyeFeature, index: number) => (
             <View key={index} style={styles.featureCard}>
-               <Text>{`Feature ${index + 1}: ${item.description}`}</Text>
+              <Text style={{fontWeight: 'bold', marginBottom: 4}}>{t('feature')} {index + 1}: {item.description}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('severity')}:</Text> {item.severity}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('location')}:</Text> {item.location}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('causes')}:</Text> {item.causes && item.causes.length > 0 ? item.causes.join(', ') : '-'}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('status')}:</Text> {item.status}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('characteristics')}:</Text> {item.characteristics && item.characteristics.length > 0 ? item.characteristics.join(', ') : '-'}</Text>
+              <Text><Text style={{fontWeight: '600'}}>{t('priority')}:</Text> {item.priority}</Text>
             </View>
           ))}
-          {/* --- End Simplified Content --- */}
         </View>
 
         {/* Eye Health Observations */}

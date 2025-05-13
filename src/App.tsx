@@ -27,7 +27,9 @@ import EyeTreatmentsScreen from './screens/EyeTreatmentsScreen'; // Import the n
 // Define the type for our stack navigator params
 export type RootStackParamList = {
   Home: undefined;
-  Camera: undefined;
+  Camera: {
+    analysisType?: 'facial' | 'eye';
+  } | undefined;
   Analysis: {
     imageUri: string;
     base64Image: string;

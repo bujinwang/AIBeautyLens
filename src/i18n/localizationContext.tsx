@@ -53,7 +53,7 @@ export const translations: Record<string, Record<string, string>> = {
     noAccessCamera: 'No access to camera',
     goBack: 'Go Back',
     visitPurposeHint: 'Example: Reduce fine lines and improve skin elasticity...',
-    startEyeAnalysis: 'Eye Analysis', // Updated text
+    startEyeAnalysis: 'Start OptiScan™ Analysis', // Updated text
 
     // Analysis Screen
     analyzing: 'Analyzing your skin... Our AI is processing 500+ data points from your image, analyzing texture, tone, pores, and specific conditions. This advanced analysis requires significant computing power and references thousands of clinical cases to provide personalized insights equivalent to multiple specialist consultations.',
@@ -312,7 +312,7 @@ export const translations: Record<string, Record<string, string>> = {
     noAccessCamera: '无法访问相机',
     goBack: '返回',
     visitPurposeHint: '例如：减少细纹并改善皮肤弹性...',
-    startEyeAnalysis: '眼部分析', // Updated text
+    startEyeAnalysis: '开始 OptiScan™ 分析', // Updated text
 
     // Analysis Screen
     analyzing: '正在分析您的皮肤... 我们的AI正在处理您图像中的500多个数据点，分析纹理、肤色、毛孔和特定皮肤状况。这种高级分析需要强大的计算能力，并参考了数千个临床案例，为您提供相当于多次专家咨询的个性化见解。',

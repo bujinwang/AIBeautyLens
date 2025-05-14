@@ -25,7 +25,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     };
   }, []);
 
-  const navigateToCamera = (analysisType: 'facial' | 'eye' = 'facial') => {
+  const navigateToCamera = (analysisType: 'facial' | 'eye' | 'hairScalp' = 'facial') => {
     console.log(`HomeScreen: Navigating to Camera for ${analysisType} analysis`);
     navigation.navigate('Camera', { analysisType });
   };
@@ -98,24 +98,32 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               style={[styles.actionButton, styles.primaryButton]}
               onPress={() => navigateToCamera('facial')}
             >
-              <MaterialIcons name="camera-alt" size={24} color="white" />
-              <Text style={styles.actionButtonText}>{t('startAnalysis')}</Text>
+              <MaterialIcons name="camera-alt" size={24} color="white" style={styles.actionButtonIcon} />
+              <Text style={styles.actionButtonText}>{t('facialAnalysisButton')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton, styles.marginTopButton]}
               onPress={() => navigateToCamera('eye')}
             >
-              <MaterialIcons name="visibility" size={24} color="white" />
-              <Text style={styles.actionButtonText}>{t('startEyeAnalysis')}</Text>
+              <MaterialIcons name="visibility" size={24} color="white" style={styles.actionButtonIcon} />
+              <Text style={styles.actionButtonText}>{t('eyeAnalysisButton')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.actionButton, styles.primaryButton, styles.marginTopButton]}
               onPress={navigateToBeforeAfterAnalysis}
             >
-              <MaterialIcons name="compare" size={24} color="white" />
-              <Text style={styles.actionButtonText}>{t('beforeAfterAnalysis')}</Text>
+              <MaterialIcons name="compare" size={24} color="white" style={styles.actionButtonIcon} />
+              <Text style={styles.actionButtonText}>{t('beforeAfterButton')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.primaryButton, styles.marginTopButton]}
+              onPress={() => navigateToCamera('hairScalp')}
+            >
+              <MaterialIcons name="science" size={24} color="white" style={styles.actionButtonIcon} />
+              <Text style={styles.actionButtonText}>{t('hairScalpAnalysisButton')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -158,6 +166,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.featureTitle}>{t('beautyBlueprint')}</Text>
                 <Text style={styles.featureDescription}>
                   {t('beautyBlueprintDescription')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.featureCard}>
+              <MaterialIcons name="science" size={24} color={COLORS.primary.main} />
+              <View style={styles.featureTextContainer}>
+                <Text style={styles.featureTitle}>{t('hairScalpAnalysis')}</Text>
+                <Text style={styles.featureDescription}>
+                  {t('hairScalpDescription')}
                 </Text>
               </View>
             </View>
@@ -375,6 +393,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.error.main,
     textAlign: 'center',
+  },
+  actionButtonIcon: {
+    marginRight: 12,
   },
 });
 

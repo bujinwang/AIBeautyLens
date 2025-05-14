@@ -23,69 +23,84 @@ import BeforeAfterAnalysisScreen from './screens/BeforeAfterAnalysisScreen';
 import BeforeAfterComparisonReportScreen from './screens/BeforeAfterComparisonReportScreen';
 import EyeAnalysisScreen from './screens/EyeAnalysisScreen';
 import EyeTreatmentsScreen from './screens/EyeTreatmentsScreen'; // Import the new screen
+import HairScalpAnalysisScreen from './screens/HairScalpAnalysisScreen';
+import HairTreatmentsScreen from './screens/HairTreatmentsScreen'; // Import the Hair Treatments screen
+import { HairScalpAnalysisResult } from './types/hairScalpAnalysis';
 
-// Define the type for our stack navigator params
+// Define our route parameters
 export type RootStackParamList = {
   Home: undefined;
   Camera: {
-    analysisType?: 'facial' | 'eye';
-  } | undefined;
+    mode?: 'facial' | 'eye' | 'beforeAfter' | 'hairScalp';
+    appointmentLength?: string;
+    visitPurpose?: string; 
+  };
   Analysis: {
-    imageUri: string;
     base64Image: string;
+    imageUri: string;
     visitPurpose?: string;
     appointmentLength?: string;
   };
-  Treatment: {
-    analysisResult: any;
+  EyeAnalysis: {
+    base64Image?: string;
     imageUri: string;
-    base64Image: string;
-    visitPurpose?: string;
-  };
-  RecommendedTreatments: {
-    imageUri: string;
-    base64Image: string;
-    recommendedTreatments: string[];
-    reasons: { [key: string]: string[] };
     visitPurpose?: string;
     appointmentLength?: string;
+    eyeAnalysisResult?: any;
   };
-  Report: {
-    analysisType?: 'eye' | 'fullFace' | 'beforeAfter'; // Indicate report type
-    imageUri?: string; // General image URI
-    eyeAnalysisResult?: any; // Result from eye analysis
-    analysisResult?: any; // Result from full face analysis
-    beforeAfterAnalysisResult?: any; // Result from before/after analysis
-    treatmentIds?: string[]; // For treatment reports
-    beforeImage?: string; // For treatment reports or before/after
-    afterImage?: string; // For before/after reports
-    visitPurpose?: string;
-    appointmentLength?: string;
+  BeforeAfterAnalysis: {
+    beforeImage: string;
+    afterImage: string;
   };
   BeforeAfterComparisonReport: {
     beforeImage: string;
     afterImage: string;
-    analysisResults: any;
+    analysisResult?: any;
   };
-  LogoGenerator: undefined;
-  PrivacyPolicy: undefined;
-  Settings: undefined;
-  BeforeAfterAnalysis: undefined;
-  EyeAnalysis: {
-    imageUri: string;
-    base64Image: string;
-    eyeAnalysisResult: any;
-    visitPurpose: string;
+  Treatment: {
+    base64Image?: string;
+    imageUri?: string;
+    analysisResult?: any;
     appointmentLength?: string;
+    visitPurpose?: string;
   };
-  EyeTreatments: { // Add definition for the new screen
-    eyeAnalysisResult: any; // Use the specific EyeAreaAnalysisResult type if imported here
+  RecommendedTreatments: {
+    analysisResult: any;
+    imageUri: string;
+  };
+  HairScalpAnalysis: {
+    imageUris: string[];
+    hairScalpAnalysisResult?: HairScalpAnalysisResult;
+  };
+  EyeTreatments: {
+    eyeAnalysisResult: any;
     imageUri?: string;
     visitPurpose?: string;
     appointmentLength?: string;
   };
+  HairTreatments: {
+    hairScalpAnalysisResult: HairScalpAnalysisResult;
+    imageUris?: string[];
+  };
+  Report: {
+    analysisType?: 'eye' | 'fullFace' | 'beforeAfter' | 'hairScalp';
+    imageUri?: string;
+    eyeAnalysisResult?: any;
+    analysisResult?: any;
+    beforeAfterAnalysisResult?: any;
+    treatmentIds?: string[];
+    beforeImage?: string;
+    afterImage?: string;
+    visitPurpose?: string;
+    appointmentLength?: number;
+    imageUris?: string[];
+    hairScalpAnalysisResult?: HairScalpAnalysisResult;
+  };
+  PrivacyPolicy: undefined;
+  Settings: undefined;
 };
 
+// Create the navigation stack
 const Stack = createStackNavigator<RootStackParamList>();
 
 // Error boundary component
@@ -200,6 +215,18 @@ const WrappedEyeTreatmentsScreen = withFeedbackButton((props: any) => ( // Wrap 
   </ScreenWrapper>
 ));
 
+const WrappedHairScalpAnalysisScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <HairScalpAnalysisScreen {...props} />
+  </ScreenWrapper>
+));
+
+const WrappedHairTreatmentsScreen = withFeedbackButton((props: any) => (
+  <ScreenWrapper>
+    <HairTreatmentsScreen {...props} />
+  </ScreenWrapper>
+));
+
 export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const navigationRef = useRef(null);
@@ -234,73 +261,141 @@ export default function App() {
         <SafeAreaProvider>
           <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
             <Stack.Navigator initialRouteName="Home">
-              <Stack.Screen
-                name="Home"
-                component={WrappedHomeScreen}
+              <Stack.Screen 
+                name="Home" 
+                component={WrappedHomeScreen} 
                 options={{ headerShown: false }}
               />
-              <Stack.Screen
-                name="Camera"
+              <Stack.Screen 
+                name="Camera" 
                 component={WrappedCameraScreen}
-                options={{ title: 'Take Photo', headerShown: false }}
+                options={{ headerShown: false }}
               />
-              <Stack.Screen
-                name="Analysis"
-                component={WrappedAnalysisScreen}
-                options={{ title: 'Analysis' }}
+              <Stack.Screen 
+                name="Analysis" 
+                component={WrappedAnalysisScreen} 
+                options={{ headerShown: false }}
               />
-              <Stack.Screen
-                name="Treatment"
-                component={WrappedTreatmentScreen}
-                options={{ title: 'Treatment Selection' }}
-              />
-              <Stack.Screen
-                name="RecommendedTreatments"
-                component={WrappedRecommendedTreatmentsScreen}
-                options={{ title: 'Recommended Treatments' }}
-              />
-              <Stack.Screen
-                name="Report"
-                component={WrappedReportScreen}
-                options={{ title: 'Treatment Report' }}
-              />
-              <Stack.Screen
-                name="LogoGenerator"
-                component={WrappedLogoGenerator}
-                options={{ title: 'Logo Generator' }}
-              />
-              <Stack.Screen
-                name="PrivacyPolicy"
-                component={WrappedPrivacyPolicyScreen}
+              <Stack.Screen 
+                name="EyeAnalysis" 
+                component={EyeAnalysisScreen} 
                 options={{
-                  title: 'Privacy Policy',
-                  headerShown: false
+                  title: 'Eye Area Analysis',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
                 }}
               />
-              <Stack.Screen
+              <Stack.Screen 
+                name="BeforeAfterAnalysis" 
+                component={WrappedBeforeAfterAnalysisScreen} 
+                options={{
+                  title: 'Before & After Analysis',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="BeforeAfterComparisonReport" 
+                component={WrappedBeforeAfterComparisonReportScreen} 
+                options={{
+                  title: 'Comparison Results',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="Treatment" 
+                component={WrappedTreatmentScreen} 
+                options={{
+                  title: 'Select Treatments',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="RecommendedTreatments" 
+                component={WrappedRecommendedTreatmentsScreen} 
+                options={{
+                  title: 'Recommended Treatments',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="EyeTreatments" 
+                component={WrappedEyeTreatmentsScreen} 
+                options={{
+                  title: 'Eye Treatments',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="HairScalpAnalysis" 
+                component={WrappedHairScalpAnalysisScreen} 
+                options={{
+                  title: 'Hair & Scalp Analysis',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="HairTreatments" 
+                component={WrappedHairTreatmentsScreen} 
+                options={{
+                  title: 'Hair Treatments',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="Report" 
+                component={WrappedReportScreen} 
+                options={{
+                  title: 'Analysis Report',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
+                name="PrivacyPolicy" 
+                component={WrappedPrivacyPolicyScreen} 
+                options={{
+                  title: 'Privacy Policy',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
+              />
+              <Stack.Screen 
                 name="Settings"
                 component={WrappedSettingsScreen}
-                options={{ title: 'Settings' }}
-              />
-              <Stack.Screen
-                name="BeforeAfterAnalysis"
-                component={WrappedBeforeAfterAnalysisScreen}
-                options={{ title: 'Before/After Analysis' }}
-              />
-              <Stack.Screen
-                name="BeforeAfterComparisonReport"
-                component={WrappedBeforeAfterComparisonReportScreen}
-                options={{ title: 'ProgressScan™ Results' }}
-              />
-              <Stack.Screen
-                name="EyeAnalysis"
-                component={WrappedEyeAnalysisScreen}
-                options={{ title: 'Eye Area Analysis' }}
-              />
-              <Stack.Screen // Add the new screen to the navigator
-                name="EyeTreatments"
-                component={WrappedEyeTreatmentsScreen}
-                options={{ title: 'Recommended Eye Treatments' }} // Set a default title
+                options={{
+                  title: 'Settings',
+                  headerStyle: {
+                    backgroundColor: '#4A90E2',
+                  },
+                  headerTintColor: '#fff',
+                }}
               />
             </Stack.Navigator>
           </NavigationContainer>

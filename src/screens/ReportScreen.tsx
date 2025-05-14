@@ -11,34 +11,55 @@ import * as Sharing from 'expo-sharing';
 import { COLORS, SPACING } from '../constants/theme'; // Import theme constants
 import { useLocalization } from '../i18n/localizationContext';
 import EyeSkincareAdviceModal from '../components/EyeSkincareAdviceModal'; // Import the new modal
+import HaircareAdviceModal from '../components/HaircareAdviceModal'; // Import the haircare modal
+import { HairScalpAnalysisResult, HaircareRecommendationsResult } from '../types/hairScalpAnalysis';
+import { getHaircareRecommendations } from '../services/geminiService';
 
 type ReportScreenRouteProp = RouteProp<RootStackParamList, 'Report'>;
 type ReportScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Report'>;
 
 type Props = {
-  route: ReportScreenRouteProp;
+  route: {
+    params: {
+      analysisType?: 'eye' | 'fullFace' | 'beforeAfter' | 'hairScalp';
+      imageUri?: string;
+      eyeAnalysisResult?: any;
+      analysisResult?: any;
+      beforeAfterAnalysisResult?: any;
+      treatmentIds?: string[];
+      beforeImage?: string;
+      afterImage?: string;
+      visitPurpose?: string;
+      appointmentLength?: number;
+      imageUris?: string[];
+      hairScalpAnalysisResult?: HairScalpAnalysisResult;
+    };
+  };
   navigation: ReportScreenNavigationProp;
 };
 
 const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   // Destructure all potential params
   const {
     analysisType,
     imageUri,
     eyeAnalysisResult,
-    analysisResult, // Assuming this might be passed for full face
-    // beforeAfterAnalysisResult, // Add if needed for before/after flow
-    treatmentIds = [], // Default to empty array if not passed
-    beforeImage, // Keep for now, might be same as imageUri
-    // afterImage // Add if needed for before/after flow
+    analysisResult,
+    treatmentIds = [],
+    beforeImage,
     visitPurpose,
-    appointmentLength
+    appointmentLength,
+    imageUris,
+    hairScalpAnalysisResult,
   } = route.params;
 
   const [generating, setGenerating] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [isEyeSkincareModalVisible, setEyeSkincareModalVisible] = useState(false); // State for the modal
+  const [isEyeSkincareModalVisible, setEyeSkincareModalVisible] = useState(false); // State for the eye modal
+  const [isHaircareModalVisible, setHaircareModalVisible] = useState(false); // State for the haircare modal
+  const [haircareRecommendations, setHaircareRecommendations] = useState<HaircareRecommendationsResult | null>(null);
+  const [isLoadingHaircare, setIsLoadingHaircare] = useState(false);
   const [localizedTreatments, setLocalizedTreatments] = useState<Treatment[]>([]); // State for localized treatments
   const [isLoadingTreatments, setIsLoadingTreatments] = useState(true); // Loading state for treatments
 
@@ -120,25 +141,24 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
       // In a real app, this would generate a PDF and share it
       // For MVP, we'll just share a text summary
 
-      const treatmentsList = selectedTreatments
-        .map(t => `- ${t?.name}: $${t?.price}`)
-        .join('\n');
-
-      const message = `
-AIBeautyLens ${t('treatmentReport')}
-${t('date')} ${formatDate()}
-
-${t('selectedTreatments')}
-${treatmentsList}
-
-${t('total')} $${totalPrice}
-
-*${t('disclaimer')}
-`;
+      const treatmentsList = selectedTreatments.map(t => `- ${t.name}: $${t.price}`).join('\n');
+      const totalPrice = selectedTreatments.reduce((sum, item) => sum + (item.price || 0), 0);
+      
+      const getReportTitle = () => {
+        if (analysisType === 'eye') return t('eyeAnalysisReport');
+        if (analysisType === 'hairScalp') return t('hairScalpAnalysisReport');
+        if (analysisType === 'beforeAfter') return t('beforeAfterAnalysisReport');
+        if (analysisType === 'fullFace') return t('facialAnalysisReport');
+        return t('treatmentReport');
+      };
+      
+      const reportTitle = getReportTitle();
+      
+      const message = `\nAIBeautyLens ${reportTitle}\n${t('date')} ${formatDate()}\n\n${t('selectedTreatments')}\n${treatmentsList}\n\n${t('total')} $${totalPrice}\n\n*${t('disclaimer')}\n`;
 
       await Share.share({
         message,
-        title: `AIBeautyLens ${t('treatmentReport')}`,
+        title: `AIBeautyLens ${reportTitle}`,
       });
     } catch (error) {
       console.error('Error sharing report:', error);
@@ -160,7 +180,7 @@ ${t('total')} $${totalPrice}
         base64Image: '', // Assuming EyeAnalysisScreen doesn't need base64 directly
         eyeAnalysisResult: eyeAnalysisResult,
         visitPurpose: visitPurpose || '',
-        appointmentLength: appointmentLength
+        appointmentLength: appointmentLength !== undefined ? String(appointmentLength) : '',
       });
     }
   };
@@ -178,8 +198,8 @@ ${t('total')} $${totalPrice}
       navigation.navigate('EyeTreatments', {
         eyeAnalysisResult: eyeAnalysisResult,
         imageUri: displayImageUri, // Pass image if needed by EyeTreatmentsScreen
-        visitPurpose: visitPurpose,
-        appointmentLength: appointmentLength
+        visitPurpose: visitPurpose || '',
+        appointmentLength: appointmentLength !== undefined ? String(appointmentLength) : '',
       });
     } else {
        Alert.alert(t('error'), t('noAnalysisDataAvailable')); // Add new i18n key if needed
@@ -187,6 +207,29 @@ ${t('total')} $${totalPrice}
   };
   // --- End of Navigation Handlers ---
 
+  // Handler for the haircare button
+  const handleViewHaircare = async () => {
+    if (hairScalpAnalysisResult) {
+      try {
+        setIsLoadingHaircare(true);
+        
+        // getHaircareRecommendations handles both cases:
+        // 1. When haircareRecommendations exist in the original analysis result
+        // 2. When they don't, it creates fallback recommendations from the existing analysis
+        // It doesn't make a new Gemini API call either way
+        const recommendations = await getHaircareRecommendations(hairScalpAnalysisResult, currentLanguage);
+        setHaircareRecommendations(recommendations);
+        setHaircareModalVisible(true);
+      } catch (error: any) {
+        console.error('Error fetching haircare recommendations:', error);
+        Alert.alert(t('error'), error?.message || t('noRecommendationsAvailable'));
+      } finally {
+        setIsLoadingHaircare(false);
+      }
+    } else {
+      Alert.alert(t('error'), t('noAnalysisDataAvailable'));
+    }
+  };
 
   return (
     <>
@@ -194,7 +237,16 @@ ${t('total')} $${totalPrice}
         <View style={styles.header}>
           {/* Conditional Title */}
           <Text style={styles.title}>
-            {analysisType === 'eye' ? t('eyeAnalysisReportTitle') : t('treatmentReport')}
+            {analysisType === 'eye' 
+              ? t('eyeAnalysisReport') 
+              : analysisType === 'hairScalp'
+                ? t('hairScalpAnalysisReport')
+                : analysisType === 'beforeAfter'
+                  ? t('beforeAfterAnalysisReport')
+                  : analysisType === 'fullFace'
+                    ? t('facialAnalysisReport')
+                    : t('treatmentReport')
+            }
           </Text>
           <Text style={styles.date}>{t('date')} {formatDate()}</Text>
         </View>
@@ -222,7 +274,17 @@ ${t('total')} $${totalPrice}
         </View>
 
         {/* --- Conditional Content Area --- */}
-        {analysisType === 'eye' && eyeAnalysisResult ? (
+        {analysisType === 'hairScalp' && hairScalpAnalysisResult ? (
+          <View style={styles.summaryContainer}>
+            <Text style={styles.sectionTitle}>{t('hairScalpAnalysis')}</Text>
+            <Text style={styles.summaryText}>{hairScalpAnalysisResult.overallCondition}</Text>
+            <Text style={styles.summaryText}>{t('assessmentDate')}: {hairScalpAnalysisResult.assessmentDate}</Text>
+            <Text style={styles.summaryText}>{t('hairLossPattern')}: {hairScalpAnalysisResult.hairLossPattern}</Text>
+            <Text style={styles.summaryText}>{t('hairQuality')}: {hairScalpAnalysisResult.hairQuality}</Text>
+            <Text style={styles.summaryText}>{t('scalpCondition')}: {hairScalpAnalysisResult.scalpCondition}</Text>
+            <Text style={styles.summaryText}>{t('preliminaryDiagnosis')}: {hairScalpAnalysisResult.preliminaryDiagnosis}</Text>
+          </View>
+        ) : analysisType === 'eye' && eyeAnalysisResult ? (
           // --- Eye Analysis Summary ---
           <View style={styles.summaryContainer}>
              <Text style={styles.sectionTitle}>{t('eyeAnalysisSummaryTitle')}</Text>
@@ -271,7 +333,39 @@ ${t('total')} $${totalPrice}
 
         {/* --- Conditional Buttons --- */}
         <View style={styles.buttonsContainer}>
-          {analysisType === 'eye' ? (
+          {analysisType === 'hairScalp' && hairScalpAnalysisResult ? (
+            <>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]}
+                  onPress={() => navigation.navigate('HairScalpAnalysis', {
+                    imageUris: imageUris || [],
+                    hairScalpAnalysisResult,
+                  })}
+                >
+                  <Text style={styles.buttonText}>{t('viewDetailedReport')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.secondaryPurpleButton]}
+                  onPress={handleViewHaircare}
+                  disabled={isLoadingHaircare}
+                >
+                  <Text style={styles.secondaryPurpleButtonText}>
+                    {isLoadingHaircare ? t('loading') : t('viewHaircare')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton]}
+                onPress={() => navigation.navigate('HairTreatments', {
+                  hairScalpAnalysisResult,
+                  imageUris: imageUris || []
+                })}
+              >
+                <Text style={styles.buttonText}>{t('viewHairTreatments')}</Text>
+              </TouchableOpacity>
+            </>
+          ) : analysisType === 'eye' ? (
             <>
               {/* Row for first two buttons */}
               <View style={styles.buttonRow}>
@@ -326,6 +420,18 @@ ${t('total')} $${totalPrice}
           </Text>
         </View>
       </ScrollView>
+
+      {/* Render the Hair Skincare Modal */}
+      {haircareRecommendations && (
+        <HaircareAdviceModal
+          visible={isHaircareModalVisible}
+          onClose={() => setHaircareModalVisible(false)}
+          recommendations={haircareRecommendations.recommendations}
+          overallRecommendation={haircareRecommendations.overallRecommendation}
+          careRoutine={haircareRecommendations.careRoutine}
+          notes={haircareRecommendations.notes}
+        />
+      )}
 
       {/* Render the Eye Skincare Modal */}
       {eyeAnalysisResult?.skincareRecommendations && (

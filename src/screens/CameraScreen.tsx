@@ -13,7 +13,7 @@ import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalization } from '../i18n/localizationContext';
-import { analyzeEyeArea } from '../services/geminiService'; // Added import
+import { analyzeEyeArea, analyzeHairScalpImages } from '../services/geminiService'; // Added import
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 type CameraScreenRouteProp = RouteProp<RootStackParamList, 'Camera'>;
@@ -24,16 +24,18 @@ type Props = {
 };
 
 const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { t } = useLocalization();
+  const { t, currentLanguage } = useLocalization();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [type, setType] = useState<CameraType>(CameraType.front);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>('');
   const [appointmentLength, setAppointmentLength] = useState<string>('1hr'); // Defaulting to a value, adjust if needed
-  const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false); // Added state for eye analysis loading
+  const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false);
+  const [hairScalpImages, setHairScalpImages] = useState<any[]>([]);
+  const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
   const cameraRef = useRef<Camera>(null);
-  const analysisType: 'facial' | 'eye' = route?.params?.analysisType || 'facial';
+  const analysisType: 'facial' | 'eye' | 'hairScalp' = route?.params?.analysisType || 'facial';
 
   useEffect(() => {
     (async () => {
@@ -253,9 +255,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      {analysisType === 'eye' && (
+      {isEyeAnalyzing && (
         <ProcessingIndicator 
           isAnalyzing={isEyeAnalyzing} 
           processingText={t('analyzingEyeArea')}
@@ -265,6 +265,18 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
         />
       )}
 
+      {isHairScalpAnalyzing && (
+        <ProcessingIndicator 
+          isAnalyzing={isHairScalpAnalyzing} 
+          processingText={t('analyzingHairScalp')}
+          analysisType="hairScalp"
+          showDetailedSteps={true}
+          showTechStack={true}
+        />
+      )}
+
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+      
       <LinearGradient
         colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
         locations={[0, 0.7, 1]}
@@ -299,7 +311,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
               source={{ uri: capturedImage.uri }}
               style={styles.cameraPreview}
             />
-
             <View style={styles.formContainer}>
               <View style={styles.formSection}>
                 <Text style={styles.formLabel}>{t('purposeOfVisit')}</Text>
@@ -316,7 +327,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                   autoCapitalize="sentences"
                 />
               </View>
-
               <View style={styles.formSection}>
                 <Text style={styles.formLabel}>{t('appointmentLength')}</Text>
                 <View style={styles.appointmentOptions}>
@@ -348,7 +358,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                 </View>
               </View>
             </View>
-
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton]}
@@ -356,21 +365,76 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
               >
                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('retake')}</Text>
               </TouchableOpacity>
-              {analysisType === 'eye' ? (
-                <TouchableOpacity
-                  style={[styles.button, styles.primaryButton]}
-                  onPress={handleAnalyze}
-                >
-                  <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('startEyeAnalysis')}</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.button, styles.primaryButton]}
-                  onPress={handleAnalyze}
-                >
-                  <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('beginAnalysis')}</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={[styles.button, styles.primaryButton]}
+                onPress={async () => {
+                  if (!capturedImage || !capturedImage.uri) return;
+                  
+                  try {
+                    let base64Data = capturedImage.base64 || '';
+                    if (!base64Data && capturedImage.uri) {
+                      base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
+                        encoding: FileSystem.EncodingType.Base64,
+                      });
+                    }
+                    
+                    if (analysisType === 'facial') {
+                      navigation.navigate('Analysis', {
+                        imageUri: capturedImage.uri,
+                        base64Image: base64Data,
+                        visitPurpose: visitPurpose,
+                        appointmentLength: appointmentLength
+                      });
+                    } else if (analysisType === 'eye') {
+                      setIsEyeAnalyzing(true);
+                      try {
+                        const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+                        navigation.navigate('Report', {
+                          analysisType: 'eye',
+                          imageUri: capturedImage.uri,
+                          eyeAnalysisResult: analysisResult,
+                          visitPurpose: visitPurpose,
+                          appointmentLength: appointmentLength
+                        });
+                      } catch (error: any) {
+                        console.error('Error during eye analysis process:', error);
+                        Alert.alert(t('error'), error?.message || t('eyeAnalysisFailed'));
+                      } finally {
+                        setIsEyeAnalyzing(false);
+                      }
+                    } else if (analysisType === 'hairScalp') {
+                      setIsHairScalpAnalyzing(true);
+                      try {
+                        const uris = [capturedImage.uri];
+                        const result = await analyzeHairScalpImages(uris, visitPurpose, currentLanguage);
+                        navigation.navigate('Report', {
+                          analysisType: 'hairScalp',
+                          imageUris: uris,
+                          imageUri: uris[0],
+                          hairScalpAnalysisResult: result,
+                          visitPurpose,
+                        });
+                      } catch (error: any) {
+                        console.error('Error during hair/scalp analysis:', error);
+                        Alert.alert(t('error'), error?.message || t('analysisUnavailable'));
+                      } finally {
+                        setIsHairScalpAnalyzing(false);
+                      }
+                    }
+                  } catch (error: any) { // Type error as 'any' here too
+                    console.error('Error preparing image for analysis:', error);
+                    Alert.alert(t('error'), t('analysisPreparationFailed'));
+                  }
+                }}
+                disabled={isEyeAnalyzing || isHairScalpAnalyzing}
+              >
+                <Text style={[styles.buttonText, styles.primaryButtonText]}>
+                  {isEyeAnalyzing || isHairScalpAnalyzing ? t('analyzing') : 
+                    analysisType === 'eye' ? t('startEyeAnalysis') : 
+                    analysisType === 'hairScalp' ? t('startHairScalpAnalysis') : 
+                    t('startAnalysis')}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -708,6 +772,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.text.secondary,
     textAlign: 'center',
+  },
+  actionButton: {
+    backgroundColor: COLORS.primary.main,
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

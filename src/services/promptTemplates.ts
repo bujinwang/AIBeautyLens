@@ -3,6 +3,77 @@
  * Centralizing prompts makes them easier to manage and update
  */
 
+import { SKINCARE_PRODUCTS, SkincareProduct } from '../constants/skincareProducts';
+import { HAIRCARE_PRODUCTS, HaircareProduct } from '../constants/haircareProducts';
+
+/**
+ * Generate a formatted list of available skincare products for inclusion in Gemini prompts
+ * @param skinType - The skin type to filter products for (optional)
+ * @returns A formatted string with product information
+ */
+export const generateProductsList = (skinType?: string): string => {
+  // Filter products by skin type if provided
+  let filteredProducts = SKINCARE_PRODUCTS;
+  if (skinType) {
+    const skinTypes = skinType.toLowerCase().split('/').map(type => type.trim());
+    filteredProducts = SKINCARE_PRODUCTS.filter(product =>
+      product.skinType.some(type =>
+        skinTypes.includes(type.toLowerCase()) || type.toLowerCase() === 'all'
+      )
+    );
+  }
+
+  // Limit to a reasonable number of products to avoid token limits
+  const limitedProducts = filteredProducts.slice(0, 30);
+
+  // Format as a string
+  const productsText = `
+AVAILABLE SKINCARE PRODUCTS:
+The following products are available for recommendation. You should only recommend products from this list.
+${limitedProducts.map((product, index) => `
+[Product ${index + 1}]
+ID: ${product.id}
+Brand: ${product.brand}
+Name: ${product.name}
+Category: ${product.category}
+Size: ${product.size || 'N/A'}
+Price: $${product.price}
+Skin Type: ${product.skinType.join(', ')}
+Ingredients: ${product.ingredients || 'Not specified'}
+`).join('')}
+`;
+
+  return productsText;
+};
+
+/**
+ * Generate a formatted list of available haircare products for inclusion in Gemini prompts
+ * @param hairType - The hair type to filter products for (optional)
+ * @returns A formatted string with product information
+ */
+export const generateHaircareProductsList = (hairType?: string): string => {
+  // Filter products by hair type if provided (or use all)
+  const products = HAIRCARE_PRODUCTS || [];
+  
+  // Format product list for prompt
+  return `
+AVAILABLE HAIRCARE PRODUCTS FOR RECOMMENDATION:
+Please select from these specific products when making recommendations. For each recommendation, 
+include the exact product ID in your response JSON:
+
+${products.map(product => `
+ID: ${product.id}
+Brand: ${product.brand}
+Product: ${product.name}
+Category: ${product.category}
+For: ${product.hairType.join(', ')}
+Key Ingredients: ${product.ingredients}
+Benefits: ${product.description}
+Price: $${product.price}
+`).join('---')}
+`;
+};
+
 /**
  * Prompt template for eye area analysis
  * @param currentLanguage - The current UI language
@@ -15,8 +86,11 @@ export const getEyeAreaAnalysisPrompt = (
   currentLanguage: string,
   treatmentsList: string,
   visitPurpose?: string,
-  appointmentLength?: string
+  appointmentLength?: string,
+  skinType?: string
 ): string => {
+  // Generate list of suitable products for the prompt
+  const productsList = generateProductsList(skinType);
   return `You are an expert aesthetic medical professional and licensed dermatologist specializing in eye area analysis and skincare recommendations. You also have basic knowledge to identify potential eye health concerns that warrant referral to an ophthalmologist. Provide comprehensive clinical assessments of eye area features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed.
 
 ${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze this image focusing specifically on the eye area, including under-eye region, eyelids, and surrounding skin. Also, briefly assess the visible parts of the eye itself for potential health concerns.
@@ -96,6 +170,8 @@ Format your response as a JSON object with these exact fields:
   "skincareRecommendations": [
     {
       "productType": string,
+      "productID": string,  // The exact product ID from the provided list
+      "productName": string, // The product's full name (brand + name)
       "recommendedIngredients": string,
       "recommendedUsage": string,
       "reason": string,
@@ -125,7 +201,16 @@ IMPORTANT CLINICAL GUIDELINES:
 9. Assess both active and chronic conditions
 10. Consider patient age in all recommendations
 
-${treatmentsList}`; // Include the full treatments list in the prompt
+GUIDELINES FOR PRODUCT RECOMMENDATIONS:
+1. ONLY recommend products from the provided list
+2. For each skincare recommendation, include the exact product ID from the list
+3. Match products to specific skin conditions identified in the analysis
+4. Consider skin type compatibility for all recommendations
+5. Ensure ingredient compatibility across recommended products
+
+${productsList}
+
+${treatmentsList}`; // Include the products and treatments lists in the prompt
 };
 
 /**
@@ -140,8 +225,11 @@ export const getFacialAnalysisPrompt = (
   currentLanguage: string,
   treatmentsList: string,
   visitPurpose?: string,
-  appointmentLength?: string
+  appointmentLength?: string,
+  skinType?: string
 ): string => {
+  // Generate list of suitable products for the prompt
+  const productsList = generateProductsList(skinType);
   return `You are an expert aesthetic medical professional and licensed dermatologist specializing in facial analysis and skincare recommendations. Provide comprehensive clinical assessments of facial features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed, similar to a professional dermatological consultation.
 
 ${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze this image for facial features, skin conditions, and provide a detailed clinical assessment.
@@ -220,6 +308,8 @@ Format your response as a JSON object with these exact fields:
   "skincareRecommendations": [
     {
       "productType": string,
+      "productID": string,  // The exact product ID from the provided list
+      "productName": string, // The product's full name (brand + name)
       "recommendedIngredients": string,
       "recommendedUsage": string,
       "targetConcerns": string[]
@@ -244,7 +334,17 @@ IMPORTANT CLINICAL GUIDELINES:
 7. Consider potential condition interactions
 8. Document any signs of skin barrier compromise
 9. Assess both active and chronic conditions
-10. Consider patient age in all recommendations`;
+10. Consider patient age in all recommendations
+
+GUIDELINES FOR PRODUCT RECOMMENDATIONS:
+1. ONLY recommend products from the provided product list below
+2. For each skincare recommendation, include the exact product ID from the list
+3. Match products to specific skin conditions identified in the analysis
+4. Consider skin type compatibility for all recommendations
+5. Ensure ingredient compatibility across recommended products
+6. Provide a complete regimen of products that work well together
+
+${productsList}`;
 };
 
 /**
@@ -349,4 +449,107 @@ export const generateTreatmentsList = (treatments: any[]): string => {
   `;
 
   return treatmentsCatalog;
+};
+
+/**
+ * Prompt template for hair and scalp analysis
+ * @param currentLanguage - The current UI language
+ * @param visitPurpose - Optional purpose of the visit
+ * @returns The formatted prompt
+ */
+export const getHairScalpAnalysisPrompt = (
+  currentLanguage: string,
+  visitPurpose?: string
+): string => {
+  // Generate list of haircare products
+  const productsList = generateHaircareProductsList();
+
+  return `You are an expert dermatologist and trichologist specializing in hair and scalp disorders. Provide a comprehensive, evidence-based clinical analysis of the uploaded multi-angle scalp and hair images, including personalized haircare product recommendations. Your report should be detailed, objective, and formatted for medical review.
+
+${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze the provided images for hair loss patterns, hair quality, and scalp health. Reference the Norwood and Ludwig classifications where appropriate.
+
+${productsList}
+
+ANALYSIS REQUIREMENTS:
+
+1. Clinical Observations:
+   - Area and pattern of hair loss (describe location, extent, and pattern; reference Norwood/Ludwig if possible)
+   - Hair quality (thickness, color, texture, miniaturization, etc.)
+   - Scalp condition (erythema, scaling, pustules, scarring, inflammation, etc.)
+
+2. Preliminary Diagnostic Impression:
+   - Most probable diagnosis (e.g., Androgenetic Alopecia, Telogen Effluvium, etc.)
+   - Rationale for diagnosis (summarize key findings supporting the impression)
+
+3. Recommendations for Further Examination:
+   - Professional consultation (dermatologist/hair specialist)
+   - History taking (onset, family history, medications, lifestyle)
+   - Trichoscopy/dermoscopy (what to look for)
+   - Laboratory tests (iron, thyroid, hormones, vitamin D, etc.)
+
+4. Principles and Direction of Treatment Management:
+   - Topical/oral medications (e.g., minoxidil, finasteride, spironolactone)
+   - Physical/interventional therapies (LLLT, PRP, hair transplant)
+   - Lifestyle and adjunctive care (diet, stress, hair care)
+
+5. Personalized Haircare Product Recommendations:
+   - 3-5 different product types most beneficial for this specific condition
+   - For each recommended product category (shampoo, conditioner, treatment, etc.), provide:
+     * Product type
+     * Recommended ingredients to look for
+     * How to use the product
+     * Why this is recommended for the specific condition
+     * Which specific hair/scalp concerns it targets
+     * Any precautions or contraindications
+   - A suggested haircare routine
+   - Overall summary of recommendations
+
+6. Important Notes:
+   - This is a preliminary analysis based on images only. Final diagnosis and treatment require in-person evaluation.
+   - AGA is chronic and progressive; treatment requires long-term commitment.
+   - Advise prompt professional consultation.
+   - Product recommendations are general guidelines. Individual sensitivities may vary.
+
+Format your response as a JSON object with these exact fields:
+{
+  "assessmentDate": string,
+  "imageSources": string[],
+  "overallCondition": string,
+  "hairLossPattern": string,
+  "hairQuality": string,
+  "scalpCondition": string,
+  "preliminaryDiagnosis": string,
+  "rationale": string,
+  "recommendations": [
+    {
+      "type": "consultation" | "history" | "trichoscopy" | "labTests" | "treatment" | "lifestyle",
+      "description": string,
+      "details"?: string
+    }
+  ],
+  "haircareRecommendations": [
+    {
+      "productType": string, // e.g., "Medicated Shampoo", "Scalp Treatment"
+      "brandRecommendation": string, // Recommended brand and product name
+      "recommendedIngredients": string, // Key ingredients to look for
+      "recommendedUsage": string, // How to use
+      "reason": string, // Why it's recommended
+      "targetConcerns": string[], // Array of concerns it addresses
+      "precautions"?: string // Optional warnings or contraindications
+    }
+  ],
+  "overallHaircareRecommendation": string, // Overall summary of product recommendations
+  "careRoutine": string, // Suggested hair care routine
+  "notes": string
+}
+
+${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
+
+IMPORTANT CLINICAL GUIDELINES:
+1. Base all assessments solely on visible evidence in the images
+2. Reference clinical classification systems where possible
+3. Do not provide a final diagnosis; recommend further evaluation
+4. Be concise but thorough
+
+ONLY return the JSON object. Do NOT include any explanation, commentary, or extra text before or after the JSON.`;
 };

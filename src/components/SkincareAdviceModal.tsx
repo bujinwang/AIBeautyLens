@@ -5,7 +5,7 @@ import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { AnalysisResult } from '../types';
 import SkinMatrixHeader from './SkinMatrixHeader';
 import { getProductsForConcerns, SkincareProduct } from '../constants/skincareProducts';
-import { getGeminiProductRecommendations, getSingleProductRecommendations } from '../services/geminiService';
+import { findProductById } from '../services/geminiService';
 import { useLocalization } from '../i18n/localizationContext';
 
 interface SkincareAdviceModalProps {
@@ -63,52 +63,72 @@ const SkincareAdviceModal: React.FC<SkincareAdviceModalProps> = ({
     setProductsByCategory(groupedProducts);
   }, [recommendedProducts, visible]);
 
-  // Add effect to fetch Gemini recommendations when visible
+  // Add effect to load products when visible
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || !analysisResult.skincareRecommendations) return;
 
-    const fetchGeminiRecommendations = async () => {
-      setIsLoadingGemini(true);
-      try {
-        console.log("Fetching product recommendations for:", {
-          skinType,
-          concerns,
-          recommendationsCount: analysisResult.skincareRecommendations?.length || 0
-        });
-
-        // Use the new function to get one product per category
-        const products = await getSingleProductRecommendations({
-          skinType,
-          concerns,
-          existingRecommendations: analysisResult.skincareRecommendations,
-          language: currentLanguage
-        });
-
-        console.log("Received products:", products.length, products);
-        setGeminiProducts(products);
-
-        // Also organize products by category for consistency
-        const groupedGeminiProducts: {[key: string]: SkincareProduct[]} = {};
-        products.forEach(product => {
-          if (!groupedGeminiProducts[product.category]) {
-            groupedGeminiProducts[product.category] = [];
+    setIsLoadingGemini(true);
+    
+    // Process products directly from analysis result
+    if (analysisResult.skincareRecommendations.length > 0) {
+      console.log("Processing skincare recommendations from analysis result");
+      
+      // Group products by category for display
+      const groupedProducts: {[key: string]: SkincareProduct[]} = {};
+      
+      // First try to get products by ID from recommendations
+      const recommendedProducts: SkincareProduct[] = [];
+      
+      // Process the recommendations
+      analysisResult.skincareRecommendations.forEach(recommendation => {
+        let product: SkincareProduct | undefined;
+        
+        // Check if we have a product ID
+        if (recommendation.productID) {
+          product = findProductById(recommendation.productID);
+          if (product) {
+            recommendedProducts.push(product);
+            
+            if (!groupedProducts[product.category]) {
+              groupedProducts[product.category] = [];
+            }
+            groupedProducts[product.category].push(product);
           }
-          groupedGeminiProducts[product.category].push(product);
+        }
+      });
+      
+      // If no products were found by ID, fallback to category matching
+      if (recommendedProducts.length === 0) {
+        const concerns = analysisResult.features.map(f => f.description);
+        
+        analysisResult.skincareRecommendations.forEach(recommendation => {
+          const categoryProducts = getProductsForConcerns(
+            recommendation.productType, 
+            concerns, 
+            analysisResult.skinType || 'all'
+          );
+          
+          if (categoryProducts.length > 0) {
+            const product = categoryProducts[0];
+            recommendedProducts.push(product);
+            
+            if (!groupedProducts[product.category]) {
+              groupedProducts[product.category] = [];
+            }
+            groupedProducts[product.category].push(product);
+          }
         });
-
-        console.log("Grouped Gemini products by category:", Object.keys(groupedGeminiProducts));
-
-        // Always update with Gemini recommendations
-        setProductsByCategory(groupedGeminiProducts);
-      } catch (error) {
-        console.error('Error fetching Gemini recommendations:', error);
-      } finally {
-        setIsLoadingGemini(false);
       }
-    };
+      
+      console.log("Found recommended products:", recommendedProducts.length);
+      setGeminiProducts(recommendedProducts);
+      setProductsByCategory(groupedProducts);
+    }
+    
+    setIsLoadingGemini(false);
+  }, [visible, analysisResult]);
 
-    fetchGeminiRecommendations();
-  }, [visible, skinType, concerns]);
+  // This section is now handled by the effect above
 
   const getCategoryIcon = (category: string) => {
     if (!category) return 'science'; // Default icon if category is undefined

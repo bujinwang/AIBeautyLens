@@ -54,6 +54,7 @@ export const translations: Record<string, Record<string, string>> = {
     goBack: 'Go Back',
     visitPurposeHint: 'Example: Reduce fine lines and improve skin elasticity...',
     startEyeAnalysis: 'Start OptiScan™ Analysis', // Updated text
+    processingText: 'Clinical-grade dermatological analysis in progress',
 
     // Analysis Screen
     analyzing: 'Analyzing your skin... Our AI is processing 500+ data points from your image, analyzing texture, tone, pores, and specific conditions. This advanced analysis requires significant computing power and references thousands of clinical cases to provide personalized insights equivalent to multiple specialist consultations.',
@@ -81,6 +82,7 @@ export const translations: Record<string, Record<string, string>> = {
     skincareProductRecommendations: 'Skincare Product Recommendations',
     tailoredRecommendations: 'The following recommendations are tailored to your',
     skinTypeAndConcerns: 'skin type and specific concerns identified in your analysis. Incorporate these products gradually into your routine for best results.',
+    recommendedProduct: 'Recommended Product:',
     keyIngredients: 'Key Ingredients:',
     usage: 'Usage:',
     why: 'Why:',
@@ -112,21 +114,17 @@ export const translations: Record<string, Record<string, string>> = {
     takeNewPhoto: 'Take New Photo',
     analyzeEyeArea: 'Analyze Eye Area',
     viewEyeAnalysis: 'View Eye Analysis',
-    analyzingEyeArea: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.', // More detailed text
+    analyzingEyeArea: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.',
+    eyeProcessingText: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.',
 
     // Treatment Screen
-    // recommendedTreatments: 'Recommended Treatments', // Duplicate key removed
+    recommendedTreatments: 'Recommended Treatments',
     basedOnAnalysis: 'Based on your facial analysis, the following treatments are recommended:',
     skinMatrixSummary: 'SkinMatrix™ Analysis Summary',
     age: 'Age:',
-    // gender: 'Gender:', // Duplicate key removed
-    // skinType: 'Skin Type:', // Duplicate key removed
     features: 'Features:',
     identified: 'identified',
     years: 'years',
-    // visitInformation: 'Visit Information', // Duplicate key removed
-    // purposeOfVisitLabel: 'Purpose of Visit:', // Duplicate key removed
-    // appointmentLengthLabel: 'Appointment Length:', // Duplicate key removed
     area: 'Area:',
     whyRecommended: 'Why it\'s recommended:',
     benefits: 'Benefits:',
@@ -136,9 +134,11 @@ export const translations: Record<string, Record<string, string>> = {
 
     // Report Screen
     treatmentReport: 'Treatment Report',
+    hairScalpAnalysisReport: 'Hair & Scalp Analysis Report',
+    eyeAnalysisReport: 'Eye Analysis Report',
+    facialAnalysisReport: 'Facial Analysis Report',
+    beforeAfterAnalysisReport: 'Before & After Analysis Report',
     date: 'Date:',
-    // recommendedTreatments: 'Recommended Treatments', // Duplicate key removed
-    // area: 'Area:', // Duplicate key removed
     totalEstimatedCost: 'Total Estimated Cost',
     importantInformation: 'Important Information',
     disclaimer: 'This analysis is powered by advanced machine learning algorithms trained on data from thousands of aesthetic medicine cases and specialist consultations. While our AI provides comprehensive insights based on extensive medical data, individual results may vary. For optimal results, please consult with a qualified aesthetic medicine specialist who can consider your unique needs and medical history.',
@@ -152,10 +152,7 @@ export const translations: Record<string, Record<string, string>> = {
     diagnosisReport: 'Diagnosis Report',
     showDiagnosisReport: 'Show Diagnosis Report',
     profileAnalysis: 'Profile Analysis',
-    // estimatedAge: 'Estimated Age', // Duplicate key removed
-    // skinType: 'Skin Type', // Duplicate key removed
     undertone: 'Undertone',
-    // gender: 'Gender', // Duplicate key removed
     confidence: 'confidence',
     overallSkinHealth: 'Overall Skin Health',
     clinicalAssessment: 'Clinical Assessment',
@@ -184,7 +181,6 @@ export const translations: Record<string, Record<string, string>> = {
     notSpecified: 'Not specified',
 
     // Privacy Policy Screen
-    // privacyPolicy: 'Privacy Policy', // Duplicate key removed
     lastUpdated: 'Last Updated:',
     infoWeCollect: '1. Information We Collect',
     infoWeCollectText: 'AIBeautyLens collects and processes facial images solely for providing personalized skincare recommendations. Images are captured through your device camera or selected from your photo library.',
@@ -212,7 +208,6 @@ export const translations: Record<string, Record<string, string>> = {
     addBeforeImage: 'Add Before Image',
     addAfterImage: 'Add After Image',
     camera: 'Camera',
-    // gallery: 'Gallery', // Duplicate key removed
     reset: 'Reset',
     analyzeChanges: 'Analyze Changes',
     capturingBeforeImage: 'Capture Before Image',
@@ -246,27 +241,88 @@ export const translations: Record<string, Record<string, string>> = {
     eyeAreaConditions: 'Eye Area Conditions',
     recommendedEyeCare: 'Recommended Eye Care',
     backToAnalysis: 'Back to Analysis',
-    personalizedEyeCareAdvice: 'Personalized Eye Care Advice', // Added key
-    // Report Screen (Eye Analysis additions)
+    personalizedEyeCareAdvice: 'Personalized Eye Care Advice',
     eyeAnalysisReportTitle: 'Eye Analysis Report',
     eyeAnalysisSummaryTitle: 'Eye Analysis Summary',
-    noTreatmentsSelected: 'No treatments were selected.', // Added for clarity in treatment report case
-    viewDetailedEyeReport: 'Detailed Eye Report', // Removed "View"
-    viewEyeSkincare: 'Eye Skincare Advice', // Removed "View"
-    viewEyeTreatments: 'Recommended Eye Treatments', // Removed "View"
-    noAnalysisDataAvailable: 'No analysis data available to proceed.', // Error message
-    eyeAnalysisFailed: 'Eye analysis failed. Please try again.', // Error message
-    // Eye Treatments Screen
-    recommendedEyeTreatments: 'Recommended Eye Treatments', // Title
-    basedOnYourEyeAnalysis: 'Based on your eye area analysis:', // Subtitle
-    noTreatmentsAvailable: 'No specific eye treatments were recommended based on this analysis.', // Empty state
-    confirmSelection: 'Confirm Selection', // Button text
-    // Eye Skincare Modal Disclaimer Points
+    noTreatmentsSelected: 'No treatments were selected.',
+    viewDetailedEyeReport: 'Detailed Eye Report',
+    viewEyeSkincare: 'Eye Skincare Advice',
+    viewEyeTreatments: 'Recommended Eye Treatments',
+    noAnalysisDataAvailable: 'No analysis data available to proceed.',
+    eyeAnalysisFailed: 'Eye analysis failed. Please try again.',
+    recommendedEyeTreatments: 'Recommended Eye Treatments',
+    basedOnYourEyeAnalysis: 'Based on your eye area analysis:',
+    noTreatmentsAvailable: 'No specific eye treatments were recommended based on this analysis.',
+    confirmSelection: 'Confirm Selection',
     eyePatchTest: '• Patch test new products before applying around the eyes',
     eyeIntroduceNewProducts: '• Introduce new products one at a time, with 1-2 weeks between additions',
     eyeConsistencyIsKey: '• Consistency is key - results typically take 4-6 weeks to become visible',
     eyeNotSubstitute: '• These recommendations are based on AI analysis and not a substitute for professional advice',
     eyeDiscontinueUse: '• Discontinue use of any product that causes irritation or discomfort',
+    startHairScalpAnalysis: 'Start Hair & Scalp Analysis',
+    hairScalpAnalysis: 'Hair & Scalp Analysis',
+    hairScalpDescription: 'AI-powered multi-angle hair and scalp assessment',
+    selectHairScalpImages: 'Select Hair & Scalp Images',
+    analyzeHairScalp: 'Analyze Hair & Scalp',
+    hairScalpSubtitle: 'Detailed Hair and Scalp Assessment',
+    assessmentDate: 'Assessment Date',
+    hairLossPattern: 'Hair Loss Pattern',
+    hairQuality: 'Hair Quality',
+    scalpCondition: 'Scalp Condition',
+    preliminaryDiagnosis: 'Preliminary Diagnosis',
+    overallCondition: 'Overall Condition',
+    hairScalpProcessingText: 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.',
+    analyzingHairScalp: 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.',
+    viewDetailedReport: 'View Detailed Report',
+    viewHaircare: 'View Haircare',
+    viewHairTreatments: 'View Hair Treatments',
+    eyeHealthWarningNote: 'Note: Potential eye health concerns were observed. Please review the detailed report and consult an ophthalmologist if needed.',
+    facialAnalysisButton: 'Facial Analysis',
+    eyeAnalysisButton: 'Eye Area Analysis',
+    beforeAfterButton: 'Before & After Analysis',
+    hairScalpAnalysisButton: 'Hair & Scalp Analysis',
+
+    // Haircare recommendations
+    recommendedHaircare: 'Recommended Haircare',
+    personalizedHaircareAdvice: 'Personalized haircare advice for your hair & scalp condition',
+    recommendedHaircareRoutine: 'Recommended Haircare Routine',
+    hairPatchTest: '• Patch test any new product 24 hours before full application',
+    hairIntroduceNewProducts: '• Introduce new products one at a time',
+    hairConsistencyIsKey: '• Consistency is key - follow recommended routine for at least 4-6 weeks',
+    hairNotSubstitute: '• These recommendations are not a substitute for professional advice',
+    hairDiscontinueUse: '• Discontinue use if any product causes irritation or discomfort',
+    overallRecommendation: 'Overall Recommendation',
+
+    // Hair treatments translations
+    recommendedHairTreatments: 'Recommended Hair Treatments',
+    basedOnYourHairAnalysis: 'Based on your hair and scalp analysis:',
+    diagnosis: 'Diagnosis',
+    loadingTreatments: 'Loading treatments...',
+    noHairTreatmentsAvailable: 'No specific hair treatments were recommended based on this analysis.',
+    recommendedForAndrogenetic: 'Highly recommended for androgenetic alopecia to slow hair loss and potentially stimulate new growth.',
+    recommendedForDryScalp: 'Recommended to address dry, flaky scalp conditions by removing buildup and providing deep hydration.',
+    recommendedForScalpHealth: 'Recommended to improve overall scalp health and create a better environment for hair growth.',
+    recommendedForHairLoss: 'PRP therapy can help stimulate dormant hair follicles and strengthen existing hair.',
+    recommendedBasedOnAnalysis: 'This treatment is recommended based on your hair and scalp analysis.',
+    failedToLoadTreatments: 'Failed to load treatments. Please try again.',
+    contraindications: 'Contraindications',
+
+    // Hair recommendation types
+    consultation: 'consultation',
+    history: 'history',
+    trichoscope: 'trichoscope',
+    labTests: 'labTests',
+    treatment: 'treatment',
+    lifestyle: 'lifestyle',
+
+    // Feature labels for reports
+    feature: 'feature',
+
+    // Clinical evaluation
+    clinicalEvaluation: 'Clinical Evaluation',
+    evaluationText: 'Enter clinical notes and evaluation...',
+    saveEvaluation: 'Save Evaluation',
+    evaluationSaved: 'Evaluation saved',
   },
   zh: {
     // General
@@ -313,6 +369,7 @@ export const translations: Record<string, Record<string, string>> = {
     goBack: '返回',
     visitPurposeHint: '例如：减少细纹并改善皮肤弹性...',
     startEyeAnalysis: '开始 OptiScan™ 分析', // Updated text
+    processingText: '临床级皮肤科分析正在进行中',
 
     // Analysis Screen
     analyzing: '正在分析您的皮肤... 我们的AI正在处理您图像中的500多个数据点，分析纹理、肤色、毛孔和特定皮肤状况。这种高级分析需要强大的计算能力，并参考了数千个临床案例，为您提供相当于多次专家咨询的个性化见解。',
@@ -344,6 +401,7 @@ export const translations: Record<string, Record<string, string>> = {
     skincareProductRecommendations: '护肤产品推荐',
     tailoredRecommendations: '以下推荐是为您的',
     skinTypeAndConcerns: '皮肤类型和分析中识别的特定问题量身定制的。逐步将这些产品纳入您的日常护理中，以获得最佳效果。',
+    recommendedProduct: '推荐产品:',
     keyIngredients: '主要成分:',
     usage: '使用方法:',
     why: '原因:',
@@ -371,21 +429,17 @@ export const translations: Record<string, Record<string, string>> = {
     takeNewPhoto: '拍摄新照片',
     analyzeEyeArea: '分析眼部区域',
     viewEyeAnalysis: '查看眼部分析',
-    analyzingEyeArea: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。', // Added Chinese translation
+    analyzingEyeArea: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。',
+    eyeProcessingText: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。',
 
     // Treatment Screen
-    recommendedTreatments: '推荐的治疗方案', // Uncommented and verified translation
+    recommendedTreatments: '推荐的治疗方案',
     basedOnAnalysis: '根据您的面部分析，推荐以下治疗方案：',
     skinMatrixSummary: 'SkinMatrix™ 分析摘要',
     age: '年龄:',
-    // gender: '性别:', // Duplicate key removed
-    // skinType: '皮肤类型:', // Duplicate key removed
     features: '特征:',
     identified: '已识别',
     years: '岁',
-    // visitInformation: '访问信息', // Duplicate key removed
-    // purposeOfVisitLabel: '访问目的:', // Duplicate key removed
-    // appointmentLengthLabel: '预约时长:', // Duplicate key removed
     area: '区域:',
     whyRecommended: '为什么推荐:',
     benefits: '好处:',
@@ -395,8 +449,11 @@ export const translations: Record<string, Record<string, string>> = {
 
     // Report Screen
     treatmentReport: '治疗报告',
+    hairScalpAnalysisReport: '头发与头皮分析报告',
+    eyeAnalysisReport: '眼部分析报告',
+    facialAnalysisReport: '面部分析报告',
+    beforeAfterAnalysisReport: '前后对比分析报告',
     date: '日期:',
-    // area: '区域:', // Duplicate key removed
     totalEstimatedCost: '总估计费用',
     importantInformation: '重要信息',
     disclaimer: '此分析由先进的机器学习算法提供支持，该算法基于数千个美容医学案例和专家咨询的数据进行训练。尽管我们的人工智能基于广泛的医学数据提供全面的见解，但个人结果可能会有所不同。为了获得最佳效果，请咨询合格的美容医学专家，他们可以考虑您的独特需求和病史。',
@@ -410,10 +467,7 @@ export const translations: Record<string, Record<string, string>> = {
     diagnosisReport: '诊断报告',
     showDiagnosisReport: '显示诊断报告',
     profileAnalysis: '概况分析',
-    // estimatedAge: '估计皮肤年龄', // Duplicate key removed
-    // skinType: '皮肤类型', // Duplicate key removed
     undertone: '肤色基调',
-    // gender: '性别', // Duplicate key removed
     confidence: '置信度',
     overallSkinHealth: '整体皮肤健康状况',
     clinicalAssessment: '临床评估',
@@ -442,7 +496,6 @@ export const translations: Record<string, Record<string, string>> = {
     notSpecified: '未指定',
 
     // Privacy Policy Screen
-    // privacyPolicy: '隐私政策', // Duplicate key removed
     lastUpdated: '最后更新：',
     infoWeCollect: '1. 我们收集的信息',
     infoWeCollectText: 'AIBeautyLens收集和处理面部图像仅用于提供个性化的护肤建议。图像通过您的设备相机或从您的相册中选择。',
@@ -470,7 +523,6 @@ export const translations: Record<string, Record<string, string>> = {
     addBeforeImage: '添加治疗前图像',
     addAfterImage: '添加治疗后图像',
     camera: '相机',
-    // gallery: '相册', // Duplicate key removed
     reset: '重置',
     analyzeChanges: '分析变化',
     capturingBeforeImage: '拍摄治疗前图像',
@@ -504,32 +556,91 @@ export const translations: Record<string, Record<string, string>> = {
     eyeAreaConditions: '眼部区域状况',
     recommendedEyeCare: '推荐的眼部护理',
     backToAnalysis: '返回分析',
-    personalizedEyeCareAdvice: '个性化眼部护理建议', // Added key
-    // Report Screen (Eye Analysis additions) - Chinese
+    personalizedEyeCareAdvice: '个性化眼部护理建议',
     eyeAnalysisReportTitle: '眼部分析报告',
     eyeAnalysisSummaryTitle: '眼部分析摘要',
     noTreatmentsSelected: '未选择任何治疗方案。',
-    viewDetailedEyeReport: '详细眼部分析报告', // Removed "查看"
-    viewEyeSkincare: '眼部护肤建议', // Removed "查看"
-    viewEyeTreatments: '推荐眼部治疗', // Removed "查看"
-    noAnalysisDataAvailable: '无可用分析数据。', // Error message
-    eyeAnalysisFailed: '眼部分析失败，请重试。', // Error message
-    // Eye Treatments Screen - Chinese
-    recommendedEyeTreatments: '推荐的眼部治疗', // Title
-    basedOnYourEyeAnalysis: '根据您的眼部分析：', // Subtitle
-    noTreatmentsAvailable: '根据本次分析，没有推荐特定的眼部治疗。', // Empty state
-    confirmSelection: '确认选择', // Button text
-    // Eye Skincare Modal Disclaimer Points - Chinese
+    viewDetailedEyeReport: '详细眼部分析报告',
+    viewEyeSkincare: '眼部护肤建议',
+    viewEyeTreatments: '推荐眼部治疗',
+    noAnalysisDataAvailable: '无可用分析数据。',
+    eyeAnalysisFailed: '眼部分析失败，请重试。',
+    recommendedEyeTreatments: '推荐的眼部治疗',
+    basedOnYourEyeAnalysis: '根据您的眼部分析：',
+    noTreatmentsAvailable: '根据本次分析，没有推荐特定的眼部治疗。',
+    confirmSelection: '确认选择',
     eyePatchTest: '• 在眼周使用新产品前进行小范围测试',
     eyeIntroduceNewProducts: '• 一次引入一种新产品，间隔1-2周',
     eyeConsistencyIsKey: '• 坚持是关键 - 效果通常需要4-6周才能显现',
     eyeNotSubstitute: '• 这些建议基于AI分析，不能替代专业建议',
     eyeDiscontinueUse: '• 如果产品引起刺激或不适，请停止使用',
-    // Eye Health Section - Chinese
     eyeHealthObservations: '眼部健康观察',
     eyeHealthWarningIntro: '观察到以下情况。这些并非诊断，但可能需要咨询眼科医生：',
     eyeHealthDisclaimer: '这不是医疗诊断。如有任何眼部健康问题，请咨询眼科医生。',
     eyeHealthWarningNote: '注意：观察到潜在的眼部健康问题。请查看详细报告并在需要时咨询眼科医生。',
+    facialAnalysisButton: '面部分析',
+    eyeAnalysisButton: '眼部分析',
+    beforeAfterButton: '前后对比分析',
+    hairScalpAnalysisButton: '头发与头皮分析',
+    analyzingHairScalp: '正在分析您的头发和头皮... 我们的AI正在处理多角度图像，以评估头发密度、头皮健康和毛囊微型化情况。',
+    hairScalpProcessingText: '正在分析您的头发和头皮... 我们的AI正在处理多角度图像，以评估头发密度、头皮健康和毛囊微型化情况。',
+    hairScalpAnalysis: '头发与头皮分析',
+    hairScalpDescription: 'AI驱动的多角度头发和头皮评估',
+    selectHairScalpImages: '选择头发和头皮图像',
+    analyzeHairScalp: '分析头发与头皮',
+    hairScalpSubtitle: '详细的头发和头皮评估',
+    assessmentDate: '评估日期',
+    hairLossPattern: '脱发模式',
+    hairQuality: '头发质量',
+    scalpCondition: '头皮状况',
+    preliminaryDiagnosis: '初步诊断',
+    overallCondition: '整体状况',
+    startHairScalpAnalysis: '开始头发与头皮分析',
+    viewDetailedReport: '查看详细报告',
+    viewHaircare: '查看头发护理',
+    viewHairTreatments: '查看头发治疗',
+
+    // Haircare recommendations - Chinese
+    recommendedHaircare: '推荐的头发护理',
+    personalizedHaircareAdvice: '根据您的头发和头皮状况提供的个性化头发护理建议',
+    recommendedHaircareRoutine: '推荐的头发护理流程',
+    hairPatchTest: '• 在完全使用任何新产品之前，先进行24小时的局部测试',
+    hairIntroduceNewProducts: '• 一次仅引入一种新产品',
+    hairConsistencyIsKey: '• 坚持是关键 - 遵循推荐的护理流程至少4-6周',
+    hairNotSubstitute: '• 这些建议不能替代专业意见',
+    hairDiscontinueUse: '• 如果任何产品导致刺激或不适，请停止使用',
+    overallRecommendation: '总体建议',
+
+    // Hair treatments translations
+    recommendedHairTreatments: '推荐的发型治疗',
+    basedOnYourHairAnalysis: '根据您的头发和头皮分析：',
+    diagnosis: '诊断',
+    loadingTreatments: '加载治疗...',
+    noHairTreatmentsAvailable: '根据本次分析，没有推荐特定的头发治疗。',
+    recommendedForAndrogenetic: '非常推荐用于雄性脱发，以减缓脱发并可能刺激新生长。',
+    recommendedForDryScalp: '推荐用于解决干燥、脱屑的头皮状况，通过去除堆积并提供深层保湿。',
+    recommendedForScalpHealth: '推荐用于改善整体头皮健康并创建更好的头发生长环境。',
+    recommendedForHairLoss: 'PRP疗法可以帮助刺激休眠的毛囊并加强现有的头发。',
+    recommendedBasedOnAnalysis: '此治疗是根据您的头发和头皮分析推荐的。',
+    failedToLoadTreatments: '加载治疗失败。请重试。',
+    contraindications: '禁忌症',
+
+    // Hair recommendation types
+    consultation: '咨询',
+    history: '病史',
+    trichoscope: '毛发镜检查',
+    labTests: '实验室检测',
+    treatment: '治疗',
+    lifestyle: '生活方式',
+    
+    // Feature labels for reports
+    feature: '特征',
+
+    // Clinical evaluation
+    clinicalEvaluation: '临床评估',
+    evaluationText: '输入临床备注和评估...',
+    saveEvaluation: '保存评估',
+    evaluationSaved: '评估已保存',
   }
 };
 

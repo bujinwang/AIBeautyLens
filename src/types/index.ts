@@ -53,7 +53,8 @@ export interface SkinIssue {
 
 export interface SkincareRecommendation {
   productType: string;
-  productName: string;
+  productName?: string;
+  productID?: string;  // Added to support direct product ID from Gemini
   size?: string;
   recommendedIngredients: string;
   recommendedUsage: string;

@@ -64,12 +64,45 @@ const EYE_TECH_STACK = [
   }
 ];
 
+const HAIR_SCALP_PROCESSING_STEPS = [
+  { id: 1, text: "Activating TrichoScan™ Imaging...", icon: "memory" },
+  { id: 2, text: "Mapping Scalp & Hair Density...", icon: "face" },
+  { id: 3, text: "Analyzing Follicular Miniaturization...", icon: "gesture" },
+  { id: 4, text: "Assessing Scalp Health Markers...", icon: "biotech" },
+  { id: 5, text: "Classifying Hair Loss Pattern...", icon: "science" },
+  { id: 6, text: "Generating Trichology Report...", icon: "lightbulb" },
+  { id: 7, text: "Finalizing Recommendations...", icon: "auto-awesome" },
+];
+
+const HAIR_SCALP_TECH_STACK = [
+  {
+    name: "TrichoScan™ HD",
+    description: "High-resolution scalp imaging system",
+    icon: "auto-awesome-motion"
+  },
+  {
+    name: "FollicleMap™ Analyzer",
+    description: "Advanced follicular density mapping",
+    icon: "image"
+  },
+  {
+    name: "ScalpMatrix™",
+    description: "Clinically-validated scalp assessment",
+    icon: "cloud"
+  },
+  {
+    name: "Miniaturization Detector",
+    description: "AI-based follicle miniaturization analysis",
+    icon: "smartphone"
+  }
+];
+
 interface ProcessingIndicatorProps {
   isAnalyzing?: boolean;
   processingText?: string;
   showDetailedSteps?: boolean;
   showTechStack?: boolean;
-  analysisType?: 'facial' | 'eye';
+  analysisType?: 'facial' | 'eye' | 'hairScalp';
 }
 
 // Define valid typography styles
@@ -90,7 +123,7 @@ const TYPOGRAPHY_STYLES = {
 
 const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   isAnalyzing = true,
-  processingText = "Clinical-grade dermatological analysis in progress",
+  processingText,
   showDetailedSteps = true,
   showTechStack = true,
   analysisType = 'facial',
@@ -255,6 +288,24 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     outputRange: ['0deg', '360deg'],
   });
 
+  // Determine processing text and steps based on analysisType
+  let displayProcessingText = processingText;
+  let steps = PROCESSING_STEPS;
+  let techStack = TECH_STACK;
+  if (analysisType === 'hairScalp') {
+    displayProcessingText = t('hairScalpProcessingText') || 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.';
+    steps = HAIR_SCALP_PROCESSING_STEPS;
+    techStack = HAIR_SCALP_TECH_STACK;
+  } else if (analysisType === 'eye') {
+    displayProcessingText = t('eyeProcessingText') || 'Analyzing your eye area...';
+    steps = PROCESSING_STEPS;
+    techStack = EYE_TECH_STACK;
+  } else {
+    displayProcessingText = processingText || t('processingText') || 'Clinical-grade dermatological analysis in progress';
+    steps = PROCESSING_STEPS;
+    techStack = TECH_STACK;
+  }
+
   if (!isAnalyzing) return null;
 
   return (
@@ -281,16 +332,16 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
             </Animated.View>
           </View>
 
-          <Text style={styles.title}>{processingText}</Text>
+          <Text style={styles.title}>{displayProcessingText}</Text>
 
-          {showDetailedSteps && PROCESSING_STEPS[currentStep] && (
+          {showDetailedSteps && steps[currentStep] && (
             <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
               <CustomIcon
-                name={PROCESSING_STEPS[currentStep].icon}
+                name={steps[currentStep].icon}
                 size={20}
                 color={COLORS.secondary.main}
               />
-              <Text style={styles.stepText}>{PROCESSING_STEPS[currentStep].text}</Text>
+              <Text style={styles.stepText}>{steps[currentStep].text}</Text>
             </Animated.View>
           )}
 
@@ -316,7 +367,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
             <View style={styles.techStackContainer}>
               <Text style={styles.techStackTitle}>Powered by cutting-edge technology</Text>
               <View style={styles.techGridContainer}>
-                {(analysisType === 'eye' ? EYE_TECH_STACK : TECH_STACK).map((tech, index) => (
+                {techStack.map((tech, index) => (
                   <Animated.View
                     key={index}
                     style={[styles.techGridItem, { opacity: index === currentTech ? 1 : 0.6 }]}

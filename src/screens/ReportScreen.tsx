@@ -169,7 +169,18 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const handleStartOver = () => {
-    navigation.popToTop();
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
+  };
+
+  // Return to home screen
+  const handleReturnHome = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
   };
 
   // --- Navigation Handlers for Eye Report Buttons ---
@@ -355,15 +366,24 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
                   </Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton]}
-                onPress={() => navigation.navigate('HairTreatments', {
-                  hairScalpAnalysisResult,
-                  imageUris: imageUris || []
-                })}
-              >
-                <Text style={styles.buttonText}>{t('viewHairTreatments')}</Text>
-              </TouchableOpacity>
+              {/* Pair "View Hair Treatments" with "Return to Home" */}
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]}
+                  onPress={() => navigation.navigate('HairTreatments', {
+                    hairScalpAnalysisResult,
+                    imageUris: imageUris || []
+                  })}
+                >
+                  <Text style={styles.buttonText}>{t('viewHairTreatments')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]}
+                  onPress={handleReturnHome}
+                >
+                  <Text style={styles.buttonText}>{t('returnToHome')}</Text>
+                </TouchableOpacity>
+              </View>
             </>
           ) : analysisType === 'eye' ? (
             <>
@@ -382,31 +402,49 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
                   <Text style={styles.secondaryPurpleButtonText}>{t('viewEyeSkincare')}</Text>
                 </TouchableOpacity>
               </View>
-              {/* Full width button below */}
-               <TouchableOpacity
-                style={[styles.button, styles.primaryButton]} // Full width primary button
-                onPress={handleViewEyeTreatments}
-              >
-                <Text style={styles.buttonText}>{t('viewEyeTreatments')}</Text>
-              </TouchableOpacity>
+              {/* Pair "View Eye Treatments" with "Return to Home" */}
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]}
+                  onPress={handleViewEyeTreatments}
+                >
+                  <Text style={styles.buttonText}>{t('viewEyeTreatments')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]}
+                  onPress={handleReturnHome}
+                >
+                  <Text style={styles.buttonText}>{t('returnToHome')}</Text>
+                </TouchableOpacity>
+              </View>
             </>
           ) : (
             <>
-              {/* Existing Treatment Report Buttons */}
+              {/* Existing Treatment Report Buttons - now in a row */}
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.shareButton]}
+                  onPress={handleShare}
+                  disabled={generating}
+                >
+                  <Text style={styles.buttonText}>
+                    {generating ? t('generating') : t('shareReport')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.halfButton, styles.primaryButton]} // Changed to primary, was secondary
+                  onPress={handleReturnHome}
+                >
+                  <Text style={styles.buttonText}>{t('returnToHome')}</Text>
+                </TouchableOpacity>
+              </View>
+              {/* Start Over button remains full width if needed, or could also be part of a row */}
+              {/* For now, let's assume Start Over might be a less frequent action or styled differently */}
               <TouchableOpacity
-                style={[styles.button, styles.shareButton]}
-                onPress={handleShare}
-                disabled={generating}
-              >
-                <Text style={styles.buttonText}>
-                  {generating ? t('generating') : t('shareReport')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.startOverButton]}
+                style={[styles.button, styles.secondaryButton]} // Kept as secondary, full width for now
                 onPress={handleStartOver}
               >
-                <Text style={styles.startOverButtonText}>{t('startOver')}</Text>
+                <Text style={styles.secondaryButtonText}>{t('startOver')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -699,8 +737,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
-  buttonText: {
-    color: 'white',
+  buttonText: { // Style for text in primary buttons
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

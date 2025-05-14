@@ -8,6 +8,7 @@ import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, TYPOGRAPHY } from '../constant
 import { useLocalization } from '../i18n/localizationContext';
 import { EyeAreaAnalysisResult, EyeFeature } from '../types/eyeAnalysis'; // Use eye-specific types
 import SkinMatrixHeader from '../components/SkinMatrixHeader'; // Re-use header if applicable
+import ClinicalEvaluationSection from '../components/ClinicalEvaluationSection';
 // FeatureSeverityRating is temporarily removed for debugging
 // import FeatureSeverityRating from '../components/FeatureSeverityRating'; 
 
@@ -114,6 +115,14 @@ const EyeAnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.healthDisclaimerText}>{t('eyeHealthDisclaimer')}</Text>
           </View>
         )}
+        
+        {/* Clinical Evaluation Section */}
+        <View style={{marginHorizontal: SPACING.sm, marginBottom: SPACING.md}}>
+          <ClinicalEvaluationSection
+            analysisType="eye"
+            sessionId={eyeAnalysisResult.id || `eye_${new Date().toISOString()}`}
+          />
+        </View>
       </ScrollView>
     </View>
   );

@@ -169,7 +169,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
       navigation.navigate('RecommendedTreatments', {
         imageUri,
-        base64Image,
+        // base64Image, // RecommendedTreatmentsScreen does not expect this param
         recommendedTreatments,
         reasons,
         visitPurpose,
@@ -189,6 +189,14 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         appointmentLength,
       });
     }
+  };
+
+  // Navigate back to home screen
+  const handleReturnHome = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }]
+    });
   };
 
   const renderErrorContent = () => {
@@ -269,7 +277,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
               <Button
                 title={t('takeNewPhoto')}
                 icon="photo-camera"
-                onPress={() => navigation.navigate('Camera')}
+                onPress={() => navigation.navigate({ name: 'Camera', params: {} })}
                 variant="primary"
                 style={styles.actionButton}
               />
@@ -449,6 +457,13 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
                 variant="primary"
                 style={styles.nextButton}
               />
+              <Button
+                title={t('returnToHome')}
+                icon="home"
+                onPress={handleReturnHome}
+                variant="primary"
+                style={styles.nextButton}
+              />
               {/* Analyze Eye Area Button Removed */}
               {/* View Eye Analysis Button Removed */}
             </View>
@@ -465,7 +480,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       {loading && (
         <ProcessingIndicator
           isAnalyzing={true}
-          processingText={isEyeAnalysis ? t('analyzingEyeArea') : t('analyzing')}
+          processingText={isEyeAnalysis ? t('analyzingEyeAreaDetailPoints') : t('analyzingFacialDetailPoints')}
           showDetailedSteps={true}
           showTechStack={true}
           analysisType={isEyeAnalysis ? 'eye' : 'facial'}
@@ -839,6 +854,9 @@ const styles = StyleSheet.create({
     letterSpacing: TYPOGRAPHY.caption.letterSpacing,
     color: COLORS.text.secondary,
   } as TextStyle,
+  homeButton: {
+    marginBottom: SPACING.sm,
+  },
 });
 
 export default AnalysisScreen;

@@ -297,7 +297,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     steps = HAIR_SCALP_PROCESSING_STEPS;
     techStack = HAIR_SCALP_TECH_STACK;
   } else if (analysisType === 'eye') {
-    displayProcessingText = t('eyeProcessingText') || 'Analyzing your eye area...';
+    displayProcessingText = t('analyzingEyeAreaDetailPoints') || 'Analyzing your eye area...';
     steps = PROCESSING_STEPS;
     techStack = EYE_TECH_STACK;
   } else {

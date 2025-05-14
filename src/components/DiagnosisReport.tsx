@@ -7,6 +7,7 @@ import FeatureSeverityRating from './FeatureSeverityRating';
 import { AnalysisResult } from '../types';
 import { useLocalization } from '../i18n/localizationContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import ClinicalEvaluationSection from './ClinicalEvaluationSection';
 
 interface DiagnosisReportProps {
   onClose: () => void;
@@ -245,15 +246,10 @@ const DiagnosisReport: React.FC<DiagnosisReportProps> = ({ onClose, analysisResu
           </View>
 
           {/* Clinical Evaluation - Full width */}
-          <View style={styles.clinicalEvaluation}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="medical-services" size={24} color={COLORS.primary.main} />
-              <Text style={[TYPOGRAPHY.h5, { color: COLORS.text.primary, marginBottom: SPACING.sm }]}>
-                {t('clinicalEvaluation')}
-              </Text>
-            </View>
-            <Text style={styles.evaluationText}>{t('evaluationText')}</Text>
-          </View>
+          <ClinicalEvaluationSection
+            analysisType="fullFace"
+            sessionId={analysisResult?.id || new Date().toISOString()}
+          />
 
           <View style={styles.disclaimer}>
             <View style={styles.disclaimerHeader}>

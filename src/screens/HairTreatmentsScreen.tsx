@@ -148,8 +148,14 @@ const HairTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Handle continue action
   const handleContinue = () => {
-    // Go back to the report screen
-    navigation.goBack();
+    navigation.navigate('Report', {
+      analysisType: 'hairScalp',
+      hairScalpAnalysisResult: hairScalpAnalysisResult,
+      imageUris: imageUris,
+      treatmentIds: selectedTreatments,
+      // visitPurpose and appointmentLength are not passed to HairTreatmentsScreen
+      // so they cannot be forwarded here unless added to its route params.
+    });
   };
 
   // Render a treatment card

@@ -59,7 +59,7 @@ export const translations: Record<string, Record<string, string>> = {
     // Analysis Screen
     analyzing: 'Analyzing your skin... Our AI is processing 500+ data points from your image, analyzing texture, tone, pores, and specific conditions. This advanced analysis requires significant computing power and references thousands of clinical cases to provide personalized insights equivalent to multiple specialist consultations.',
     estimatedTime: 'Estimated time: 3 minutes',
-    viewTreatmentPlan: 'View treatment plan',
+    viewTreatmentPlan: 'View Treatment Plan',
     clinicalLensAnalysis: 'ClinicalLens™ Analysis',
     skinMatrixResults: 'SkinMatrix™ Analysis Results',
     poweredByAesthetiScan: 'Powered by AesthetiScan™ technology',
@@ -114,8 +114,9 @@ export const translations: Record<string, Record<string, string>> = {
     takeNewPhoto: 'Take New Photo',
     analyzeEyeArea: 'Analyze Eye Area',
     viewEyeAnalysis: 'View Eye Analysis',
-    analyzingEyeArea: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.',
-    eyeProcessingText: 'Analyzing your eye area... Our AI is processing 300+ data points from your image, focusing on fine lines, puffiness, dark circles, and skin texture around the eyes. This specialized analysis references thousands of clinical cases to provide insights equivalent to an oculoplastic consultation.',
+    analyzingFacialDetailPoints: 'Analyzing your facial skin... Our DermaGraph™ AI is processing over 500 data points, assessing texture, tone, pores, and specific conditions to provide insights equivalent to multiple specialist consultations.',
+    analyzingEyeAreaDetailPoints: 'Analyzing your eye area... Our OptiScan™ AI is processing over 300 data points, focusing on fine lines, puffiness, dark circles, and texture to provide insights equivalent to an oculoplastic consultation.',
+    analyzingHairScalpDetailPoints: 'Analyzing your hair & scalp... Our AI is processing numerous data points to assess hair density, scalp health, and follicular miniaturization for personalized haircare strategies.',
 
     // Treatment Screen
     recommendedTreatments: 'Recommended Treatments',
@@ -323,6 +324,7 @@ export const translations: Record<string, Record<string, string>> = {
     evaluationText: 'Enter clinical notes and evaluation...',
     saveEvaluation: 'Save Evaluation',
     evaluationSaved: 'Evaluation saved',
+    enterClinicalNotes: 'Enter clinical notes here:',
   },
   zh: {
     // General
@@ -429,8 +431,9 @@ export const translations: Record<string, Record<string, string>> = {
     takeNewPhoto: '拍摄新照片',
     analyzeEyeArea: '分析眼部区域',
     viewEyeAnalysis: '查看眼部分析',
-    analyzingEyeArea: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。',
-    eyeProcessingText: '正在分析您的眼部区域... 我们的AI正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理。这项专业分析参考了数千个临床案例，旨在提供相当于眼整形外科咨询的见解。',
+    analyzingFacialDetailPoints: '正在分析您的面部皮肤... 我们的 DermaGraph™ AI 正在处理您图像中的500多个数据点，评估纹理、肤色、毛孔和特定皮肤状况，为您提供相当于多次专家咨询的个性化见解。',
+    analyzingEyeAreaDetailPoints: '正在分析您的眼部区域... 我们的 OptiScan™ AI 正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理，旨在提供相当于眼整形外科咨询的见解。',
+    analyzingHairScalpDetailPoints: '正在分析您的头发与头皮... 我们的AI正在处理众多数据点，以评估头发密度、头皮健康状况和毛囊微型化，为个性化护发策略提供详细见解。',
 
     // Treatment Screen
     recommendedTreatments: '推荐的治疗方案',
@@ -641,6 +644,7 @@ export const translations: Record<string, Record<string, string>> = {
     evaluationText: '输入临床备注和评估...',
     saveEvaluation: '保存评估',
     evaluationSaved: '评估已保存',
+    enterClinicalNotes: '在此输入临床备注：',
   }
 };
 
@@ -712,3 +716,4 @@ export const LocalizationProvider: React.FC<{children: React.ReactNode}> = ({ ch
 
 // Custom hook to use localization
 export const useLocalization = () => useContext(LocalizationContext);
+

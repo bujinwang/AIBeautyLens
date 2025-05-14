@@ -250,7 +250,7 @@ export const TYPOGRAPHY = {
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   }
-};
+} as const;
 
 // Spacing scale (in pixels)
 export const SPACING = {

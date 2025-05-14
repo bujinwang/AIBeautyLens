@@ -13,6 +13,8 @@ import { TREATMENTS } from '../constants/treatments';
 import { SkincareProduct, SKINCARE_PRODUCTS } from '../constants/skincareProducts';
 import { HairScalpAnalysisResult, HaircareRecommendationsResult } from '../types/hairScalpAnalysis';
 
+const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
+
 // Navigation reference for navigation outside of components
 // This is used in the navigate function below
 let _navigationRef: any = null;
@@ -600,7 +602,7 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
         ],
         generation_config: {
           temperature: 0.6,
-          max_output_tokens: 8192,
+          max_output_tokens: DEFAULT_MAX_OUTPUT_TOKENS,
           response_mime_type: "application/json",
           top_p: 0.8,
           top_k: 40
@@ -916,7 +918,7 @@ export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, ap
         ],
         generation_config: {
           temperature: 0.6,
-          max_output_tokens: 8192,
+          max_output_tokens: DEFAULT_MAX_OUTPUT_TOKENS,
           response_mime_type: "application/json",
           top_p: 0.8,
           top_k: 40
@@ -1234,7 +1236,7 @@ Focus on objective, visible changes between the images. Be specific and detailed
         temperature: 0.1,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        maxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
         responseMimeType: "application/json"
       },
       safetySettings: [
@@ -1313,7 +1315,7 @@ Focus on objective, visible changes between the images. Be specific and detailed
         temperature: 0.1,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 4096,
+        maxOutputTokens: DEFAULT_MAX_OUTPUT_TOKENS,
         responseMimeType: "application/json"
       },
       safetySettings: [
@@ -1449,210 +1451,223 @@ function extractAnalysisResults(responseText: string, language: string = 'en') {
     // Log a sample of the response
     console.log('Response text sample:', responseText.substring(0, 200) + '...');
     
-    // Look for JSON pattern in the response text
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    // Look for JSON pattern in the response text - use less greedy regex
+    // This first tries to find { ... } that has valid JSON content
+    const jsonRegexPatterns = [
+      /\{(?:[^{}]|"[^"]*"|\{(?:[^{}]|"[^"]*")*\})*\}/g, // Less greedy pattern to find potential JSON objects
+      /\{[\s\S]*\}/g // Fallback to more greedy pattern
+    ];
     
-    if (!jsonMatch) {
-      console.error('No JSON found in response, trying fallback parsing');
-      // Try to extract structured data in a different way
-      const improvementMatch = responseText.match(/improvement[:\s]*([^.\n,]+)/i);
-      const skinToneMatch = responseText.match(/skin tone[:\s]*([^.\n]+)/i);
-      const textureMatch = responseText.match(/texture[:\s]*([^.\n]+)/i);
-      const wrinkleMatch = responseText.match(/wrinkle[:\s]*([^.\n]+)/i);
-      const moistureMatch = responseText.match(/moisture[:\s]*([^.\n]+)/i);
-      
-      // Extract recommendations
-      const recommendationsMatch = responseText.match(/recommendations?:?\s*([\s\S]+)$/i);
-      const recommendations = recommendationsMatch ? 
-        recommendationsMatch[1]
-          .split(/\d+\.|\n-|\*/)
-          .map((r: string) => r.trim())
-          .filter((r: string) => r.length > 10 && r.length < 200)
-          .slice(0, 4) : 
-        [];
-      
-      console.log('No improvementAreas found in response text, using fallback');
-      
-      return {
-        analysisResults: {
-          improvement: improvementMatch?.[1]?.trim() || "Approximately 60-70%",
-          skinToneChange: skinToneMatch?.[1]?.trim() || "Noticeable brightening and evening of skin tone",
-          textureChange: textureMatch?.[1]?.trim() || "Smoother texture with reduced visibility of pores",
-          wrinkleReduction: wrinkleMatch?.[1]?.trim() || "Moderate reduction in fine lines",
-          moistureLevel: moistureMatch?.[1]?.trim() || "Improved hydration levels"
-        },
-        improvementAreas: [
-          {
-            area: "Around eyes [EXTRACTED FALLBACK]",
-            description: "Noticeable reduction in fine lines and increased firmness",
-            coordinates: {
-              x: 50,
-              y: 40,
-              radius: 12
+    let jsonMatch = null;
+    let validJson: any = null;
+    // jsonMatch is not used by the primary parsing logic anymore.
+    // bestMatchString is also not strictly needed if direct parse is prioritized.
+
+    // 1. Attempt to parse the entire responseText directly
+    try {
+      // Clean potential markdown backticks before parsing
+      const cleanedResponseText = responseText.replace(/^```json\s*|```\s*$/g, '').trim();
+      if (cleanedResponseText) { // Ensure not trying to parse an empty string after cleaning
+        const parsedDirectly = JSON.parse(cleanedResponseText);
+        if (parsedDirectly && typeof parsedDirectly === 'object') {
+          validJson = parsedDirectly;
+          // console.log('Successfully parsed entire responseText directly.'); // DEBUG
+          // console.log('Parsed validJson object (direct parse):', JSON.stringify(validJson, null, 2)); // DEBUG
+        }
+      } else {
+        // console.log('Response text was empty after cleaning markdown, skipping direct parse.'); // DEBUG
+      }
+    } catch (e) {
+      // console.log('Direct parse of entire responseText failed. Will attempt regex matching.', e); // DEBUG
+    }
+
+    // 2. If direct parse failed, attempt regex-based search
+    if (!validJson) {
+      // console.log('Attempting regex-based JSON extraction...'); // DEBUG
+      for (const regexPattern of jsonRegexPatterns) {
+        const matches = responseText.matchAll(regexPattern);
+        let potentialValidJsons: { jsonObject: object, stringValue: string }[] = [];
+        
+        for (const match of matches) {
+          try {
+            const possibleJsonString = match[0];
+            const possibleJson = JSON.parse(possibleJsonString);
+            if (possibleJson && typeof possibleJson === 'object') {
+              potentialValidJsons.push({ jsonObject: possibleJson, stringValue: possibleJsonString });
             }
-          },
-          {
-            area: "Cheeks [EXTRACTED FALLBACK]",
-            description: "Improved skin tone and texture",
-            coordinates: {
-              x: 30,
-              y: 50,
-              radius: 15
-            }
-          },
-          {
-            area: "Forehead [EXTRACTED FALLBACK]",
-            description: "Smoother appearance with fewer fine lines",
-            coordinates: {
-              x: 50,
-              y: 20,
-              radius: 14
-            }
+          } catch (regexParseError) {
+            // This specific regex match isn't valid JSON, continue
+            continue;
           }
-        ],
-        recommendations: recommendations.length > 0 ? recommendations : [
-          "Continue with current treatments as they show positive results",
-          "Consider adding vitamin C serum for enhanced results",
-          "Maintain sunscreen application to protect your progress",
-          "Stay consistent with your current skincare routine"
-        ]
-      };
+        }
+
+        if (potentialValidJsons.length > 0) {
+          // Select the longest valid JSON string as the most likely candidate
+          potentialValidJsons.sort((a, b) => b.stringValue.length - a.stringValue.length);
+          validJson = potentialValidJsons[0].jsonObject;
+          // bestMatchString = potentialValidJsons[0].stringValue; // Keep if needed for logging
+          // console.log('Selected best valid JSON via regex from response'); // DEBUG
+          // console.log('Best parsed validJson object (regex):', JSON.stringify(validJson, null, 2)); // DEBUG
+          break; // Found a good candidate with this regex pattern
+        }
+      }
     }
     
-    // Parse the JSON from the matched string
-    try {
-      const analysisResults = JSON.parse(jsonMatch[0]);
-      console.log('Successfully parsed JSON response');
-      
-      // Check if improvementAreas exists and has the correct format
-      if (!analysisResults.improvementAreas || !Array.isArray(analysisResults.improvementAreas) || analysisResults.improvementAreas.length === 0) {
-        console.warn('Parsed JSON is missing improvementAreas array or it is empty');
+    // If direct parsing or regex parsing worked, validate and return
+    if (validJson) {
+      return ensureRequiredFields(validJson, language);
+    }
+    
+    // 3. If no valid JSON found by direct parse or regex, try fixing the original responseText
+    if (!validJson) { // Ensure this block only runs if validJson is still null
+      // console.log('No parseable JSON found by direct or regex methods, attempting to fix original responseText'); // DEBUG
+      let jsonString: string = responseText; // Initialize with the original responseText for fixing
         
-        // Add fallback improvement areas if missing
-        analysisResults.improvementAreas = [
-          {
-            area: "Around eyes [JSON FALLBACK]",
-            description: "Noticeable reduction in fine lines and increased firmness",
-            coordinates: {
-              x: 50,
-              y: 40,
-              radius: 12
-            }
-          },
-          {
-            area: "Cheeks [JSON FALLBACK]",
-            description: "Improved skin tone and texture",
-            coordinates: {
-              x: 30,
-              y: 50,
-              radius: 15
-            }
-          },
-          {
-            area: "Forehead [JSON FALLBACK]",
-            description: "Smoother appearance with fewer fine lines",
-            coordinates: {
-              x: 50,
-              y: 20,
-              radius: 14
-            }
-          }
-        ];
-      } else {
-        // Validate and fix each improvement area
-        analysisResults.improvementAreas = analysisResults.improvementAreas.map((area: any, index: number) => {
-          if (!area.coordinates || typeof area.coordinates !== 'object') {
-            console.warn(`ImprovementArea at index ${index} is missing coordinates, adding default`);
-            area.coordinates = {
-              x: 50,
-              y: 40 + (index * 10),
-              radius: 12
-            };
-          } else {
-            // Make sure coordinates are numbers and in the correct range
-            if (typeof area.coordinates.x !== 'number' || area.coordinates.x < 0 || area.coordinates.x > 100) {
-              console.warn(`Invalid x coordinate in area ${index}, fixing:`, area.coordinates.x);
-              area.coordinates.x = 50;
-            }
-            
-            if (typeof area.coordinates.y !== 'number' || area.coordinates.y < 0 || area.coordinates.y > 100) {
-              console.warn(`Invalid y coordinate in area ${index}, fixing:`, area.coordinates.y);
-              area.coordinates.y = 40 + (index * 10);
-            }
-            
-            if (typeof area.coordinates.radius !== 'number' || area.coordinates.radius < 5 || area.coordinates.radius > 20) {
-              console.warn(`Invalid radius in area ${index}, fixing:`, area.coordinates.radius);
-              area.coordinates.radius = 12;
-            }
-          }
-          return area;
-        });
-      }
-      
-      // Log the parsed improvementAreas for debugging
-      console.log('Final improvementAreas:', JSON.stringify(analysisResults.improvementAreas));
-      
-      return analysisResults;
-    } catch (jsonError) {
-      console.error('Error parsing JSON match:', jsonError);
-      console.log('JSON match that failed to parse:', jsonMatch[0].substring(0, 200) + '...');
-      
-      // Try to fix potential JSON issues (missing closing brackets, etc)
-      try {
-        let fixedJson = jsonMatch[0];
-        // Count opening and closing brackets
-        const openBraces = (fixedJson.match(/\{/g) || []).length;
-        const closeBraces = (fixedJson.match(/\}/g) || []).length;
-        const openBrackets = (fixedJson.match(/\[/g) || []).length;
-        const closeBrackets = (fixedJson.match(/\]/g) || []).length;
+      // Clean up any control characters or non-printable characters
+        jsonString = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
         
-        // Add missing closing braces/brackets
+        // Count opening and closing braces/brackets
+        const openBraces = (jsonString.match(/\{/g) || []).length;
+        const closeBraces = (jsonString.match(/\}/g) || []).length;
+        const openBrackets = (jsonString.match(/\[/g) || []).length;
+        const closeBrackets = (jsonString.match(/\]/g) || []).length;
+        
+        // Balance braces and brackets
         if (openBraces > closeBraces) {
-          fixedJson += '}'.repeat(openBraces - closeBraces);
+          jsonString += '}'.repeat(openBraces - closeBraces);
         }
         if (openBrackets > closeBrackets) {
-          fixedJson += ']'.repeat(openBrackets - closeBrackets);
+          jsonString += ']'.repeat(openBrackets - closeBrackets);
         }
         
-        // Try to parse the fixed JSON
-        const fixedResults = JSON.parse(fixedJson);
-        console.log('Successfully parsed fixed JSON');
-        
-        // Check and fix improvementAreas in the fixed result
-        if (!fixedResults.improvementAreas || !Array.isArray(fixedResults.improvementAreas) || fixedResults.improvementAreas.length === 0) {
-          console.warn('Fixed JSON is missing improvementAreas array or it is empty');
-          fixedResults.improvementAreas = [
-            {
-              area: "Around eyes [FIXED FALLBACK]",
-              description: "Noticeable reduction in fine lines and increased firmness",
-              coordinates: {
-                x: 50,
-                y: 40,
-                radius: 12
-              }
-            },
-            {
-              area: "Cheeks [FIXED FALLBACK]",
-              description: "Improved skin tone and texture",
-              coordinates: {
-                x: 30,
-                y: 50,
-                radius: 15
-              }
-            }
-          ];
+        // Fix other common JSON syntax errors
+        jsonString = jsonString
+          .replace(/,\s*[\}\]]/g, '$&') // Fix trailing commas
+          .replace(/\]\s*\{/g, '],[{') // Fix missing commas between array items
+          .replace(/\}\s*\{/g, '},{') // Fix missing commas between objects
+          .replace(/([,\{\[]\s*)(\w+)(\s*:)/g, '$1"$2"$3') // Add quotes to unquoted keys
+          .replace(/:(\s*)([^",\{\[\]\s][^,\{\[\]\s]*)([\s,\}\]])/g, ':"$2"$3'); // Add quotes to unquoted values
+          
+          // console.log('Attempting to parse fixed jsonString:', jsonString); // DEBUG
+          try {
+          // Parse the fixed JSON
+          const analysisResults = JSON.parse(jsonString);
+          console.log('Successfully parsed JSON after fixes');
+          return ensureRequiredFields(analysisResults, language);
+        } catch (jsonError) {
+          console.error('Error parsing fixed JSON:', jsonError);
+          
+          // Try a more aggressive fix as a last resort
+          try {
+            // Convert problematic } to escaped form if they appear in values
+            const furtherFixedJson = jsonString.replace(/(?<=[^\\]"[^"]*)}(?=[^"]*")/g, '\\}');
+            // console.log('Attempting to parse furtherFixedJson:', furtherFixedJson); // DEBUG
+            const lastResults = JSON.parse(furtherFixedJson);
+            console.log('Successfully parsed JSON with aggressive fixes');
+            return ensureRequiredFields(lastResults, language);
+          } catch (lastError) {
+            console.error('All JSON parsing attempts failed:', lastError);
+            return provideFallbackResponse(language);
+          }
         }
-        
-        return fixedResults;
-      } catch (fixError) {
-        console.error('Failed to fix and parse JSON:', fixError);
-        return provideFallbackResponse(language);
-      }
-    }
+    } // This closes the `if (!validJson)` block for step 3.
+    
+    // This is the ultimate fallback if all prior attempts (direct, regex, fixing) failed.
+    console.warn('No JSON structure found in response after all attempts, falling back');
+    return provideFallbackResponse(language);
   } catch (parseError) {
     console.error('Error parsing response text:', parseError);
     return provideFallbackResponse(language);
   }
+}
+
+// Helper function to ensure all required fields exist with fallbacks if needed
+function ensureRequiredFields(analysisResults: any, language: string = 'en') {
+  // Ensure analysisResults field exists
+  if (!analysisResults.analysisResults) {
+    console.warn('Parsed JSON is missing analysisResults object');
+    
+    // Add fallback analysis results based on language
+    analysisResults.analysisResults = language === 'zh' ? {
+      improvement: "约67% [FALLBACK]",
+      skinToneChange: "肤色明显变亮，更加均匀 [FALLBACK]",
+      textureChange: "肤质更加光滑，毛孔减少约43% [FALLBACK]",
+      wrinkleReduction: "眼部细纹减少约35% [FALLBACK]",
+      moistureLevel: "水分含量提高约28% [FALLBACK]"
+    } : {
+      improvement: "67% [FALLBACK]",
+      skinToneChange: "Significant brightening observed [FALLBACK]",
+      textureChange: "Smoother texture with 43% reduction in visible pores [FALLBACK]",
+      wrinkleReduction: "35% reduction in fine lines around eyes [FALLBACK]",
+      moistureLevel: "Improved by 28% [FALLBACK]"
+    };
+  }
+
+  // Check if improvementAreas exists and has the correct format
+  if (!analysisResults.improvementAreas || !Array.isArray(analysisResults.improvementAreas) || analysisResults.improvementAreas.length === 0) {
+    console.warn('Parsed JSON is missing improvementAreas array or it is empty');
+    
+    // Add fallback improvement areas based on language
+    analysisResults.improvementAreas = language === 'zh' ? [
+      {
+        area: "眼部周围 [FALLBACK]",
+        description: "细纹明显减少，皮肤更加紧致 [FALLBACK]",
+        coordinates: {
+          x: 50,
+          y: 40,
+          radius: 12
+        }
+      },
+      {
+        area: "T区 [FALLBACK]",
+        description: "毛孔缩小，油光减少 [FALLBACK]",
+        coordinates: {
+          x: 50,
+          y: 30,
+          radius: 15
+        }
+      }
+    ] : [
+      {
+        area: "Around eyes [FALLBACK]",
+        description: "Noticeable reduction in fine lines and increased firmness",
+        coordinates: {
+          x: 50,
+          y: 40,
+          radius: 12
+        }
+      },
+      {
+        area: "Cheeks [FALLBACK]",
+        description: "Improved skin tone and texture",
+        coordinates: {
+          x: 30,
+          y: 50,
+          radius: 15
+        }
+      }
+    ];
+  }
+  
+  // Check if recommendations exist and add fallbacks if needed
+  if (!analysisResults.recommendations || !Array.isArray(analysisResults.recommendations) || analysisResults.recommendations.length === 0) {
+    console.warn('Parsed JSON is missing recommendations array or it is empty');
+    
+    // Add fallback recommendations based on language
+    analysisResults.recommendations = language === 'zh' ? [
+      "继续当前的护理方案 [FALLBACK]",
+      "考虑添加维生素C精华以增强效果 [FALLBACK]",
+      "坚持使用防晒霜保护皮肤改善成果 [FALLBACK]",
+      "每周使用一次保湿面膜以提供额外水分 [FALLBACK]"
+    ] : [
+      "Continue with current treatments [FALLBACK]",
+      "Consider adding vitamin C serum for enhanced results [FALLBACK]",
+      "Maintain sunscreen application for best results [FALLBACK]",
+      "Use a hydrating mask once a week for additional moisture [FALLBACK]"
+    ];
+  }
+  
+  return analysisResults;
 }
 
 // Helper function to preprocess images (resize/compress)
@@ -1861,7 +1876,20 @@ export const analyzeHairScalpImages = async (
       console.error('Raw Gemini response (hair/scalp):', text);
       throw new Error('The analysis result could not be processed. Please try again or use different images.');
     }
-    return result;
+    // Get current date in YYYY-MM-DD format
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+
+    // Add or overwrite the assessmentDate in the result
+    const resultWithDate = {
+      ...result,
+      assessmentDate: formattedDate,
+    };
+
+    return resultWithDate;
   } catch (error: any) {
     logNetworkError('analyzeHairScalpImages', error);
     throw new Error(error?.message || 'Failed to analyze hair/scalp images');
@@ -1938,3 +1966,4 @@ export const getHaircareRecommendations = async (
       : 'These recommendations are based on your hair analysis. Consult a dermatologist for severe or persistent issues.'
   };
 };
+

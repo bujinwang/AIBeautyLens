@@ -100,6 +100,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     }
 
     navigation.navigate('Report', {
+      analysisType: 'fullFace', // Explicitly set analysisType for clarity
       treatmentIds: selectedTreatments,
       beforeImage: imageUri,
     });

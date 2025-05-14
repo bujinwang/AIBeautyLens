@@ -27,7 +27,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   const navigateToCamera = (analysisType: 'facial' | 'eye' | 'hairScalp' = 'facial') => {
     console.log(`HomeScreen: Navigating to Camera for ${analysisType} analysis`);
-    navigation.navigate('Camera', { analysisType });
+    navigation.navigate('Camera', { mode: analysisType });
   };
 
   const navigateToLogoGenerator = () => {
@@ -47,7 +47,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   const navigateToBeforeAfterAnalysis = () => {
     console.log("HomeScreen: Navigating to Before/After Analysis");
-    navigation.navigate('BeforeAfterAnalysis');
+    navigation.navigate('BeforeAfterAnalysis', { beforeImage: '', afterImage: '' });
   };
 
   console.log("HomeScreen: Rendering");

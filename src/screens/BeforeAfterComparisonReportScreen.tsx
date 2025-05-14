@@ -19,8 +19,10 @@ type Props = {
 
 const BeforeAfterComparisonReportScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t } = useLocalization();
-  const { beforeImage, afterImage, analysisResults } = route.params;
+  const { beforeImage, afterImage, analysisResult } = route.params;
   const [generating, setGenerating] = useState(false);
+  // For backward compatibility with existing code - rename analysisResult to analysisResults  
+  const analysisResults = analysisResult;
 
   // Add error tracking for missing data
   const [hasDataError, setHasDataError] = useState(false);
@@ -35,21 +37,38 @@ const BeforeAfterComparisonReportScreen: React.FC<Props> = ({ route, navigation 
       improvementAreasLength: analysisResults?.improvementAreas?.length || 0
     }));
     
+    // More lenient validation to use fallback values when needed
     if (!analysisResults) {
-      console.warn('No analysis results received');
-      setHasDataError(true);
-    } else if (!analysisResults.analysisResults) {
-      console.warn('Missing analysisResults field in response');
-      setHasDataError(true);
-    } else if (!analysisResults.recommendations) {
-      console.warn('Missing recommendations field in response');
-      setHasDataError(true);
-    } else if (!analysisResults.improvementAreas || analysisResults.improvementAreas.length === 0) {
-      console.warn('Missing or empty improvementAreas field in response:', analysisResults.improvementAreas);
+      console.warn('No analysis results received, using fallback data');
       setHasDataError(true);
     } else {
-      console.log('Analysis results integrity check passed');
-      console.log('Received improvement areas:', JSON.stringify(analysisResults.improvementAreas));
+      // Check each critical component and warn if missing, but don't set error if we have fallbacks
+      let missingFields = [];
+      
+      if (!analysisResults.analysisResults) {
+        console.warn('Missing analysisResults field in response');
+        missingFields.push('analysisResults');
+      }
+      
+      if (!analysisResults.recommendations || analysisResults.recommendations.length === 0) {
+        console.warn('Missing or empty recommendations field in response');
+        missingFields.push('recommendations');
+      }
+      
+      if (!analysisResults.improvementAreas || analysisResults.improvementAreas.length === 0) {
+        console.warn('Missing or empty improvementAreas field in response');
+        missingFields.push('improvementAreas');
+      }
+      
+      // Only show warning banner if we're missing critical fields or using fallbacks
+      setHasDataError(missingFields.length > 0);
+      
+      if (missingFields.length > 0) {
+        console.log(`Using fallback data for missing fields: ${missingFields.join(', ')}`);
+      } else {
+        console.log('Analysis results integrity check passed');
+        console.log('Received improvement areas:', JSON.stringify(analysisResults.improvementAreas));
+      }
     }
   }, [analysisResults]);
 

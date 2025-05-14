@@ -35,7 +35,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const [hairScalpImages, setHairScalpImages] = useState<any[]>([]);
   const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
   const cameraRef = useRef<Camera>(null);
-  const analysisType: 'facial' | 'eye' | 'hairScalp' = route?.params?.analysisType || 'facial';
+  const currentMode: 'facial' | 'eye' | 'hairScalp' | 'beforeAfter' = route?.params?.mode || 'facial';
 
   useEffect(() => {
     (async () => {
@@ -139,7 +139,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
         }
       }
 
-      if (analysisType === 'eye') {
+      if (currentMode === 'eye') {
         setIsEyeAnalyzing(true);
         try {
           const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
@@ -258,7 +258,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
       {isEyeAnalyzing && (
         <ProcessingIndicator 
           isAnalyzing={isEyeAnalyzing} 
-          processingText={t('analyzingEyeArea')}
+          processingText={t('analyzingEyeAreaDetailPoints')}
           analysisType="eye"
           showDetailedSteps={true}
           showTechStack={true}
@@ -268,7 +268,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
       {isHairScalpAnalyzing && (
         <ProcessingIndicator 
           isAnalyzing={isHairScalpAnalyzing} 
-          processingText={t('analyzingHairScalp')}
+          processingText={t('analyzingHairScalpDetailPoints')}
           analysisType="hairScalp"
           showDetailedSteps={true}
           showTechStack={true}
@@ -378,14 +378,14 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                       });
                     }
                     
-                    if (analysisType === 'facial') {
+                    if (currentMode === 'facial') {
                       navigation.navigate('Analysis', {
                         imageUri: capturedImage.uri,
                         base64Image: base64Data,
                         visitPurpose: visitPurpose,
                         appointmentLength: appointmentLength
                       });
-                    } else if (analysisType === 'eye') {
+                    } else if (currentMode === 'eye') {
                       setIsEyeAnalyzing(true);
                       try {
                         const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
@@ -402,7 +402,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                       } finally {
                         setIsEyeAnalyzing(false);
                       }
-                    } else if (analysisType === 'hairScalp') {
+                    } else if (currentMode === 'hairScalp') {
                       setIsHairScalpAnalyzing(true);
                       try {
                         const uris = [capturedImage.uri];
@@ -430,8 +430,8 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
               >
                 <Text style={[styles.buttonText, styles.primaryButtonText]}>
                   {isEyeAnalyzing || isHairScalpAnalyzing ? t('analyzing') : 
-                    analysisType === 'eye' ? t('startEyeAnalysis') : 
-                    analysisType === 'hairScalp' ? t('startHairScalpAnalysis') : 
+                    currentMode === 'eye' ? t('startEyeAnalysis') : 
+                    currentMode === 'hairScalp' ? t('startHairScalpAnalysis') : 
                     t('startAnalysis')}
                 </Text>
               </TouchableOpacity>

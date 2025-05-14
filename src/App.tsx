@@ -65,9 +65,14 @@ export type RootStackParamList = {
     visitPurpose?: string;
   };
   RecommendedTreatments: {
-    analysisResult: any;
     imageUri: string;
+    recommendedTreatments: string[];
+    reasons: { [key: string]: string[] };
+    visitPurpose?: string;
+    appointmentLength?: string;
+    // analysisResult: any; // Replaced by more specific params
   };
+  LogoGenerator: undefined; // Added for LogoGenerator route
   HairScalpAnalysis: {
     imageUris: string[];
     hairScalpAnalysisResult?: HairScalpAnalysisResult;
@@ -92,7 +97,7 @@ export type RootStackParamList = {
     beforeImage?: string;
     afterImage?: string;
     visitPurpose?: string;
-    appointmentLength?: number;
+    appointmentLength?: string;
     imageUris?: string[];
     hairScalpAnalysisResult?: HairScalpAnalysisResult;
   };

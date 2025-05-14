@@ -176,7 +176,7 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
       navigation.navigate('BeforeAfterComparisonReport', {
         beforeImage: beforeImage.base64,
         afterImage: afterImage.base64,
-        analysisResults: analysisResults
+        analysisResult: analysisResults
       });
       
     } catch (error) {

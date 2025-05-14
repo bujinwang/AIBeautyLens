@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView, Alert, ViewStyle } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -36,6 +36,62 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
   const cameraRef = useRef<Camera>(null);
   const currentMode: 'facial' | 'eye' | 'hairScalp' | 'beforeAfter' = route?.params?.mode || 'facial';
+
+  const getFrameConfig = () => {
+    // Initialize with common properties from faceFrameContainer
+    let containerStyle: ViewStyle = {
+      position: 'absolute', // Assuming this is always 'absolute' from styles.faceFrameContainer
+      alignItems: 'center', // Assuming this is always 'center'
+      justifyContent: 'center', // Assuming this is always 'center'
+      // Default dimensions from the base faceFrameContainer style
+      top: styles.faceFrameContainer.top,
+      left: styles.faceFrameContainer.left,
+      right: styles.faceFrameContainer.right,
+      bottom: styles.faceFrameContainer.bottom,
+    };
+    let frameStyle: ViewStyle = styles.faceFrame;
+    let tipTextKey = 'centerYourFace';
+    let showCorners = true;
+
+    switch (currentMode) {
+      case 'eye':
+        containerStyle = {
+          ...containerStyle, // Keep common properties like position, alignItems, justifyContent
+          top: styles.eyeFrameContainer.top,
+          left: styles.eyeFrameContainer.left,
+          right: styles.eyeFrameContainer.right,
+          bottom: styles.eyeFrameContainer.bottom,
+        };
+        frameStyle = { ...styles.faceFrame, ...styles.eyeFrame };
+        tipTextKey = 'centerYourEyes'; // Ensure this key is in your i18n files
+        showCorners = true; // Show corners for a distinct rectangle
+        break;
+      case 'hairScalp':
+        containerStyle = {
+          ...containerStyle, // Keep common properties
+          top: styles.hairScalpFrameContainer.top,
+          left: styles.hairScalpFrameContainer.left,
+          right: styles.hairScalpFrameContainer.right,
+          bottom: styles.hairScalpFrameContainer.bottom,
+        };
+        frameStyle = { ...styles.faceFrame, ...styles.hairScalpFrame };
+        tipTextKey = 'centerYourScalp'; // Ensure this key is in your i18n files
+        showCorners = false;
+        break;
+      case 'facial':
+        // containerStyle already defaults to faceFrameContainer dimensions
+        frameStyle = { ...styles.faceFrame, ...styles.facialFrame };
+        tipTextKey = 'centerYourFace';
+        break;
+      default:
+        // Defaults to 'facial' style if mode is 'beforeAfter' or unexpected
+        // containerStyle already defaults to faceFrameContainer dimensions
+        frameStyle = { ...styles.faceFrame, ...styles.facialFrame };
+        tipTextKey = 'centerYourFace';
+        break;
+    }
+    return { containerStyle, frameStyle, tipText: t(tipTextKey), showCorners };
+  };
 
   useEffect(() => {
     (async () => {
@@ -447,15 +503,24 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
             ratio="4:3"
           >
             <View style={styles.cameraOverlay}>
-              <View style={styles.faceFrameContainer}>
-                <View style={styles.faceFrame}>
-                  <View style={[styles.cornerBorder, styles.topLeft]} />
-                  <View style={[styles.cornerBorder, styles.topRight]} />
-                  <View style={[styles.cornerBorder, styles.bottomLeft]} />
-                  <View style={[styles.cornerBorder, styles.bottomRight]} />
-                </View>
-                <Text style={styles.frameTip}>{t('centerYourFace')}</Text>
-              </View>
+              {(() => {
+                const { containerStyle, frameStyle, tipText, showCorners } = getFrameConfig();
+                return (
+                  <View style={containerStyle}>
+                    <View style={frameStyle}>
+                      {showCorners && (
+                        <>
+                          <View style={[styles.cornerBorder, styles.topLeft]} />
+                          <View style={[styles.cornerBorder, styles.topRight]} />
+                          <View style={[styles.cornerBorder, styles.bottomLeft]} />
+                          <View style={[styles.cornerBorder, styles.bottomRight]} />
+                        </>
+                      )}
+                    </View>
+                    <Text style={styles.frameTip}>{tipText}</Text>
+                  </View>
+                );
+              })()}
 
               <TouchableOpacity
                 style={styles.flipButton}
@@ -689,10 +754,10 @@ const styles = StyleSheet.create({
   },
   cornerBorder: {
     position: 'absolute',
-    width: 30,
-    height: 30,
+    width: 20, // Reduced for subtlety
+    height: 20, // Reduced for subtlety
     borderColor: COLORS.primary.main, // Use a distinct color
-    borderWidth: 4,
+    borderWidth: 3, // Reduced for subtlety
   },
   topLeft: {
     top: -2,
@@ -785,6 +850,32 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Styles for 'eye' mode
+  eyeFrameContainer: {
+    top: '40%', // Increased to make it shorter
+    left: '15%', // Decreased to make it wider
+    right: '15%', // Decreased to make it wider
+    bottom: '40%', // Increased to make it shorter (Results in W:70%, H:20% container)
+  },
+  eyeFrame: {
+    borderRadius: 10, // Smaller radius for a short, wide rectangle
+  },
+
+  // Styles for 'hairScalp' mode
+  hairScalpFrameContainer: {
+    top: '20%', // Square container W:60%, H:60%
+    left: '20%',
+    right: '20%',
+    bottom: '20%',
+  },
+  hairScalpFrame: {
+    borderRadius: 9999, // Makes it a circle if container is square
+  },
+
+  // Style for 'facial' mode to make it more oval-like
+  facialFrame: {
+    borderRadius: 180, // Increased for a more pronounced oval/elegant face shape
   },
 });
 

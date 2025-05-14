@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   routineText: {
     fontSize: 14,
-    color: COLORS.text.secondary,
+    color: COLORS.primary.contrast, // Changed for better contrast on primary.light background
     lineHeight: 20,
   },
   noProductsContainer: {

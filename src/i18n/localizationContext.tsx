@@ -46,6 +46,8 @@ export const translations: Record<string, Record<string, string>> = {
     appointmentLength: 'Appointment Length',
     positionFace: 'Position your face within the frame for best results',
     centerYourFace: 'Ensure eyes and forehead are centered in the frame',
+    centerYourEyes: 'Align eyes within the frame',
+    centerYourScalp: 'Align scalp within the frame',
     gallery: 'Gallery',
     capture: 'Capture',
     beginAnalysis: 'Full Face Analysis', // Updated text
@@ -363,6 +365,8 @@ export const translations: Record<string, Record<string, string>> = {
     appointmentLength: '预约时长',
     positionFace: '将您的脸放在框内以获得最佳效果',
     centerYourFace: '确保眼睛和额头在框内居中',
+    centerYourEyes: '请将眼睛对准取景框',
+    centerYourScalp: '请将头顶部置于框内',
     gallery: '相册',
     capture: '拍摄',
     beginAnalysis: '全脸分析', // Updated text

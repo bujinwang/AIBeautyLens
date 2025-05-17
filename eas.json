@@ -27,10 +27,18 @@
         "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w"
       }
     },
-    "web_production": {
-      "distribution": "internal",
+    "production-us": {
+      "extends": "production",
       "env": {
-        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w"
+        "APP_REGION": "US",
+        "EXPO_PUBLIC_DEFAULT_LANGUAGE": "en"
+      }
+    },
+    "production-china": {
+      "extends": "production",
+      "env": {
+        "APP_REGION": "CN",
+        "EXPO_PUBLIC_DEFAULT_LANGUAGE": "zh"
       }
     }
   },
@@ -44,6 +52,12 @@
       "android": {
         "track": "production"
       }
+    },
+    "production-us": {
+      "extends": "production"
+    },
+    "production-china": {
+      "extends": "production"
     }
   }
 }

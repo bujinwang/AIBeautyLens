@@ -669,11 +669,12 @@ const LocalizationContext = createContext<LocalizationContextType>({
 });
 
 export const LocalizationProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
-  // Get saved language or default to English
-  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+  // Determine initial language: AsyncStorage > ENV_VAR > 'en'
+  const initialLanguage = process.env.EXPO_PUBLIC_DEFAULT_LANGUAGE || 'en';
+  const [currentLanguage, setCurrentLanguage] = useState<string>(initialLanguage);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load saved language on mount
+  // Load saved language on mount, overriding the initialLanguage if present
   useEffect(() => {
     const loadLanguage = async () => {
       try {
@@ -681,9 +682,11 @@ export const LocalizationProvider: React.FC<{children: React.ReactNode}> = ({ ch
         if (savedLanguage) {
           setCurrentLanguage(savedLanguage);
         }
+        // If no saved language, currentLanguage remains initialLanguage (from ENV or 'en')
         setIsLoaded(true);
       } catch (error) {
         console.error('Error loading language preference:', error);
+        // In case of error, still proceed with initialLanguage
         setIsLoaded(true);
       }
     };

@@ -3,7 +3,6 @@
     "name": "AIBeautyLens",
     "slug": "AIBeautyLens",
     "version": "1.0.6",
-    "platforms": ["ios", "android", "web"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -37,7 +36,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1E3A8A"
       },
-      "package": "com.yourcompany.aibeautylens",
+      "package": "com.autobebesys.aibeautylens",
       "versionCode": 5,
       "permissions": [
         "CAMERA",
@@ -48,8 +47,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       [

@@ -93,29 +93,45 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
       if (!result.canceled) {
         const selectedAsset = result.assets?.[0];
         if (selectedAsset) {
-          // Ensure the directory exists for caching
-          const imagesDir = FileSystem.cacheDirectory + 'images';
-          const dirInfo = await FileSystem.getInfoAsync(imagesDir);
-          if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(imagesDir, { intermediates: true });
-          }
-
-          const newUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
-          await FileSystem.copyAsync({ from: selectedAsset.uri, to: newUri });
-          
-          // Try to read base64 data if not available
+          let finalUri = selectedAsset.uri;
           let base64Data = selectedAsset.base64;
-          if (!base64Data) {
-            try {
-              base64Data = await FileSystem.readAsStringAsync(newUri, {
-                encoding: FileSystem.EncodingType.Base64,
-              });
-            } catch (readError) {
-              console.error(`Error reading ${mode} image as base64:`, readError);
+
+          if (Platform.OS !== 'web') {
+            // Native platforms: continue with caching logic
+            const imagesDir = FileSystem.cacheDirectory + 'images';
+            const dirInfo = await FileSystem.getInfoAsync(imagesDir);
+            if (!dirInfo.exists) {
+              await FileSystem.makeDirectoryAsync(imagesDir, { intermediates: true });
+            }
+
+            const newCachedUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
+            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newCachedUri });
+            finalUri = newCachedUri; // Use the cached URI for native
+
+            if (!base64Data) {
+              try {
+                base64Data = await FileSystem.readAsStringAsync(finalUri, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+              } catch (readError) {
+                console.error(`Error reading ${mode} image as base64 from cache:`, readError);
+              }
+            }
+          } else {
+            // Web platform: use the URI and base64 directly from ImagePicker
+            // The URI might be a blob URI or data URI, base64 should be available
+            if (!base64Data && finalUri.startsWith('data:')) {
+                // If base64 is not directly provided but URI is a data URI, extract it
+                base64Data = finalUri.substring(finalUri.indexOf(',') + 1);
+            } else if (!base64Data) {
+                // Fallback if base64 is still missing (should be rare with base64: true)
+                console.warn(`Base64 data not available for ${mode} image on web, URI: ${finalUri}`);
+                // Attempt to fetch and convert blob URI if necessary, though ImagePicker should provide base64
+                // This part can be expanded if blob URIs without direct base64 become an issue
             }
           }
 
-          const processedImage = {...selectedAsset, uri: newUri, base64: base64Data};
+          const processedImage = {...selectedAsset, uri: finalUri, base64: base64Data};
           
           // Use the explicitly passed mode parameter instead of currentMode
           if (mode === 'before') {

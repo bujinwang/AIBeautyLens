@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Platform } from 'react-native';
 
 /**
  * Resizes an image to reduce its file size while maintaining quality
@@ -38,12 +39,21 @@ export const imageToBase64 = async (uri: string): Promise<string> => {
  */
 export const getImageFileSize = async (uri: string): Promise<number> => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
-    // Use type assertion to work around TypeScript limitation
-    const size = (fileInfo as any).size || 0;
-    return size / (1024 * 1024); // Convert to MB
+    if (Platform.OS === 'web' && uri.startsWith('data:')) {
+      // For web data URIs, estimate size from base64 string length
+      // Remove "data:image/jpeg;base64," or similar prefix
+      const base64String = uri.substring(uri.indexOf(',') + 1);
+      // Base64 string length is roughly 4/3 of the original data size
+      const size = (base64String.length * 3) / 4;
+      return size / (1024 * 1024); // Convert to MB
+    } else {
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      // Use type assertion to work around TypeScript limitation
+      const size = (fileInfo as any).size || 0;
+      return size / (1024 * 1024); // Convert to MB
+    }
   } catch (error) {
-    console.error('Error getting file size:', error);
+    console.error('Error getting file size for URI:', uri, error);
     return 0;
   }
 };

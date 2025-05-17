@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, TextStyle, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, TextStyle, Dimensions, ScrollView, Platform } from 'react-native';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import CustomIcon from './CustomIcon';
 import AILogoIcon from './AILogoIcon';
@@ -167,7 +167,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
         toValue: 1,
         duration: 1500,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       })
     );
 
@@ -179,12 +179,12 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
         Animated.timing(pulseValue, {
           toValue: 1.1,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulseValue, {
           toValue: 1,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     );
@@ -230,7 +230,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
           Animated.timing(fadeValue, {
             toValue: 1,
             duration: 250,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
           return next;
         });
@@ -253,7 +253,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     Animated.timing(techFadeValue, {
       toValue: 1,
       duration: 250,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
 
     const techInterval = setInterval(() => {
@@ -266,12 +266,12 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
           Animated.timing(techFadeValue, {
             toValue: 0,
             duration: 150,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(techFadeValue, {
             toValue: 1,
             duration: 150,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]).start();
         return next;

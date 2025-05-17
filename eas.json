@@ -26,9 +26,24 @@
       "env": {
         "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w"
       }
+    },
+    "web_production": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GEMINI_API_KEY": "AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "bwang@autobebesys.com",
+        "ascAppId": "6478294324",
+        "appleTeamId": "8YA9NZNLCS"
+      },
+      "android": {
+        "track": "production"
+      }
+    }
   }
-} 
+}

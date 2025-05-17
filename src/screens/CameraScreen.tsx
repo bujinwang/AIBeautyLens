@@ -131,41 +131,60 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
       if (!result.canceled) {
         const selectedAsset = result.assets?.[0];
         if (selectedAsset) {
-          // Check if the URI is a file and not a directory
-          if (selectedAsset.uri.startsWith('file://')) {
+          let finalUri = selectedAsset.uri;
+          let base64Data = selectedAsset.base64;
+
+          if (Platform.OS !== 'web' && selectedAsset.uri.startsWith('file://')) {
+            // Native platforms: continue with caching logic
             const imagesDir = FileSystem.cacheDirectory + 'images';
-            // Ensure the directory exists
             const dirInfo = await FileSystem.getInfoAsync(imagesDir);
             if (!dirInfo.exists) {
               await FileSystem.makeDirectoryAsync(imagesDir, { intermediates: true });
             }
+            const newCachedUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
+            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newCachedUri });
+            finalUri = newCachedUri;
 
-            const newUri = imagesDir + '/' + selectedAsset.uri.split('/').pop();
-            await FileSystem.copyAsync({ from: selectedAsset.uri, to: newUri });
-            
-            // If we don't have base64 from the image picker, try to read it
-            let base64Data = selectedAsset.base64;
             if (!base64Data) {
               try {
-                base64Data = await FileSystem.readAsStringAsync(newUri, {
+                base64Data = await FileSystem.readAsStringAsync(finalUri, {
                   encoding: FileSystem.EncodingType.Base64,
                 });
                 console.log('Successfully read base64 data from selected image');
               } catch (readError) {
-                console.error('Error reading selected image as base64:', readError);
+                console.error('Error reading selected image as base64 from cache:', readError);
+                // Optionally, alert the user or handle the error appropriately
               }
             }
-
-            setPreviewVisible(true);
-            setCapturedImage({...selectedAsset, uri: newUri, base64: base64Data});
+          } else if (Platform.OS === 'web') {
+            // Web platform: use the URI and base64 directly from ImagePicker
+            if (!base64Data && finalUri && finalUri.startsWith('data:')) {
+                base64Data = finalUri.substring(finalUri.indexOf(',') + 1);
+            } else if (!base64Data) {
+                console.warn(`Base64 data not available for picked image on web, URI: ${finalUri}`);
+            }
           } else {
-            // Show an alert to the user instead of rendering/logging a string in the UI
+            // This case handles non-file URIs on native platforms (unlikely for picker) or other unexpected scenarios.
+            console.warn(`Unsupported URI type or platform for image picking: ${selectedAsset.uri}`);
             Alert.alert(
               t('invalidImageTitle'),
               t('invalidImageMessage'),
               [{ text: t('ok') }]
             );
-            return;
+            return; // Exit if the image can't be processed
+          }
+
+          // Ensure base64Data is not undefined before proceeding
+          if (typeof base64Data === 'string' || (base64Data === null && Platform.OS !== 'web')) { // Allow null base64 for native if it was already null and not re-read
+            setPreviewVisible(true);
+            setCapturedImage({...selectedAsset, uri: finalUri, base64: base64Data});
+          } else {
+            console.error('Failed to obtain base64 data for the selected image on web or image is invalid.');
+            Alert.alert(
+              t('imageProcessingErrorTitle') || 'Image Error',
+              t('imageProcessingErrorMessage') || 'Could not process the selected image. Please try again.',
+              [{ text: t('ok') }]
+            );
           }
         }
       }

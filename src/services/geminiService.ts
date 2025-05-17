@@ -412,6 +412,13 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
   } else {
     base64Image = imageUri;
   }
+
+  // Ensure base64 string does not contain the data URI prefix
+  const prefixMatchFacial = /^data:image\/(jpeg|png);base64,/.exec(base64Image);
+  if (prefixMatchFacial) {
+    base64Image = base64Image.substring(prefixMatchFacial[0].length);
+  }
+
   // Get the current language from AsyncStorage
   let currentLanguage = 'en';
   try {
@@ -850,6 +857,12 @@ export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, ap
     });
   } else {
     base64Image = imageUri;
+  }
+
+  // Ensure base64 string does not contain the data URI prefix
+  const prefixMatchEye = /^data:image\/(jpeg|png);base64,/.exec(base64Image);
+  if (prefixMatchEye) {
+    base64Image = base64Image.substring(prefixMatchEye[0].length);
   }
   
   // Get the current language from AsyncStorage
@@ -1845,7 +1858,18 @@ export const analyzeHairScalpImages = async (
   // Convert all images to base64
   const base64Images: string[] = [];
   for (const uri of imageUris) {
-    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    let base64: string;
+    if (uri.startsWith('file://')) {
+      base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    } else {
+      base64 = uri; // Assume it's already a base64 string or data URI
+    }
+
+    // Ensure base64 string does not contain the data URI prefix
+    const prefixMatchHair = /^data:image\/(jpeg|png);base64,/.exec(base64);
+    if (prefixMatchHair) {
+      base64 = base64.substring(prefixMatchHair[0].length);
+    }
     base64Images.push(base64);
   }
 

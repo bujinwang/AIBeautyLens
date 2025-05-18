@@ -79,18 +79,15 @@ Price: $${product.price}
  * @param currentLanguage - The current UI language
  * @param treatmentsList - List of available treatments
  * @param visitPurpose - Optional purpose of the visit
- * @param appointmentLength - Optional appointment length
  * @returns The formatted prompt
  */
 export const getEyeAreaAnalysisPrompt = (
   currentLanguage: string,
   treatmentsList: string,
-  visitPurpose?: string,
-  appointmentLength?: string,
-  skinType?: string
+  visitPurpose?: string
 ): string => {
   // Generate list of suitable products for the prompt
-  const productsList = generateProductsList(skinType);
+  const productsList = generateProductsList(undefined);
   return `You are an expert aesthetic medical professional and licensed dermatologist specializing in eye area analysis and skincare recommendations. You also have basic knowledge to identify potential eye health concerns that warrant referral to an ophthalmologist. Provide comprehensive clinical assessments of eye area features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed.
 
 ${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze this image focusing specifically on the eye area, including under-eye region, eyelids, and surrounding skin. Also, briefly assess the visible parts of the eye itself for potential health concerns.
@@ -187,7 +184,6 @@ IMPORTANT: Keep your response concise but complete. Focus on the most relevant c
 ${treatmentsList}
 
 ${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
-${appointmentLength ? `APPOINTMENT LENGTH: ${appointmentLength}` : ''}
 
 IMPORTANT CLINICAL GUIDELINES:
 1. Base all assessments solely on visible evidence in the image
@@ -218,18 +214,15 @@ ${treatmentsList}`; // Include the products and treatments lists in the prompt
  * @param currentLanguage - The current UI language
  * @param treatmentsList - List of available treatments
  * @param visitPurpose - Optional purpose of the visit
- * @param appointmentLength - Optional appointment length
  * @returns The formatted prompt
  */
 export const getFacialAnalysisPrompt = (
   currentLanguage: string,
   treatmentsList: string,
-  visitPurpose?: string,
-  appointmentLength?: string,
-  skinType?: string
+  visitPurpose?: string
 ): string => {
   // Generate list of suitable products for the prompt
-  const productsList = generateProductsList(skinType);
+  const productsList = generateProductsList(undefined);
   return `You are an expert aesthetic medical professional and licensed dermatologist specializing in facial analysis and skincare recommendations. Provide comprehensive clinical assessments of facial features, skin conditions, and personalized treatment recommendations. Your analysis should be thorough and detailed, similar to a professional dermatological consultation.
 
 ${currentLanguage === 'zh' ? 'Please respond in Simplified Chinese (简体中文). ' : ''}Analyze this image for facial features, skin conditions, and provide a detailed clinical assessment.
@@ -322,7 +315,6 @@ VERY IMPORTANT: BE CONCISE. Prioritize the most critical information. Avoid leng
 ${treatmentsList}
 
 ${visitPurpose ? `PURPOSE OF VISIT: ${visitPurpose}` : ''}
-${appointmentLength ? `APPOINTMENT LENGTH: ${appointmentLength}` : ''}
 
 IMPORTANT CLINICAL GUIDELINES:
 1. Base all assessments solely on visible evidence in the image

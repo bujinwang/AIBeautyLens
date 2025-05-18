@@ -30,7 +30,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>('');
-  const [appointmentLength, setAppointmentLength] = useState<string>('1hr'); // Defaulting to a value, adjust if needed
   const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false);
   const [hairScalpImages, setHairScalpImages] = useState<any[]>([]);
   const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
@@ -217,14 +216,13 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
       if (currentMode === 'eye') {
         setIsEyeAnalyzing(true);
         try {
-          const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+          const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
           if (analysisResult) {
             navigation.navigate('Report', {
               analysisType: 'eye',
               imageUri: capturedImage.uri,
               eyeAnalysisResult: analysisResult,
               visitPurpose: visitPurpose,
-              appointmentLength: appointmentLength
             });
           } else {
             Alert.alert(t('error'), t('eyeAnalysisFailed'));
@@ -241,7 +239,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
           imageUri: capturedImage.uri,
           base64Image: base64Data,
           visitPurpose: visitPurpose,
-          appointmentLength: appointmentLength
         });
       }
     } catch (error) {
@@ -272,7 +269,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
       }
 
       // Call the actual eye analysis service
-      const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+      const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
 
       // Check if analysis was successful before navigating
       if (analysisResult) {
@@ -284,7 +281,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
           eyeAnalysisResult: analysisResult, // Pass the eye results
           // Pass other relevant params if ReportScreen needs them for eye context
           visitPurpose: visitPurpose,
-          appointmentLength: appointmentLength
         });
       } else {
         // Handle case where analysisResult is null or undefined (error handled in service)
@@ -402,36 +398,6 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                   autoCapitalize="sentences"
                 />
               </View>
-              <View style={styles.formSection}>
-                <Text style={styles.formLabel}>{t('appointmentLength')}</Text>
-                <View style={styles.appointmentOptions}>
-                  {['1hr', '2hrs', '4hrs', '6hrs', '8hrs'].map((option) => (
-                    <TouchableOpacity
-                      key={option}
-                      style={[
-                        styles.appointmentOption,
-                        appointmentLength === option && styles.appointmentOptionSelected
-                      ]}
-                      onPress={() => setAppointmentLength(option)}
-                    >
-                      <View style={styles.appointmentOptionContent}>
-                        {(option === '2hrs' || option === '4hrs' || option === '6hrs' || option === '8hrs') ? (
-                          <MaterialIcons
-                            name="stars"
-                            size={16}
-                            color={appointmentLength === option ? COLORS.primary.main : COLORS.gray[400]}
-                            style={styles.vipIcon}
-                          />
-                        ) : null}
-                        <Text style={[
-                          styles.appointmentOptionText,
-                          appointmentLength === option && styles.appointmentOptionTextSelected
-                        ]}>{option}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
             </View>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
@@ -458,18 +424,16 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
                         imageUri: capturedImage.uri,
                         base64Image: base64Data,
                         visitPurpose: visitPurpose,
-                        appointmentLength: appointmentLength
                       });
                     } else if (currentMode === 'eye') {
                       setIsEyeAnalyzing(true);
                       try {
-                        const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose, appointmentLength);
+                        const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
                         navigation.navigate('Report', {
                           analysisType: 'eye',
                           imageUri: capturedImage.uri,
                           eyeAnalysisResult: analysisResult,
                           visitPurpose: visitPurpose,
-                          appointmentLength: appointmentLength
                         });
                       } catch (error: any) {
                         console.error('Error during eye analysis process:', error);
@@ -707,41 +671,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.paper,
     minHeight: 80, // Reduced from 100
     textAlignVertical: 'top',
-  },
-  appointmentOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  appointmentOption: {
-    flex: 1,
-    minWidth: '45%',
-    borderWidth: 1,
-    borderColor: COLORS.gray[200],
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: COLORS.background.paper,
-  },
-  appointmentOptionSelected: {
-    borderColor: COLORS.primary.main,
-    backgroundColor: COLORS.primary.light,
-  },
-  appointmentOptionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  vipIcon: {
-    marginRight: 4,
-  },
-  appointmentOptionText: {
-    fontSize: 16,
-    color: COLORS.text.primary,
-    textAlign: 'center',
-  },
-  appointmentOptionTextSelected: {
-    color: COLORS.primary.main,
-    fontWeight: '600',
   },
   cameraPreview: {
     width: '100%',

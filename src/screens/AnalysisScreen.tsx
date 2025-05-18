@@ -30,7 +30,7 @@ type Props = {
 
 const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const { t } = useLocalization();
-  const { imageUri, base64Image, visitPurpose: routeVisitPurpose, appointmentLength } = route.params;
+  const { imageUri, base64Image, visitPurpose: routeVisitPurpose } = route.params;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isQuotaError, setIsQuotaError] = useState(false);
@@ -73,10 +73,10 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsEyeAnalysis(type === 'eye');
       
       if (type === 'facial') {
-        const result = await analyzeFacialImage(base64Image, visitPurpose, appointmentLength);
+        const result = await analyzeFacialImage(base64Image, visitPurpose);
         setAnalysisResult(result);
       } else {
-        const result = await analyzeEyeArea(base64Image, visitPurpose, appointmentLength);
+        const result = await analyzeEyeArea(base64Image, visitPurpose);
         setEyeAnalysisResult(result);
       }
     } catch (error) {
@@ -173,7 +173,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         recommendedTreatments,
         reasons,
         visitPurpose,
-        appointmentLength,
       });
     }
   };
@@ -186,7 +185,6 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         base64Image,
         eyeAnalysisResult,
         visitPurpose,
-        appointmentLength,
       });
     }
   };
@@ -306,7 +304,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Display the visit purpose and appointment length as read-only information
   const renderVisitInfoSection = () => {
-    if (!visitPurpose && !appointmentLength) return null;
+    if (!visitPurpose) return null;
 
     return (
       <Card
@@ -317,19 +315,10 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         icon="assignment"
       >
         <View style={styles.visitInfoContainer}>
-          {visitPurpose ? (
-            <View style={styles.visitInfoItem}>
-              <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
-              <Text style={styles.visitInfoValue}>{visitPurpose}</Text>
-            </View>
-          ) : null}
-
-          {appointmentLength ? (
-            <View style={styles.visitInfoItem}>
-              <Text style={styles.visitInfoLabel}>{t('appointmentLengthLabel')}</Text>
-              <Text style={styles.visitInfoValue}>{appointmentLength}</Text>
-            </View>
-          ) : null}
+          <View style={styles.visitInfoItem}>
+            <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
+            <Text style={styles.visitInfoValue}>{visitPurpose}</Text>
+          </View>
         </View>
       </Card>
     );

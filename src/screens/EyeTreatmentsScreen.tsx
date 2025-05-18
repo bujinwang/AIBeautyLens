@@ -23,7 +23,6 @@ interface EyeTreatmentParams {
   eyeAnalysisResult: EyeAreaAnalysisResult; // Use correct type name
   imageUri?: string; // Optional image URI
   visitPurpose?: string;
-  appointmentLength?: string;
 }
 
 const EyeTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -32,7 +31,6 @@ const EyeTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
     eyeAnalysisResult,
     imageUri, // Keep if needed for display or next step
     visitPurpose,
-    appointmentLength
   } = route.params as EyeTreatmentParams;
 
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);

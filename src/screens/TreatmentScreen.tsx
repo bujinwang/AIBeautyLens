@@ -38,7 +38,6 @@ interface TreatmentParams {
   reasons: { [key: string]: string[] };
   benefits: { [key: string]: string[] };
   visitPurpose: string;
-  appointmentLength?: string;
 }
 
 // Define a Treatment type to match the TREATMENTS structure
@@ -56,7 +55,6 @@ interface SimulationParams {
   imageUri: string;
   base64Image: string;
   visitPurpose?: string;
-  appointmentLength?: string;
 }
 
 const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -75,7 +73,6 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
     reasons = {},
     benefits = {},
     visitPurpose = "",
-    appointmentLength = ""
   } = route.params as TreatmentParams;
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
@@ -414,23 +411,15 @@ const TreatmentScreen: React.FC<Props> = ({ route, navigation }) => {
 
   // Add a function to render visit information
   const renderVisitPurpose = () => {
-    if (!visitPurpose && !appointmentLength) return null;
+    if (!visitPurpose) return null;
 
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('visitInformation')}</Text>
-        {visitPurpose && (
-          <View style={styles.visitInfoItem}>
-            <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
-            <Text style={styles.purposeText}>{visitPurpose}</Text>
-          </View>
-        )}
-        {appointmentLength && (
-          <View style={styles.visitInfoItem}>
-            <Text style={styles.visitInfoLabel}>{t('appointmentLengthLabel')}</Text>
-            <Text style={styles.purposeText}>{appointmentLength}</Text>
-          </View>
-        )}
+        <View style={styles.visitInfoItem}>
+          <Text style={styles.visitInfoLabel}>{t('purposeOfVisitLabel')}</Text>
+          <Text style={styles.purposeText}>{visitPurpose}</Text>
+        </View>
       </View>
     );
   };

@@ -32,20 +32,17 @@ export type RootStackParamList = {
   Home: undefined;
   Camera: {
     mode?: 'facial' | 'eye' | 'beforeAfter' | 'hairScalp';
-    appointmentLength?: string;
     visitPurpose?: string; 
   };
   Analysis: {
     base64Image: string;
     imageUri: string;
     visitPurpose?: string;
-    appointmentLength?: string;
   };
   EyeAnalysis: {
     base64Image?: string;
     imageUri: string;
     visitPurpose?: string;
-    appointmentLength?: string;
     eyeAnalysisResult?: any;
   };
   BeforeAfterAnalysis: {
@@ -61,7 +58,6 @@ export type RootStackParamList = {
     base64Image?: string;
     imageUri?: string;
     analysisResult?: any;
-    appointmentLength?: string;
     visitPurpose?: string;
   };
   RecommendedTreatments: {
@@ -69,8 +65,6 @@ export type RootStackParamList = {
     recommendedTreatments: string[];
     reasons: { [key: string]: string[] };
     visitPurpose?: string;
-    appointmentLength?: string;
-    // analysisResult: any; // Replaced by more specific params
   };
   LogoGenerator: undefined; // Added for LogoGenerator route
   HairScalpAnalysis: {
@@ -81,7 +75,6 @@ export type RootStackParamList = {
     eyeAnalysisResult: any;
     imageUri?: string;
     visitPurpose?: string;
-    appointmentLength?: string;
   };
   HairTreatments: {
     hairScalpAnalysisResult: HairScalpAnalysisResult;
@@ -97,7 +90,6 @@ export type RootStackParamList = {
     beforeImage?: string;
     afterImage?: string;
     visitPurpose?: string;
-    appointmentLength?: string;
     imageUris?: string[];
     hairScalpAnalysisResult?: HairScalpAnalysisResult;
   };

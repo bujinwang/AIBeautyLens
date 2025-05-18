@@ -400,10 +400,9 @@ interface GeminiProductResponseData {
  * Analyzes a facial image and returns recommendations
  * @param base64Image - Base64 encoded image string
  * @param visitPurpose - Optional purpose of the visit
- * @param appointmentLength - Optional appointment length
  * @returns Analysis results including age, skin type, and treatment recommendations
  */
-export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string, appointmentLength?: string, skinType: string = 'all') => {
+export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string, skinType: string = 'all') => {
   let base64Image = '';
   if (imageUri.startsWith('file://')) {
     base64Image = await FileSystem.readAsStringAsync(imageUri, {
@@ -596,7 +595,7 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
             role: "user",
             parts: [
               {
-                text: getFacialAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, appointmentLength, skinType)
+                text: getFacialAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, skinType)
               },
               {
                 inline_data: {
@@ -846,10 +845,9 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
  * Analyzes eye area in an image and returns recommendations
  * @param base64Image - Base64 encoded image string
  * @param visitPurpose - Optional purpose of the visit
- * @param appointmentLength - Optional appointment length
  * @returns Analysis results including eye area conditions and treatment recommendations
  */
-export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, appointmentLength?: string, skinType: string = 'all') => {
+export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, skinType: string = 'all') => {
   let base64Image = '';
   if (imageUri.startsWith('file://')) {
     base64Image = await FileSystem.readAsStringAsync(imageUri, {
@@ -918,7 +916,7 @@ export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, ap
             role: "user",
             parts: [
               {
-                text: getEyeAreaAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, appointmentLength, skinType)
+                text: getEyeAreaAnalysisPrompt(currentLanguage, treatmentsList, visitPurpose, skinType)
               },
               {
                 inline_data: {

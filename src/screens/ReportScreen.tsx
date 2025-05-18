@@ -30,7 +30,6 @@ type Props = {
       beforeImage?: string;
       afterImage?: string;
       visitPurpose?: string;
-      appointmentLength?: number;
       imageUris?: string[];
       hairScalpAnalysisResult?: HairScalpAnalysisResult;
     };
@@ -49,7 +48,6 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
     treatmentIds = [],
     beforeImage,
     visitPurpose,
-    appointmentLength,
     imageUris,
     hairScalpAnalysisResult,
   } = route.params;
@@ -191,7 +189,6 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
         base64Image: '', // Assuming EyeAnalysisScreen doesn't need base64 directly
         eyeAnalysisResult: eyeAnalysisResult,
         visitPurpose: visitPurpose || '',
-        appointmentLength: appointmentLength !== undefined ? String(appointmentLength) : '',
       });
     }
   };
@@ -210,7 +207,6 @@ const ReportScreen: React.FC<Props> = ({ route, navigation }) => {
         eyeAnalysisResult: eyeAnalysisResult,
         imageUri: displayImageUri, // Pass image if needed by EyeTreatmentsScreen
         visitPurpose: visitPurpose || '',
-        appointmentLength: appointmentLength !== undefined ? String(appointmentLength) : '',
       });
     } else {
        Alert.alert(t('error'), t('noAnalysisDataAvailable')); // Add new i18n key if needed

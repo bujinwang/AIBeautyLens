@@ -21,7 +21,6 @@ interface TreatmentParams {
   recommendedTreatments: string[];
   reasons: { [key: string]: string[] };
   visitPurpose?: string;
-  appointmentLength?: string;
 }
 
 interface SimulationParams {
@@ -29,7 +28,6 @@ interface SimulationParams {
   imageUri: string;
   base64Image: string;
   visitPurpose?: string;
-  appointmentLength?: string;
 }
 
 const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -39,8 +37,7 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
     base64Image = "",
     recommendedTreatments = [],
     reasons = {},
-    visitPurpose,
-    appointmentLength
+    visitPurpose
   } = route.params as TreatmentParams;
 
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);

@@ -247,7 +247,7 @@ export default function App() {
 
   // Add debug logging for navigation
   const onNavigationStateChange = (state: any) => {
-    console.log('Navigation state changed:', state);
+    // Intentionally empty to prevent logging while keeping the function reference
   };
 
   console.log("App.tsx: Rendering, isInitialized =", isInitialized);

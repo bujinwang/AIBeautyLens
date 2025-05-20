@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform, TextInput, ScrollView, Alert, ViewStyle } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -25,16 +25,24 @@ type Props = {
 
 const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const { t, currentLanguage } = useLocalization();
+  const [permission, requestPermission] = useCameraPermissions();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [type, setType] = useState<CameraType>(CameraType.front);
+  const [facing, setFacing] = useState('front');
   const [previewVisible, setPreviewVisible] = useState(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>('');
   const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false);
   const [hairScalpImages, setHairScalpImages] = useState<any[]>([]);
   const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
-  const cameraRef = useRef<Camera>(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
   const currentMode: 'facial' | 'eye' | 'hairScalp' | 'beforeAfter' = route?.params?.mode || 'facial';
+
+  // Function to handle barcode scanning (empty implementation to prevent crash)
+  const handleBarcodeScanned = () => {
+    // Empty implementation 
+    // This prevents the error by having a constant handler instead of conditional logic
+  };
 
   const getFrameConfig = () => {
     // Initialize with common properties from faceFrameContainer
@@ -92,15 +100,23 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
     return { containerStyle, frameStyle, tipText: t(tipTextKey), showCorners };
   };
 
+  // Function to toggle camera facing
+  const toggleCameraFacing = () => {
+    setFacing(facing === 'front' ? 'back' : 'front');
+  };
+
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      console.log('Requesting camera permission...');
+      const cameraPermission = await requestPermission();
+      const status = cameraPermission.status === 'granted';
+      console.log('Camera permission granted:', status);
+      setHasPermission(status);
     })();
   }, []);
 
   const takePicture = async () => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current || !isCameraReady) return;
     try {
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
@@ -234,6 +250,25 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
         } finally {
           setIsEyeAnalyzing(false);
         }
+      } else if (currentMode === 'hairScalp') {
+        setIsHairScalpAnalyzing(true);
+        try {
+          const analysisResult = await analyzeHairScalpImages([capturedImage.uri], visitPurpose, currentLanguage);
+          if (analysisResult) {
+            navigation.navigate('HairScalpAnalysis', {
+              imageUris: [capturedImage.uri],
+              hairScalpAnalysisResult: analysisResult,
+            });
+          } else {
+            Alert.alert(t('error'), t('hairScalpAnalysisFailed'));
+          }
+        } catch (error: any) {
+          console.error('Error during hair & scalp analysis process:', error);
+          const errorMessage = error?.message || t('hairScalpAnalysisFailed');
+          Alert.alert(t('error'), errorMessage);
+        } finally {
+          setIsHairScalpAnalyzing(false);
+        }
       } else {
         navigation.navigate('Analysis', {
           imageUri: capturedImage.uri,
@@ -324,56 +359,10 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
+
   return (
     <View style={styles.container}>
-      {isEyeAnalyzing && (
-        <ProcessingIndicator 
-          isAnalyzing={isEyeAnalyzing} 
-          processingText={t('analyzingEyeAreaDetailPoints')}
-          analysisType="eye"
-          showDetailedSteps={true}
-          showTechStack={true}
-        />
-      )}
-
-      {isHairScalpAnalyzing && (
-        <ProcessingIndicator 
-          isAnalyzing={isHairScalpAnalyzing} 
-          processingText={t('analyzingHairScalpDetailPoints')}
-          analysisType="hairScalp"
-          showDetailedSteps={true}
-          showTechStack={true}
-        />
-      )}
-
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      <LinearGradient
-        colors={[COLORS.primary.dark, COLORS.primary.main, 'rgba(255,255,255,0.9)']}
-        locations={[0, 0.7, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={navigateToHome}
-          >
-            <CustomIcon name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-
-          <View style={styles.logoContainer}>
-            <Logo size="medium" showTagline={false} color="white" containerStyle={styles.logo} />
-          </View>
-
-          <View style={{ width: 40 }} />
-        </View>
-      </LinearGradient>
-
-      <View style={styles.subtitle}>
-        <Text style={styles.subtitleText}>{t('positionFace')}</Text>
-      </View>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary.dark} />
 
       {previewVisible && capturedImage ? (
         <ScrollView style={styles.previewScrollContainer}>
@@ -408,63 +397,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, styles.primaryButton]}
-                onPress={async () => {
-                  if (!capturedImage || !capturedImage.uri) return;
-                  
-                  try {
-                    let base64Data = capturedImage.base64 || '';
-                    if (!base64Data && capturedImage.uri) {
-                      base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
-                        encoding: FileSystem.EncodingType.Base64,
-                      });
-                    }
-                    
-                    if (currentMode === 'facial') {
-                      navigation.navigate('Analysis', {
-                        imageUri: capturedImage.uri,
-                        base64Image: base64Data,
-                        visitPurpose: visitPurpose,
-                      });
-                    } else if (currentMode === 'eye') {
-                      setIsEyeAnalyzing(true);
-                      try {
-                        const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
-                        navigation.navigate('Report', {
-                          analysisType: 'eye',
-                          imageUri: capturedImage.uri,
-                          eyeAnalysisResult: analysisResult,
-                          visitPurpose: visitPurpose,
-                        });
-                      } catch (error: any) {
-                        console.error('Error during eye analysis process:', error);
-                        Alert.alert(t('error'), error?.message || t('eyeAnalysisFailed'));
-                      } finally {
-                        setIsEyeAnalyzing(false);
-                      }
-                    } else if (currentMode === 'hairScalp') {
-                      setIsHairScalpAnalyzing(true);
-                      try {
-                        const uris = [capturedImage.uri];
-                        const result = await analyzeHairScalpImages(uris, visitPurpose, currentLanguage);
-                        navigation.navigate('Report', {
-                          analysisType: 'hairScalp',
-                          imageUris: uris,
-                          imageUri: uris[0],
-                          hairScalpAnalysisResult: result,
-                          visitPurpose,
-                        });
-                      } catch (error: any) {
-                        console.error('Error during hair/scalp analysis:', error);
-                        Alert.alert(t('error'), error?.message || t('analysisUnavailable'));
-                      } finally {
-                        setIsHairScalpAnalyzing(false);
-                      }
-                    }
-                  } catch (error: any) { // Type error as 'any' here too
-                    console.error('Error preparing image for analysis:', error);
-                    Alert.alert(t('error'), t('analysisPreparationFailed'));
-                  }
-                }}
+                onPress={handleAnalyze}
                 disabled={isEyeAnalyzing || isHairScalpAnalyzing}
               >
                 <Text style={[styles.buttonText, styles.primaryButtonText]}>
@@ -479,64 +412,74 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
         </ScrollView>
       ) : (
         <View style={styles.cameraContainer}>
-          <Camera
+          <CameraView
             ref={cameraRef}
             style={styles.camera}
-            type={type}
+            facing={facing as any} // Type casting to avoid error
             ratio="4:3"
-          >
-            <View style={styles.cameraOverlay}>
-              {(() => {
-                const { containerStyle, frameStyle, tipText, showCorners } = getFrameConfig();
-                return (
-                  <View style={containerStyle}>
-                    <View style={frameStyle}>
-                      {showCorners && (
-                        <>
-                          <View style={[styles.cornerBorder, styles.topLeft]} />
-                          <View style={[styles.cornerBorder, styles.topRight]} />
-                          <View style={[styles.cornerBorder, styles.bottomLeft]} />
-                          <View style={[styles.cornerBorder, styles.bottomRight]} />
-                        </>
-                      )}
-                    </View>
-                    <Text style={styles.frameTip}>{tipText}</Text>
+            onBarcodeScanned={handleBarcodeScanned} // Always pass a handler
+            onCameraReady={() => { 
+              console.log('Camera is ready! Facing:', facing);
+              setIsCameraReady(true);
+            }}
+            onMountError={(error: { message: string }) => { 
+              console.error('CameraView Mount Error:', error.message);
+            }}
+          />
+          {/* Overlay elements, now siblings, positioned absolutely */}
+          <View style={styles.cameraOverlay}>
+            {(() => {
+              const { containerStyle, frameStyle, tipText, showCorners } = getFrameConfig();
+              
+              return (
+                <View style={containerStyle}>
+                  <View style={frameStyle}>
+                    {showCorners && (
+                      <>
+                        <View style={[styles.corner, styles.topLeftCorner]} />
+                        <View style={[styles.corner, styles.topRightCorner]} />
+                        <View style={[styles.corner, styles.bottomLeftCorner]} />
+                        <View style={[styles.corner, styles.bottomRightCorner]} />
+                      </>
+                    )}
                   </View>
-                );
-              })()}
+                  <Text style={styles.frameText}>{tipText}</Text>
+                </View>
+              );
+            })()}
 
-              <TouchableOpacity
-                style={styles.flipButton}
-                onPress={() => {
-                  setType(
-                    type === CameraType.back
-                      ? CameraType.front
-                      : CameraType.back
-                  );
-                }}
-              >
-                <CustomIcon name="flip-camera-ios" size={26} color="white" />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.flipButton}
+              onPress={toggleCameraFacing}
+            >
+              <CustomIcon name="flip-camera-ios" size={26} color="white" />
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton]}
-                onPress={pickImage}
-              >
-                <CustomIcon name="photo-library" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('gallery')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.primaryButton]}
-                onPress={takePicture}
-              >
-                <CustomIcon name="camera-alt" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('capture')}</Text>
-              </TouchableOpacity>
-            </View>
-          </Camera>
+          {/* Bottom button container, now a sibling, positioned absolutely */}
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity style={styles.pickButton} onPress={pickImage}>
+              <MaterialIcons name="photo-library" size={28} color="white" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+              <View style={styles.captureButtonInner} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.homeButton} onPress={navigateToHome}>
+              <MaterialIcons name="home" size={28} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
+      )}
+
+      {(isEyeAnalyzing || isHairScalpAnalyzing) && (
+        <ProcessingIndicator
+          isAnalyzing={true}
+          analysisType={isEyeAnalyzing ? 'eye' : isHairScalpAnalyzing ? 'hairScalp' : 'facial'}
+          showDetailedSteps={true}
+          showTechStack={true}
+        />
       )}
     </View>
   );
@@ -599,8 +542,8 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
-    justifyContent: 'flex-end',
-    borderRadius: 20,
+    // justifyContent: 'flex-end', // Removed for simplification
+    // borderRadius: 20,          // Removed for simplification
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -678,10 +621,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cameraOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'transparent',
     justifyContent: 'space-between',
     padding: 20,
+    zIndex: 1, // Ensure it's on top of CameraView
   },
   faceFrameContainer: {
     position: 'absolute',
@@ -824,6 +772,91 @@ const styles = StyleSheet.create({
   // Style for 'facial' mode to make it more oval-like
   facialFrame: {
     borderRadius: 180, // Increased for a more pronounced oval/elegant face shape
+  },
+  upperButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+  },
+  homeButton: {
+    padding: 10,
+  },
+  inputContainer: {
+    padding: 10,
+  },
+  visitPurposeInput: {
+    borderWidth: 1,
+    borderColor: COLORS.gray[200],
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: COLORS.text.primary,
+    backgroundColor: COLORS.background.paper,
+  },
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: COLORS.primary.main,
+    borderWidth: 3,
+  },
+  topLeftCorner: {
+    top: -2,
+    left: -2,
+    borderBottomWidth: 0,
+    borderRightWidth: 0,
+  },
+  topRightCorner: {
+    top: -2,
+    right: -2,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+  },
+  bottomLeftCorner: {
+    bottom: -2,
+    left: -2,
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+  },
+  bottomRightCorner: {
+    bottom: -2,
+    right: -2,
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+  },
+  frameText: {
+    position: 'absolute',
+    bottom: -30,
+    color: 'white',
+    fontSize: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10, // This will provide spacing from edges
+    zIndex: 2, // On top of cameraOverlay
+  },
+  pickButton: {
+    padding: 10,
+  },
+  captureButton: {
+    padding: 10,
+  },
+  captureButtonInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 50,
+    backgroundColor: 'white',
   },
 });
 

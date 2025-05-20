@@ -118,6 +118,7 @@ export const translations: Record<string, Record<string, string>> = {
     analyzingFacialDetailPoints: 'Analyzing your facial skin... Our DermaGraph™ AI is processing over 500 data points, assessing texture, tone, pores, and specific conditions to provide insights equivalent to multiple specialist consultations.',
     analyzingEyeAreaDetailPoints: 'Analyzing your eye area... Our OptiScan™ AI is processing over 300 data points, focusing on fine lines, puffiness, dark circles, and texture to provide insights equivalent to an oculoplastic consultation.',
     analyzingHairScalpDetailPoints: 'Analyzing your hair & scalp... Our AI is processing numerous data points to assess hair density, scalp health, and follicular miniaturization for personalized haircare strategies.',
+    analyzingBeforeAfterDetailPoints: 'Analyzing your progress... Our ProgressScan™ AI is processing both images to quantify improvements in texture, tone, and specific conditions. This comparison provides objective measurements of your treatment efficacy.',
 
     // Treatment Screen
     recommendedTreatments: 'Recommended Treatments',
@@ -273,7 +274,7 @@ export const translations: Record<string, Record<string, string>> = {
     scalpCondition: 'Scalp Condition',
     preliminaryDiagnosis: 'Preliminary Diagnosis',
     overallCondition: 'Overall Condition',
-    hairScalpProcessingText: 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.',
+    hairScalpProcessingText: 'Analyzing your hair & scalp... Our TrichoScan™ AI is processing over 200 data points, assessing hair density, scalp condition, follicular miniaturization, and hair shaft quality to provide insights equivalent to a trichologist consultation.',
     analyzingHairScalp: 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.',
     viewDetailedReport: 'View Detailed Report',
     viewHaircare: 'View Haircare',
@@ -435,6 +436,7 @@ export const translations: Record<string, Record<string, string>> = {
     analyzingFacialDetailPoints: '正在分析您的面部皮肤... 我们的 DermaGraph™ AI 正在处理您图像中的500多个数据点，评估纹理、肤色、毛孔和特定皮肤状况，为您提供相当于多次专家咨询的个性化见解。',
     analyzingEyeAreaDetailPoints: '正在分析您的眼部区域... 我们的 OptiScan™ AI 正在处理您图像中的300多个数据点，重点关注眼周的细纹、浮肿、黑眼圈和皮肤纹理，旨在提供相当于眼整形外科咨询的见解。',
     analyzingHairScalpDetailPoints: '正在分析您的头发与头皮... 我们的AI正在处理众多数据点，以评估头发密度、头皮健康状况和毛囊微型化，为个性化护发策略提供详细见解。',
+    analyzingBeforeAfterDetailPoints: '正在分析您的进展情况... 我们的 ProgressScan™ AI 正在处理两张图像，量化纹理、肤色和特定状况的改善情况。这种对比可为您的治疗效果提供客观测量。',
 
     // Treatment Screen
     recommendedTreatments: '推荐的治疗方案',
@@ -587,7 +589,7 @@ export const translations: Record<string, Record<string, string>> = {
     beforeAfterButton: '前后对比分析',
     hairScalpAnalysisButton: '头发与头皮分析',
     analyzingHairScalp: '正在分析您的头发和头皮... 我们的AI正在处理多角度图像，以评估头发密度、头皮健康和毛囊微型化情况。',
-    hairScalpProcessingText: '正在分析您的头发和头皮... 我们的AI正在处理多角度图像，以评估头发密度、头皮健康和毛囊微型化情况。',
+    hairScalpProcessingText: '正在分析您的头发与头皮... 我们的 TrichoScan™ AI 正在处理超过200个数据点，评估头发密度、头皮状况、毛囊微型化和毛发质量，提供相当于毛发专家咨询的专业见解。',
     hairScalpAnalysis: '头发与头皮分析',
     hairScalpDescription: 'AI驱动的多角度头发和头皮评估',
     selectHairScalpImages: '选择头发和头皮图像',

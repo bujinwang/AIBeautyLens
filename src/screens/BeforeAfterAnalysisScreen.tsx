@@ -2,13 +2,14 @@ import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../App';
-import { Camera, CameraType } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
 import { useLocalization } from '../i18n/localizationContext';
 import { analyzeBeforeAfterImages } from '../services/geminiService';
+import ProcessingIndicator from '../components/ProcessingIndicator';
 
 type BeforeAfterAnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BeforeAfterAnalysis'>;
 
@@ -25,7 +26,10 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
   const [cameraVisible, setCameraVisible] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const cameraRef = useRef<Camera>(null);
+  const cameraRef = useRef<CameraView>(null);
+  
+  // Update camera permissions API
+  const [permission, requestPermission] = useCameraPermissions();
 
   // Add new effect to log state changes for debugging
   React.useEffect(() => {
@@ -44,10 +48,11 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
     }
   }, [afterImage]);
 
+  // Update to use the new permissions API
   React.useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
+      const cameraPermission = await requestPermission();
+      setHasPermission(cameraPermission.status === 'granted');
     })();
   }, []);
 
@@ -208,19 +213,9 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const renderCameraView = () => {
-    if (hasPermission === null) {
-      return (
-        <View style={styles.permissionContainer}>
-          <MaterialIcons name="camera" size={50} color={COLORS.primary.main} />
-          <Text style={styles.permissionText}>{t('requestingPermission')}</Text>
-        </View>
-      );
-    }
-
     if (hasPermission === false) {
       return (
         <View style={styles.permissionContainer}>
-          <MaterialIcons name="no-photography" size={50} color={COLORS.error.main} />
           <Text style={styles.permissionText}>{t('noAccessCamera')}</Text>
           <TouchableOpacity
             style={styles.permissionButton}
@@ -234,41 +229,34 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
 
     return (
       <View style={styles.cameraContainer}>
-        <Camera
+        <CameraView
           ref={cameraRef}
           style={styles.camera}
-          type={CameraType.back}
+          facing="back"
           ratio="4:3"
         >
           <View style={styles.cameraOverlay}>
             <View style={styles.faceFrameContainer}>
               <View style={styles.faceFrame}>
-                <View style={[styles.cornerBorder, styles.topLeft]} />
-                <View style={[styles.cornerBorder, styles.topRight]} />
-                <View style={[styles.cornerBorder, styles.bottomLeft]} />
-                <View style={[styles.cornerBorder, styles.bottomRight]} />
+                <Text style={styles.frameText}>{currentMode === 'before' ? t('capturingBeforeImage') : t('capturingAfterImage')}</Text>
               </View>
-              <Text style={styles.frameTip}>{currentMode === 'before' ? t('capturingBeforeImage') : t('capturingAfterImage')}</Text>
+            </View>
+            <View style={styles.bottomBar}>
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={takePicture}
+              >
+                <View style={styles.captureButtonInner} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setCameraVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+              </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.secondaryButton]}
-              onPress={() => setCameraVisible(false)}
-            >
-              <MaterialIcons name="close" size={20} color={COLORS.primary.main} style={styles.buttonIcon} />
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>{t('cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton]}
-              onPress={takePicture}
-            >
-              <MaterialIcons name="camera-alt" size={20} color="white" style={styles.buttonIcon} />
-              <Text style={[styles.buttonText, styles.primaryButtonText]}>{t('capture')}</Text>
-            </TouchableOpacity>
-          </View>
-        </Camera>
+        </CameraView>
       </View>
     );
   };
@@ -433,6 +421,16 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {renderAnalysisResult()}
+
+      {isAnalyzing && (
+        <ProcessingIndicator
+          isAnalyzing={true}
+          analysisType="beforeAfter"
+          showDetailedSteps={true}
+          showTechStack={true}
+          processingText={t('analyzingBeforeAfterDetailPoints')}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -727,6 +725,46 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  frameText: {
+    color: 'white',
+    fontSize: 14,
+    marginTop: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    overflow: 'hidden',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+  },
+  captureButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 10,
+  },
+  captureButtonInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'black',
+  },
+  cancelButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 10,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.primary.main,
   },
 });
 

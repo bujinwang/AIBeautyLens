@@ -97,12 +97,47 @@ const HAIR_SCALP_TECH_STACK = [
   }
 ];
 
+// Add new before/after tech stack
+const BEFORE_AFTER_TECH_STACK = [
+  {
+    name: "CompareScan™ HD",
+    description: "Precision progress tracking imaging system",
+    icon: "compare"
+  },
+  {
+    name: "ProgressTrack™ AI",
+    description: "Advanced treatment efficacy assessment",
+    icon: "timeline"
+  },
+  {
+    name: "DeltaAnalyzer™",
+    description: "Clinically-validated change detection algorithm",
+    icon: "analytics"
+  },
+  {
+    name: "BeforeAfter™ Engine",
+    description: "Treatment visualization technology",
+    icon: "visibility"
+  }
+];
+
+// Add new before/after processing steps
+const BEFORE_AFTER_PROCESSING_STEPS = [
+  { id: 1, text: "Initializing Image Registration...", icon: "compare" },
+  { id: 2, text: "Calculating Color & Texture Metrics...", icon: "palette" },
+  { id: 3, text: "Performing Change Detection Analysis...", icon: "track_changes" },
+  { id: 4, text: "Measuring Treatment Efficacy...", icon: "insights" },
+  { id: 5, text: "Quantifying Clinical Improvements...", icon: "psychology" },
+  { id: 6, text: "Generating Change Assessment Report...", icon: "assessment" },
+  { id: 7, text: "Finalizing Recommendations...", icon: "lightbulb" },
+];
+
 interface ProcessingIndicatorProps {
   isAnalyzing?: boolean;
   processingText?: string;
   showDetailedSteps?: boolean;
   showTechStack?: boolean;
-  analysisType?: 'facial' | 'eye' | 'hairScalp';
+  analysisType?: 'facial' | 'eye' | 'hairScalp' | 'beforeAfter';
 }
 
 // Define valid typography styles
@@ -292,14 +327,19 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
   let displayProcessingText = processingText;
   let steps = PROCESSING_STEPS;
   let techStack = TECH_STACK;
+
   if (analysisType === 'hairScalp') {
-    displayProcessingText = t('hairScalpProcessingText') || 'Analyzing your hair and scalp... Our AI is processing multi-angle images to assess hair density, scalp health, and follicular miniaturization.';
+    displayProcessingText = t('hairScalpProcessingText') || 'Analyzing your hair & scalp... Our TrichoScan™ AI is processing over 200 data points, assessing hair density, scalp condition, follicular miniaturization, and hair shaft quality to provide insights equivalent to a trichologist consultation.';
     steps = HAIR_SCALP_PROCESSING_STEPS;
     techStack = HAIR_SCALP_TECH_STACK;
   } else if (analysisType === 'eye') {
     displayProcessingText = t('analyzingEyeAreaDetailPoints') || 'Analyzing your eye area...';
     steps = PROCESSING_STEPS;
     techStack = EYE_TECH_STACK;
+  } else if (analysisType === 'beforeAfter') {
+    displayProcessingText = t('analyzingBeforeAfterDetailPoints') || 'Analyzing your progress... Our ProgressScan™ AI is processing both images to quantify improvements in texture, tone, and specific conditions. This comparison provides objective measurements of your treatment efficacy.';
+    steps = BEFORE_AFTER_PROCESSING_STEPS;
+    techStack = BEFORE_AFTER_TECH_STACK;
   } else {
     displayProcessingText = processingText || t('processingText') || 'Clinical-grade dermatological analysis in progress';
     steps = PROCESSING_STEPS;
@@ -312,7 +352,8 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
     <View style={styles.container}>
       <View style={[
         styles.innerContainer,
-        isVerySmallScreen && styles.innerContainerVerySmall
+        isVerySmallScreen && styles.innerContainerVerySmall,
+        analysisType === 'hairScalp' && styles.hairScalpContainer
       ]}>
         <ScrollView 
           style={styles.scrollView}
@@ -326,22 +367,29 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
                 {
                   transform: [{ rotate: spin }, { scale: pulseValue }],
                 },
+                analysisType === 'hairScalp' && styles.hairScalpIconBackground
               ]}
             >
               <AILogoIcon size="large" />
             </Animated.View>
           </View>
 
-          <Text style={styles.title}>{displayProcessingText}</Text>
+          <Text style={[
+            styles.title,
+            analysisType === 'hairScalp' && styles.hairScalpTitle
+          ]}>{displayProcessingText}</Text>
 
           {showDetailedSteps && steps[currentStep] && (
             <Animated.View style={[styles.stepContainer, { opacity: fadeValue }]}>
               <CustomIcon
                 name={steps[currentStep].icon}
                 size={20}
-                color={COLORS.secondary.main}
+                color={analysisType === 'hairScalp' ? COLORS.success.main : COLORS.secondary.main}
               />
-              <Text style={styles.stepText}>{steps[currentStep].text}</Text>
+              <Text style={[
+                styles.stepText,
+                analysisType === 'hairScalp' && styles.hairScalpStepText
+              ]}>{steps[currentStep].text}</Text>
             </Animated.View>
           )}
 
@@ -349,6 +397,7 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({
             <Animated.View
               style={[
                 styles.progressBar,
+                analysisType === 'hairScalp' && styles.hairScalpProgressBar,
                 {
                   width: progressWidth.interpolate({
                     inputRange: [0, 1],
@@ -537,6 +586,22 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  // Hair & Scalp specific styles
+  hairScalpContainer: {
+    backgroundColor: COLORS.background.default,
+  },
+  hairScalpIconBackground: {
+    backgroundColor: 'rgba(0, 128, 0, 0.05)', // Light green tint
+  },
+  hairScalpTitle: {
+    color: COLORS.success.dark,
+  },
+  hairScalpStepText: {
+    color: COLORS.success.dark,
+  },
+  hairScalpProgressBar: {
+    backgroundColor: COLORS.success.main, // Green progress bar
   },
 });
 

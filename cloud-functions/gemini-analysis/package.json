@@ -1,0 +1,23 @@
+{
+  "name": "gemini-analysis-function",
+  "version": "1.0.0",
+  "description": "Google Cloud Function for Gemini Vision API analysis",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "functions-framework --target=analyzeImage",
+    "deploy": "gcloud functions deploy analyzeImage --runtime nodejs20 --trigger-topic image-uploaded",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.0.0",
+    "@google-cloud/firestore": "^7.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "@google-cloud/aiplatform": "^3.0.0",
+    "@google-cloud/pubsub": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "typescript": "^5.1.3"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "image-processor-function",
+  "version": "1.0.0",
+  "description": "Google Cloud Function for image processing",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "functions-framework --target=processImage",
+    "deploy": "gcloud functions deploy processImage --runtime nodejs20 --trigger-http",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.0.0",
+    "@google-cloud/firestore": "^7.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "@google-cloud/pubsub": "^4.0.0",
+    "sharp": "^0.33.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "typescript": "^5.1.3"
+  }
+}

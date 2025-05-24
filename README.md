@@ -1,80 +1,186 @@
-# AI Beauty Lens
+# AI Beauty Lens - Monorepo
 
-AI Beauty Lens is a standalone iOS mobile application that uses artificial intelligence to analyze facial features and recommend personalized aesthetic treatments. The app leverages OpenAI's GPT-4o Vision and DALL-E APIs for facial analysis and treatment simulation, with all data stored locally for maximum privacy. No backend server is required.
+A comprehensive AI-powered beauty analysis application built with React Native, NestJS, and Google Cloud Functions.
 
-## Features
+## 🏗️ Project Structure
 
-- Native iOS camera/photo library integration
-- On-device photo storage (no cloud upload)
-- Facial analysis and age estimation using GPT-4o Vision
-- Personalized treatment recommendations from a hardcoded database
-- Treatment simulation (before/after) using DALL-E
-- On-device PDF treatment report generation and iOS share sheet
-- Simple, privacy-focused design
-
-## Tech Stack
-
-- **Framework:** React Native (Expo SDK ~50)
-- **Language:** TypeScript
-- **Navigation:** React Navigation (Stack Navigator v6)
-- **Styling:** React Native `StyleSheet` API, custom theme
-- **API Calls:** `axios` (OpenAI GPT-4o, DALL-E)
-- **Localization:** `i18next` with `react-i18next`
-- **PDF Generation:** On-device (no backend)
-
-## Directory Structure (Key)
+This project is organized as a monorepo using Yarn workspaces:
 
 ```
-src/
-  components/         # Reusable UI components
-  screens/            # Main app screens
-    CameraScreen.tsx
-    AnalysisScreen.tsx
-    TreatmentScreen.tsx
-    SimulationScreen.tsx
-    ReportScreen.tsx
-  services/           # API integrations
-    openaiService.ts  # GPT-4o Vision
-    imageGenService.ts# DALL-E
-  constants/          # App constants
-    treatments.ts     # Hardcoded treatment list
-  utils/              # Helper functions
-    imageUtils.ts     # Image processing
-    reportGenerator.ts# PDF generation
+ai-beauty-lens-monorepo/
+├── app/                          # React Native mobile application
+├── backend/                      # NestJS backend API
+├── cloud-functions/              # Google Cloud Functions
+│   ├── gemini-analysis/         # Gemini Vision API analysis
+│   └── image-processor/         # Image processing functions
+├── shared/                       # Shared types and utilities
+├── infrastructure/               # Infrastructure as code
+├── docs/                        # Documentation
+└── package.json                 # Root workspace configuration
 ```
 
-## API Usage
+## 🚀 Quick Start
 
-- **Facial Analysis:**
-  - Uses OpenAI GPT-4o Vision API to analyze facial images and estimate age.
-  - Returns treatment recommendations from a hardcoded list.
-- **Treatment Simulation:**
-  - Uses DALL-E API to generate realistic after images based on selected treatments.
-- **All API keys are stored securely using environment variables.**
+### Prerequisites
+- Node.js >= 18.0.0
+- Yarn >= 1.22.0
+- Expo CLI (for mobile development)
+- Google Cloud SDK (for cloud functions)
 
-## Security & Privacy
+### Installation
+```bash
+# Install all dependencies for all workspaces
+yarn install
+```
 
-- No backend server; all data is stored on-device.
-- API keys are managed with React Native Config and obfuscation techniques.
-- User photos are never uploaded to a remote server.
-- Terms of service include photo privacy information.
+### Development
 
-## Development Timeline (MVP)
+#### Mobile App
+```bash
+# Start Expo development server
+yarn app:start
 
-**Week 1:** Core app setup, camera/photo integration, navigation, hardcoded treatments
+# Run on Android
+yarn app:android
 
-**Week 2:** OpenAI API integration, facial analysis, treatment recommendation UI, secure API key storage
+# Run on iOS
+yarn app:ios
+```
 
-**Week 3:** DALL-E integration, before/after UI, treatment selection, result caching
+#### Backend API
+```bash
+# Start backend in development mode
+yarn backend:start
 
-**Week 4:** PDF report generation, iOS sharing, UI polish, device testing
+# Build backend
+yarn backend:build
+```
 
-## Cost Considerations
+#### Shared Package
+```bash
+# Build shared package (required before using in other workspaces)
+yarn shared:build
+```
 
-- Only API usage costs (no hosting):
-  - GPT-4o Vision: ~$0.10/analysis
-  - DALL-E: ~$0.04/simulation
+#### Cloud Functions
+```bash
+# Deploy all functions
+yarn functions:deploy
+```
+
+## 📦 Workspaces
+
+### App (`@aibeautylens/app`)
+React Native mobile application with Expo for iOS and Android platforms.
+
+**Key Features:**
+- Camera integration for image capture
+- AI-powered beauty analysis
+- Treatment recommendations
+- Multi-language support
+- Offline capabilities
+
+### Backend (`@aibeautylens/backend`)
+NestJS backend API providing REST endpoints and WebSocket connections.
+
+**Key Features:**
+- User authentication and authorization
+- Image upload and management
+- Analysis result storage
+- Real-time notifications
+- Integration with Google Cloud services
+
+### Shared (`@aibeautylens/shared`)
+Common TypeScript types, constants, and utilities shared across all workspaces.
+
+**Includes:**
+- Type definitions for analysis results
+- API endpoint constants
+- Utility functions
+- Validation schemas
+
+### Cloud Functions
+Serverless functions for image processing and AI analysis.
+
+**Functions:**
+- `gemini-analysis`: Integrates with Gemini Vision API for beauty analysis
+- `image-processor`: Handles image upload, validation, and preprocessing
+
+## 🛠️ Development Workflow
+
+1. **Install dependencies**: `yarn install`
+2. **Build shared package**: `yarn shared:build`
+3. **Start backend**: `yarn backend:start`
+4. **Start mobile app**: `yarn app:start`
+5. **Deploy functions**: `yarn functions:deploy` (when ready)
+
+## 📚 Documentation
+
+- [Workspace Setup Guide](./docs/workspace-setup.md)
+- [Migration Notes](./docs/migration-notes.md)
+- [Architectural Plan](./architectural_plan.md)
+
+## 🧪 Testing
+
+```bash
+# Run tests across all workspaces
+yarn test
+
+# Run linting across all workspaces
+yarn lint
+```
+
+## 🚀 Deployment
+
+### Mobile App
+```bash
+cd app
+eas build --platform all
+eas submit --platform all
+```
+
+### Backend
+```bash
+yarn backend:build
+# Deploy to your preferred platform
+```
+
+### Cloud Functions
+```bash
+yarn functions:deploy
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+Each workspace may require specific environment variables:
+
+- **App**: Configure in `app/.env`
+- **Backend**: Configure in `backend/.env`
+- **Cloud Functions**: Configure via Google Cloud Console
+
+### TypeScript
+The project uses shared TypeScript configuration with workspace-specific overrides.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Check the [documentation](./docs/)
+- Open an issue on GitHub
+- Contact the development team
 
 ---
 
-For more details, see `Tasks.MD`.
+Built with ❤️ by the AI Beauty Lens Team

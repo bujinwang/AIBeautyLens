@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { GcsModule } from './modules/gcs/gcs.module';
 
 @Module({
   imports: [
@@ -9,10 +12,10 @@ import { AppService } from './app.service';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    // TODO: Add other modules here
-    // AuthModule,
+    AuthModule,
+    UsersModule,
+    GcsModule,
     // AnalysisModule,
-    // UserModule,
     // UploadModule,
   ],
   controllers: [AppController],

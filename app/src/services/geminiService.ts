@@ -570,7 +570,7 @@ export const analyzeFacialImage = async (imageUri: string, visitPurpose?: string
           console.error('Error during image compression:', compressionError);
           // If compression fails, try one more time with more aggressive settings
           if (retryCount === 0) {
-            console.log('Retrying with more aggressive compression...');
+            console.log('[analyzeFacialImage] Retrying with more aggressive compression...');
             processedBase64 = await reduceBase64ImageSize(base64Image);
           } else {
             throw compressionError;
@@ -893,6 +893,7 @@ export const analyzeEyeArea = async (imageUri: string, visitPurpose?: string, sk
       let processedBase64 = base64Image;
       if (isIPad) {
         try {
+          console.log('[analyzeEyeArea] Preprocessing image for eye analysis...');
           processedBase64 = await preprocessImage(base64Image);
         } catch (compressionError) {
           console.error('Error during image compression:', compressionError);
@@ -1682,36 +1683,39 @@ function ensureRequiredFields(analysisResults: any, language: string = 'en') {
 }
 
 // Helper function to preprocess images (resize/compress)
-async function preprocessImage(base64Image: string): Promise<string> {
+async function preprocessImage(imageDataString: string): Promise<string> {
+  console.log(`[preprocessImage] Initial imageDataString length: ${imageDataString.length} bytes`);
   try {
     // Check if image is too large
-    if (base64Image.length <= 500000) {
-      // Image is already small enough
-      return base64Image;
+    if (imageDataString.length <= 500000) {
+      console.log('[preprocessImage] Image is already small enough, skipping compression.');
+      return imageDataString;
     }
 
-    console.log(`Image size (${base64Image.length} bytes) exceeds recommended size. Compressing...`);
+    console.log(`[preprocessImage] Image size (${imageDataString.length} bytes) exceeds recommended size. Starting compression...`);
 
     // Create a temporary file to store the image
-    const tempFilePath = `${FileSystem.cacheDirectory}temp_image.jpg`;
-    await FileSystem.writeAsStringAsync(tempFilePath, base64Image, {
+    const tempFilePath = `${FileSystem.cacheDirectory}temp_image_${Date.now()}.jpg`;
+    console.log(`[preprocessImage] Writing to temporary file: ${tempFilePath}`);
+    await FileSystem.writeAsStringAsync(tempFilePath, imageDataString, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    console.log('[preprocessImage] Successfully wrote to temporary file.');
 
     // Determine compression level based on image size
     let quality = 0.7;
     let maxWidth = 800;
 
-    if (base64Image.length > 1000000) {
+    if (imageDataString.length > 1000000) {
       quality = 0.5;
       maxWidth = 600;
     }
-    if (base64Image.length > 2000000) {
+    if (imageDataString.length > 2000000) {
       quality = 0.3;
       maxWidth = 400;
     }
 
-    console.log(`Applying compression: quality=${quality}, maxWidth=${maxWidth}`);
+    console.log(`[preprocessImage] Applying compression: quality=${quality}, maxWidth=${maxWidth}`);
 
     // Resize and compress the image
     const manipResult = await ImageManipulator.manipulateAsync(
@@ -1719,21 +1723,25 @@ async function preprocessImage(base64Image: string): Promise<string> {
       [{ resize: { width: maxWidth } }],
       { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
     );
+    console.log(`[preprocessImage] Image manipulation complete. Result URI: ${manipResult.uri}`);
 
     // Read the compressed image
-    const compressedBase64 = await FileSystem.readAsStringAsync(manipResult.uri, {
+    const compressedImageData = await FileSystem.readAsStringAsync(manipResult.uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    console.log(`[preprocessImage] Read compressed image as base64. Length: ${compressedImageData.length} bytes`);
 
     // Clean up the temporary file
     await FileSystem.deleteAsync(tempFilePath);
+    console.log(`[preprocessImage] Cleaned up temporary file: ${tempFilePath}`);
 
-    console.log(`Image compressed: ${base64Image.length} -> ${compressedBase64.length} bytes`);
-    return compressedBase64;
+    console.log(`[preprocessImage] Image compressed: ${imageDataString.length} -> ${compressedImageData.length} bytes`);
+    return compressedImageData;
   } catch (error) {
-    console.error('Error preprocessing image:', error);
-    // Return original image if preprocessing fails
-    return base64Image;
+    console.error('[preprocessImage] Error preprocessing image:', error);
+    // Return original image if preprocessing fails to avoid breaking the flow
+    console.warn('[preprocessImage] Returning original image due to preprocessing error.');
+    return imageDataString;
   }
 }
 
@@ -1988,4 +1996,3 @@ export const getHaircareRecommendations = async (
       : 'These recommendations are based on your hair analysis. Consult a dermatologist for severe or persistent issues.'
   };
 };
-

@@ -13,14 +13,24 @@ import { UsersModule } from '../users/users.module'; // Assuming a UsersModule w
     UsersModule,
     PassportModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '60m' },
-      }),
+      imports: [ConfigModule], // Ensures ConfigService is available for this factory
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        console.log(`[AuthModule] JWT_SECRET from ConfigService: ${secret ? 'Loaded' : 'NOT LOADED'}`); // Diagnostic log
+        if (!secret) {
+          throw new Error('[AuthModule] FATAL: JWT_SECRET is undefined. Check .env and ConfigModule setup.');
+        }
+        const expiresIn = configService.get<string>('JWT_EXPIRATION_TIME') || '60m';
+        console.log(`[AuthModule] JWT expiresIn: ${expiresIn}`); // Diagnostic log
+        return {
+          secret: secret,
+          signOptions: { expiresIn: expiresIn },
+        };
+      },
       inject: [ConfigService],
     }),
-    ConfigModule,
+    ConfigModule, // Re-adding ConfigModule here. Even if global, ensuring it's explicitly
+                  // available to AuthModule might help resolve DI for JwtModule.registerAsync.
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],

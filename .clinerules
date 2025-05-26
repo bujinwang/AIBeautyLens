@@ -1,0 +1,30 @@
+# AIBeautyLens Project Intelligence for Cline
+
+This file captures important patterns, preferences, and project-specific intelligence to help Cline (the AI assistant) work more effectively on the AIBeautyLens project.
+
+## Key Learnings & Patterns:
+
+*   (To be filled as patterns are discovered or preferences are stated)
+
+## User Preferences & Workflow:
+
+*   (To be filled)
+
+## Project-Specific Conventions:
+
+*   (Refer to .cursorrules for coding conventions)
+*   Memory Bank: Core files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`, `progress.md`) are maintained in the `memory-bank/` directory. Cline MUST read these at the start of every session and create them if missing.
+
+## Known Challenges & Workarounds:
+
+*   **GCS Pre-signed URL Signing with Local ADC:**
+    *   **Challenge:** Generating v4 signed URLs locally using ADC (user credentials via `gcloud auth application-default login`) and service account impersonation (`options.serviceAccount`) results in an "Error: Cannot sign data without `client_email`". This is because user ADC credentials lack a `client_email` and `private_key` for direct signing, and the impersonation flow isn't working as expected with the Node.js client library in this local setup.
+    *   **Constraint:** Organization policy prohibits creating/using service account key files.
+    *   **Current Status:** Investigating solutions. Deployment to a GCP environment (Cloud Run, GKE, etc.) where a service account is directly attached to the compute resource is the recommended path for reliable testing.
+
+## Tool Usage Patterns:
+
+*   (To be filled)
+
+---
+*Cline: Please update this file as you learn more about the project and my preferences.*

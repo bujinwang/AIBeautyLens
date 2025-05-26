@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aibeautylens-backend-service
+spec:
+  selector:
+    app: aibeautylens-backend # This must match the labels in your deployment.yaml
+  ports:
+    - protocol: TCP
+      port: 80 # Port exposed externally by the LoadBalancer
+      targetPort: 3000 # Port your container listens on (from deployment.yaml and Dockerfile)
+  type: LoadBalancer

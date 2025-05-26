@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aibeautylens-backend-deployment
+  labels:
+    app: aibeautylens-backend
+spec:
+  replicas: 1 # Start with 1 replica, can be scaled later
+  selector:
+    matchLabels:
+      app: aibeautylens-backend
+  template:
+    metadata:
+      labels:
+        app: aibeautylens-backend
+    spec:
+      serviceAccountName: aibeautylens-k8s-sa
+      containers:
+      - name: aibeautylens-backend
+        image: gcr.io/shining-env-459701-v5/aibeautylens-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000 # Port your NestJS app listens on
+        env:
+        # Add any necessary environment variables here
+        # Example:
+        # - name: DATABASE_URL
+        #   value: "your-database-url"
+        # - name: GCS_BUCKET_NAME
+        #   value: "your-gcs-bucket-name"
+        # - name: GCS_PROJECT_ID
+        #   value: "shining-env-459701-v5"
+        # - name: GCS_SIGNING_SERVICE_ACCOUNT_EMAIL
+        #   value: "your-signing-service-account-email@shining-env-459701-v5.iam.gserviceaccount.com"
+        # Ensure the service account used by GKE nodes has permissions to impersonate the signing service account
+        # or that the signing service account is directly used by the GKE nodes.
+        # For GCS signing to work, the GKE node's service account needs 'Service Account Token Creator'
+        # role on the GCS_SIGNING_SERVICE_ACCOUNT_EMAIL.
+        # Alternatively, if you assign GCS_SIGNING_SERVICE_ACCOUNT_EMAIL directly to the GKE nodes,
+        # it needs GCS object access and signing permissions.
+        - name: PORT
+          value: "3000"
+        # You will need to create a .env file or manage secrets in GKE for sensitive data
+        # For now, we'll assume environment variables are set directly or via ConfigMaps/Secrets
+        # For GCS_SIGNING_SERVICE_ACCOUNT_EMAIL, ensure it's correctly configured.
+        # The GKE node service account will be used by default if the application code
+        # relies on Application Default Credentials (ADC) within the GKE pod.
+        # This node service account needs the 'Service Account Token Creator' role
+        # on the 'GCS_SIGNING_SERVICE_ACCOUNT_EMAIL' if that's how you've configured your gcs.service.ts
+        # Alternatively, you can assign the 'GCS_SIGNING_SERVICE_ACCOUNT_EMAIL' directly to the GKE nodes.
+        # For simplicity, ensure the GKE default node service account has the necessary permissions.
+        # Or, create a dedicated service account for the GKE nodes and grant it permissions.

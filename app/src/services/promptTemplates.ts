@@ -272,6 +272,17 @@ ANALYSIS REQUIREMENTS:
    - Melasma/hyperpigmentation
    - Skin sensitivity markers
 
+5. Layered Aging Analysis (分层抗衰分析):
+   If signs of aging are present, provide a layered analysis:
+   a) Collagen-Related Aging:
+      - Identify wrinkles or fine lines potentially linked to collagen loss and structural changes (e.g., "胶原蛋白流失导致断裂形成的皱纹").
+      - Describe their location and characteristics.
+      - Briefly explain the suspected link to collagen degradation.
+   b) Dehydration-Related Aging:
+      - Identify areas of skin laxity, sagging, or dullness potentially linked to cellular dehydration or reduced Glycosaminoglycans (GAGs) like Hyaluronic Acid (e.g., "细胞缺水导致的松弛下垂").
+      - Describe their location and characteristics.
+      - Briefly explain the suspected link to hydration status at a cellular level.
+
 Format your response as a JSON object with these exact fields:
 {
   "estimatedAge": number,
@@ -307,7 +318,21 @@ Format your response as a JSON object with these exact fields:
       "recommendedUsage": string,
       "targetConcerns": string[]
     }
-  ]
+  ],
+  "layeredAgingAnalysis": {
+    "collagenRelated": {
+      "isPresent": boolean,
+      "description": string,
+      "locations": string[],
+      "details": string
+    },
+    "dehydrationRelated": {
+      "isPresent": boolean,
+      "description": string,
+      "locations": string[],
+      "details": string
+    }
+  }
 }
 
 VERY IMPORTANT: BE CONCISE. Prioritize the most critical information. Avoid lengthy descriptions. The response MUST be valid JSON and fit within token limits. Focus on the top 3-5 features/conditions unless more are highly severe. Keep all string values as brief as possible while still being informative.

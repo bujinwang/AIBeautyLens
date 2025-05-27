@@ -21,7 +21,8 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@aibeautylens/shared": ["../shared/src"],
-      "@aibeautylens/shared/*": ["../shared/src/*"]
+      "@aibeautylens/shared/*": ["../shared/src/*"],
+      "@backend/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

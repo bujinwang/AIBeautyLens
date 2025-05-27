@@ -17,27 +17,17 @@ spec:
       serviceAccountName: aibeautylens-k8s-sa
       containers:
       - name: aibeautylens-backend
-        image: gcr.io/shining-env-459701-v5/aibeautylens-backend:latest
+        image: gcr.io/shining-env-459701-v5/aibeautylens-backend:latest-direct-sign-amd64
         imagePullPolicy: Always
         ports:
         - containerPort: 3000 # Port your NestJS app listens on
         env:
-        # Add any necessary environment variables here
-        # Example:
-        # - name: DATABASE_URL
-        #   value: "your-database-url"
-        # - name: GCS_BUCKET_NAME
-        #   value: "your-gcs-bucket-name"
-        # - name: GCS_PROJECT_ID
-        #   value: "shining-env-459701-v5"
-        # - name: GCS_SIGNING_SERVICE_ACCOUNT_EMAIL
-        #   value: "your-signing-service-account-email@shining-env-459701-v5.iam.gserviceaccount.com"
-        # Ensure the service account used by GKE nodes has permissions to impersonate the signing service account
-        # or that the signing service account is directly used by the GKE nodes.
-        # For GCS signing to work, the GKE node's service account needs 'Service Account Token Creator'
-        # role on the GCS_SIGNING_SERVICE_ACCOUNT_EMAIL.
-        # Alternatively, if you assign GCS_SIGNING_SERVICE_ACCOUNT_EMAIL directly to the GKE nodes,
-        # it needs GCS object access and signing permissions.
+        - name: GCS_BUCKET_NAME
+          value: "aimeifuphotobucket"
+        - name: GCS_PROJECT_ID
+          value: "shining-env-459701-v5"
+        - name: GCS_SIGNING_SERVICE_ACCOUNT_EMAIL
+          value: "aibeautylens-sa@shining-env-459701-v5.iam.gserviceaccount.com"
         - name: PORT
           value: "3000"
         # You will need to create a .env file or manage secrets in GKE for sensitive data

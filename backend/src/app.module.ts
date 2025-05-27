@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { GcsModule } from './modules/gcs/gcs.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { GcsModule } from './modules/gcs/gcs.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    PrismaModule, // Add PrismaModule here
     AuthModule,
     UsersModule,
     GcsModule,

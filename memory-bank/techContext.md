@@ -18,6 +18,7 @@
     *   `@nestjs/jwt` for JWT handling
     *   `@google-cloud/storage` for GCS integration
     *   `dotenv` for environment variable management
+    *   **Database ORM:** Prisma (`prisma`, `@prisma/client`) for PostgreSQL
 *   **Shared Code:**
     *   TypeScript (for types, constants, utils shared between frontend and backend)
 *   **Cloud Services:**
@@ -36,9 +37,9 @@
 *   **Yarn Version:** (To be specified, e.g., v1.22.x)
 *   **GCloud CLI:** Required for GCP interactions, ADC setup.
 *   **Environment Variables:**
-    *   Backend: Managed via `.env` file (e.g., `GCS_BUCKET_NAME`, `GCS_SIGNING_SERVICE_ACCOUNT_EMAIL`, `JWT_SECRET`).
+*   Backend: Managed via `.env` file (e.g., `DATABASE_URL`, `GCS_BUCKET_NAME`, `GCS_SIGNING_SERVICE_ACCOUNT_EMAIL`, `JWT_SECRET`).
 *   **Key Scripts (from root `package.json`):**
-    *   `yarn app:dev`: Runs the frontend Expo app.
+*   `yarn app:dev`: Runs the frontend Expo app.
     *   `yarn backend:dev`: Runs the backend NestJS server in watch mode.
     *   `yarn backend:build`: Builds the backend.
     *   `yarn backend:start`: Starts the built backend.
@@ -65,6 +66,8 @@
     *   `@nestjs/config`
     *   `@nestjs/jwt`, `@nestjs/passport`
     *   `@google-cloud/storage`
+    *   `prisma` (devDependency)
+    *   `@prisma/client`
     *   `typescript`
     *   `reflect-metadata`
     *   `rxjs`

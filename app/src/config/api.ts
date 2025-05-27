@@ -10,6 +10,22 @@ export const FALLBACK_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaS
 // API timeout in milliseconds
 export const API_TIMEOUT = 180000;
 
+// Backend API base URL
+export const getBaseUrl = (): string => {
+  // Use environment variable if available
+  const envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envBaseUrl) return envBaseUrl;
+  
+  // Otherwise use platform-specific defaults for development
+  if (Platform.OS === 'web') {
+    return 'http://localhost:3000/api';
+  } else if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3000/api'; // Android emulator uses 10.0.2.2 to access host machine
+  } else {
+    return 'http://localhost:3000/api'; // iOS and other platforms
+  }
+};
+
 // Validate API key format (always valid since we're using fallback)
 export const isValidApiKey = (key: string): boolean => {
   return true;

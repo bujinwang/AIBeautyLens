@@ -9,12 +9,14 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
+    console.log('[UsersController] getProfile called, req.user:', req.user);
     return req.user;
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getUser(@Param('id') id: string) {
+    console.log(`[UsersController] getUser called with id: ${id}`);
     return this.usersService.findById(id);
   }
 

@@ -6,14 +6,15 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-    super();
+    super({ usernameField: 'email' }); // Specify email as the username field
   }
 
-  async validate(username: string, password: string): Promise<any> {
-    const user = await this.authService.validateUser(username, password);
-    if (!user) {
-      throw new UnauthorizedException();
+  async validate(email: string, password: string): Promise<any> {
+    // email parameter name here matches usernameField above
+    const clinician = await this.authService.validateUser(email, password);
+    if (!clinician) {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    return user;
+    return clinician; // This will be attached to req.user for the login route
   }
 }

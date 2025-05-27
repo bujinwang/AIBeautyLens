@@ -14,7 +14,8 @@
 *   **Cloud Storage:** Google Cloud Storage (GCS) for image uploads (via pre-signed URLs).
 *   **Authentication:** JWT-based authentication for the backend.
 *   **Cloud Functions:** For specific, isolated processing tasks (e.g., image processing, AI analysis orchestration).
-*   **Database:** (To be determined/filled: e.g., Firestore, PostgreSQL).
+*   **Database (Core Relational Data):** PostgreSQL, managed via Prisma ORM.
+*   **Database (Operational/Analysis Metadata):** Cloud Firestore (for image metadata, AI prompt templates, and triggering analysis workflows).
 
 ## 3. Design Patterns in Use
 

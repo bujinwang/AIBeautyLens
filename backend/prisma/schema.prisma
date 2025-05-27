@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Clinician {
+  clinician_id      String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  hashed_password   String
+  salt              String
+  specialty         String?
+  organization_id   String?   // Foreign key to Organization
+  roles             String[]  @default([])
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  organization      Organization? @relation(fields: [organization_id], references: [organization_id])
+  patientAssignments ClinicianPatientAssignment[]
+}
+
+model Patient {
+  patient_id            String    @id @default(uuid())
+  full_name             String    // Consider encryption for PII at application level if needed
+  date_of_birth         DateTime? // Consider encryption for PII
+  gender                String?
+  contact_info          String?   // Consider encryption for PII; or use JSON type if DB supports and more structure is needed
+  additional_phi_details String?   // Consider encryption for PII
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+  clinicianAssignments  ClinicianPatientAssignment[]
+}
+
+model Organization {
+  organization_id String      @id @default(uuid())
+  name            String
+  address         String?
+  contact_info    String?
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  clinicians      Clinician[]
+}
+
+model ClinicianPatientAssignment {
+  assignment_id   String    @id @default(uuid())
+  clinician_id    String
+  patient_id      String
+  assignment_date DateTime?
+  status          String    @default("active") // e.g., active, inactive
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  clinician       Clinician @relation(fields: [clinician_id], references: [clinician_id], onDelete: Cascade)
+  patient         Patient   @relation(fields: [patient_id], references: [patient_id], onDelete: Cascade)
+
+  @@unique([clinician_id, patient_id])
+}

@@ -6,11 +6,11 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { UsersModule } from '../users/users.module'; // Assuming a UsersModule will be created
+import { CliniciansModule } from '../clinicians/clinicians.module';
 
 @Module({
   imports: [
-    UsersModule,
+    CliniciansModule, // Replace UsersModule with CliniciansModule
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule], // Ensures ConfigService is available for this factory

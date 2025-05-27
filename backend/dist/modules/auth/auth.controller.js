@@ -17,15 +17,24 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const local_auth_guard_1 = require("./guards/local-auth.guard");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
-const register_user_dto_1 = require("./dto/register-user.dto");
+const roles_guard_1 = require("./guards/roles.guard");
+const roles_decorator_1 = require("./decorators/roles.decorator");
+const role_enum_1 = require("./enums/role.enum");
+const register_clinician_dto_1 = require("./dto/register-clinician.dto");
+const login_dto_1 = require("./dto/login.dto");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async register(registerUserDto) {
-        return this.authService.register(registerUserDto.username, registerUserDto.password);
+    async register(registerClinicianDto) {
+        return this.authService.register({
+            email: registerClinicianDto.email,
+            name: registerClinicianDto.name,
+            password: registerClinicianDto.password,
+            specialty: registerClinicianDto.specialty,
+        });
     }
-    async login(req) {
+    async login(loginDto, req) {
         return this.authService.login(req.user);
     }
     getProfile(req) {
@@ -38,19 +47,22 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [register_user_dto_1.RegisterUserDto]),
+    __metadata("design:paramtypes", [register_clinician_dto_1.RegisterClinicianDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.UseGuards)(local_auth_guard_1.LocalAuthGuard),
     (0, common_1.Post)('login'),
-    __param(0, (0, common_1.Request)()),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Clinician, role_enum_1.Role.Admin),
     (0, common_1.Get)('profile'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),

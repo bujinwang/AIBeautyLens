@@ -44,34 +44,49 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const users_service_1 = require("../users/users.service");
+const clinicians_service_1 = require("../clinicians/clinicians.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
+const role_enum_1 = require("./enums/role.enum");
 let AuthService = class AuthService {
-    constructor(usersService, jwtService) {
-        this.usersService = usersService;
+    constructor(cliniciansService, jwtService) {
+        this.cliniciansService = cliniciansService;
         this.jwtService = jwtService;
     }
-    async register(username, password) {
-        const existingUser = await this.usersService.findOne(username);
-        if (existingUser) {
-            throw new common_1.ConflictException('Username already exists');
+    async register(registrationData) {
+        const existingClinician = await this.cliniciansService.findOneByEmail(registrationData.email);
+        if (existingClinician) {
+            throw new common_1.ConflictException('Email already exists');
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await this.usersService.create({ username, password: hashedPassword });
-        const { password: _, ...result } = newUser;
-        return result;
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(registrationData.password, salt);
+        const createInput = {
+            email: registrationData.email,
+            name: registrationData.name,
+            specialty: registrationData.specialty,
+            hashed_password: hashedPassword,
+            salt: salt,
+            roles: [role_enum_1.Role.Clinician],
+        };
+        const newClinician = await this.cliniciansService.create(createInput);
+        return this.cliniciansService.excludePasswordFields(newClinician);
     }
-    async validateUser(username, pass) {
-        const user = await this.usersService.findOne(username);
-        if (user && await bcrypt.compare(pass, user.password)) {
-            const { password, ...result } = user;
-            return result;
+    async validateUser(email, pass) {
+        const clinician = await this.cliniciansService.findOneByEmail(email);
+        if (clinician && clinician.hashed_password && clinician.salt) {
+            const isPasswordMatching = await bcrypt.compare(pass, clinician.hashed_password);
+            if (isPasswordMatching) {
+                return this.cliniciansService.excludePasswordFields(clinician);
+            }
         }
         return null;
     }
-    async login(user) {
-        const payload = { username: user.username, sub: user.id };
+    async login(clinician) {
+        const payload = {
+            email: clinician.email,
+            sub: clinician.clinician_id,
+            roles: clinician.roles,
+        };
         return {
             access_token: this.jwtService.sign(payload),
         };
@@ -80,6 +95,6 @@ let AuthService = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [users_service_1.UsersService,
+    __metadata("design:paramtypes", [clinicians_service_1.CliniciansService,
         jwt_1.JwtService])
 ], AuthService);

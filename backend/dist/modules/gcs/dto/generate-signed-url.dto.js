@@ -24,3 +24,10 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], GenerateSignedUrlDto.prototype, "fileExtension", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(60),
+    __metadata("design:type", Number)
+], GenerateSignedUrlDto.prototype, "expirationMinutes", void 0);

@@ -9,15 +9,30 @@
     *   The backend builds successfully (`yarn backend:build`).
     *   The server can be started (`node backend/dist/main.js`).
     *   Environment variables (`.env`) are being loaded.
-    *   The `/api/gcs/signed-url` endpoint is reachable and attempts to generate a URL.
+    *   The `/api/gcs/signed-url` endpoint is reachable and now successfully generates signed URLs locally using a service account key after resolving organization and service account policy restrictions.
+    *   **Database Setup (PostgreSQL with Prisma):**
+        *   Switched ORM from TypeORM to Prisma.
+        *   Prisma initialized in the backend project.
+        *   Database schema defined in `prisma/schema.prisma` for Clinicians, Patients, Organizations, and Assignments.
+        *   Initial migration successfully applied to `aibeautylens_dev_db`.
+        *   `PrismaService` and `PrismaModule` created and integrated into `AppModule`.
+    *   **Authentication (Clinicians):**
+        *   `CliniciansService` and `CliniciansModule` created for clinician data management via Prisma.
+        *   `AuthModule` updated to use `CliniciansModule`.
+        *   `AuthService` refactored for clinician registration (email/password, hashing) and validation using Prisma.
+        *   `JwtStrategy` and `LocalStrategy` updated for clinician authentication.
+        *   Role-Based Access Control (RBAC) basics: `Roles` decorator, `Role` enum, and `RolesGuard` created.
+        *   `AuthController` updated with `RegisterClinicianDto`, `LoginDto`, and RBAC on profile route.
 *   **Frontend Core:** (Presumed to be in a basic runnable state, details to be filled).
-*   **Memory Bank:** Initial core files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`) have been created with placeholder content.
+*   **Memory Bank:** Initial core files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`) have been created with placeholder content. All memory bank files updated to reflect Prisma switch and Auth module progress.
+*   **Architectural Plan:** `database_strategy_plan.md` created and updated to reflect Prisma usage.
 
 ## 2. What's Left to Build (High-Level)
 
 *   **Backend:**
-    *   Full implementation of Auth module (registration, login, JWT strategy).
-    *   Full implementation of Users module.
+    *   Refine and test Auth module (e.g., password reset, email verification if needed).
+    *   Implement remaining CRUD operations and business logic for Clinicians, Patients, Organizations.
+    *   Full implementation of Users module (if still needed for other user types, or remove if clinicians are the only users).
     *   Full implementation of GCS module (successful signed URL generation).
     *   Integration with AI models (Gemini or alternatives).
     *   Database integration and schema.
@@ -43,12 +58,33 @@
 
 ## 3. Current Status
 
-*   **Actively working on:** Investigating workarounds for GCS pre-signed URL generation issues in the local development environment.
-*   **Blocked by:** The `@google-cloud/storage` library's behavior when attempting v4 signing with user Application Default Credentials (ADC) and service account impersonation in a local environment. The library expects `client_email` and `private_key` directly from the credentials used for signing, which user ADC does not provide. This is constrained by the org policy disallowing service account key creation. Deployment to a GCP environment (where a service account is directly attached to the compute resource) is the recommended path for reliable testing.
+*   **Completed:**
+    *   Initial setup of PostgreSQL database with Prisma ORM for core entities.
+    *   Core clinician authentication (register, login, JWT, basic RBAC) implemented using Prisma.
+*   **Actively working on:** Updating memory bank files to reflect recent authentication work.
+*   **Next Steps (Backend):**
+    *   Thorough testing of the authentication flow.
+        *   Test clinician registration success and failure cases (e.g., existing email, invalid data).
+        *   Test clinician login success (correct credentials) and failure cases (e.g., incorrect password, non-existent user).
+        *   Verify JWT generation, structure, and expiration.
+        *   Test protected routes with valid and invalid JWTs.
+        *   Consider adding tests for password reset and email verification if these features are implemented later.
+    *   Implementation of NestJS modules for Patients and Organizations.
+    *   Development of services and controllers for managing Patients and Organizations using `PrismaService`.
+        *   Implement `GET /patients` to list all patients (consider pagination/filtering later).
+        *   Implement `GET /patients/:id` to retrieve a single patient.
+        *   Implement `POST /patients` to create a new patient.
+        *   Implement `PUT /patients/:id` to update a patient.
+        *   Implement `DELETE /patients/:id` to delete a patient.
+        *   Implement `GET /organizations` to list all organizations.
+        *   Implement `GET /organizations/:id` to retrieve a single organization.
+        *   Implement `POST /organizations` to create a new organization.
+        *   Implement `PUT /organizations/:id` to update an organization.
+        *   Implement `DELETE /organizations/:id` to delete an organization.
+*   **Resolved (GCS Signing):** The `@google-cloud/storage` library now successfully generates signed URLs locally by using a service account key. The previous issues related to "Cannot sign data without `client_email`" and policy restrictions (org and service account level disabling key creation) have been troubleshooted and resolved, allowing a service account key to be used for local development.
 
 ## 4. Known Issues
 
-*   **GCS Signing with ADC:** The primary blocker. Local ADC (user credentials) is not successfully impersonating the target service account to sign GCS v4 URLs. The client library seems to require `client_email` and `private_key` for the ADC principal itself, which user credentials don't have.
 *   **AI Model Accessibility in China:** Gemini API accessibility is a known concern for users in China; alternatives or proxy solutions need to be considered.
 *   **Memory Bank Population:** Core Memory Bank files are placeholders and need to be filled with detailed project-specific information.
 *   **Missing .clinerules file:** This file, intended for project-specific AI guidance, has not yet been created or discussed.

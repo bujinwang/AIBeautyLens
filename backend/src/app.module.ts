@@ -11,7 +11,7 @@ import { GeminiModule } from './modules/gemini/gemini.module';
 import { ImagesModule } from './modules/images/images.module'; // Added ImagesModule
 import { TreatmentsModule } from './modules/treatments/treatments.module'; // Added TreatmentsModule
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, Reflector } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -39,6 +39,7 @@ import { APP_GUARD } from '@nestjs/core';
   controllers: [AppController],
   providers: [
     AppService,
+    Reflector,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

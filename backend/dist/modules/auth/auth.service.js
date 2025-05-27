@@ -50,6 +50,7 @@ const bcrypt = __importStar(require("bcrypt"));
 const role_enum_1 = require("./enums/role.enum");
 const config_1 = require("@nestjs/config");
 const crypto = __importStar(require("crypto"));
+const email_service_1 = require("../../common/services/email.service");
 let AuthService = class AuthService {
     constructor(cliniciansService, jwtService, configService) {
         this.cliniciansService = cliniciansService;
@@ -77,7 +78,7 @@ let AuthService = class AuthService {
             email_verified: false,
         };
         const newClinician = await this.cliniciansService.create(createInput);
-        await this.sendVerificationEmail(newClinician.email, verificationToken);
+        await (0, email_service_1.sendVerificationEmail)(newClinician.email, newClinician.name, verificationToken);
         return this.cliniciansService.excludePasswordFields(newClinician);
     }
     async validateUser(email, pass) {
@@ -158,7 +159,7 @@ let AuthService = class AuthService {
             password_reset_token: resetToken,
             password_reset_expires: resetExpires,
         });
-        await this.sendPasswordResetEmail(email, resetToken);
+        await (0, email_service_1.sendPasswordResetEmail)(clinician.email, clinician.name, resetToken);
     }
     async resetPassword(token, password, passwordConfirmation) {
         if (password !== passwordConfirmation) {
@@ -202,7 +203,7 @@ let AuthService = class AuthService {
             verification_token: verificationToken,
             verification_token_expires: verificationExpires,
         });
-        await this.sendVerificationEmail(email, verificationToken);
+        await (0, email_service_1.sendVerificationEmail)(clinician.email, clinician.name, verificationToken);
     }
     generateToken() {
         return crypto.randomBytes(32).toString('hex');
@@ -218,12 +219,6 @@ let AuthService = class AuthService {
     }
     async findClinicianByRefreshToken(token) {
         return this.cliniciansService.findOneByRefreshToken(token);
-    }
-    async sendVerificationEmail(email, token) {
-        console.log(`Verification link for ${email}: ${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token=${token}`);
-    }
-    async sendPasswordResetEmail(email, token) {
-        console.log(`Password reset link for ${email}: ${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${token}`);
     }
 };
 exports.AuthService = AuthService;

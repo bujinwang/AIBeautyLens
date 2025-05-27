@@ -6,17 +6,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CliniciansModule = void 0;
+exports.TreatmentsModule = void 0;
 const common_1 = require("@nestjs/common");
-const clinicians_service_1 = require("./clinicians.service");
-const clinicians_controller_1 = require("./clinicians.controller");
-let CliniciansModule = class CliniciansModule {
+const treatments_controller_1 = require("./treatments.controller");
+const treatments_service_1 = require("./treatments.service");
+const prisma_module_1 = require("../../prisma/prisma.module");
+let TreatmentsModule = class TreatmentsModule {
 };
-exports.CliniciansModule = CliniciansModule;
-exports.CliniciansModule = CliniciansModule = __decorate([
+exports.TreatmentsModule = TreatmentsModule;
+exports.TreatmentsModule = TreatmentsModule = __decorate([
     (0, common_1.Module)({
-        providers: [clinicians_service_1.CliniciansService],
-        exports: [clinicians_service_1.CliniciansService],
-        controllers: [clinicians_controller_1.CliniciansController],
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [treatments_controller_1.TreatmentsController],
+        providers: [treatments_service_1.TreatmentsService],
+        exports: [treatments_service_1.TreatmentsService],
     })
-], CliniciansModule);
+], TreatmentsModule);

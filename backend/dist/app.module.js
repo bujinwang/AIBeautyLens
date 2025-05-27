@@ -17,6 +17,10 @@ const gcs_module_1 = require("./modules/gcs/gcs.module");
 const prisma_module_1 = require("./prisma/prisma.module");
 const logging_module_1 = require("./common/modules/logging.module");
 const gemini_module_1 = require("./modules/gemini/gemini.module");
+const images_module_1 = require("./modules/images/images.module");
+const treatments_module_1 = require("./modules/treatments/treatments.module");
+const throttler_1 = require("@nestjs/throttler");
+const core_1 = require("@nestjs/core");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,14 +31,29 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            throttler_1.ThrottlerModule.forRoot([
+                {
+                    ttl: 900000,
+                    limit: 100,
+                },
+            ]),
             logging_module_1.LoggingModule,
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             gcs_module_1.GcsModule,
             gemini_module_1.GeminiModule,
+            images_module_1.ImagesModule,
+            treatments_module_1.TreatmentsModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [
+            app_service_1.AppService,
+            core_1.Reflector,
+            {
+                provide: core_1.APP_GUARD,
+                useClass: throttler_1.ThrottlerGuard,
+            },
+        ],
     })
 ], AppModule);

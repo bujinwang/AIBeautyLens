@@ -114,8 +114,10 @@ Serverless functions for image processing and AI analysis.
 4. **Start mobile app**: `yarn app:start`
 5. **Deploy functions**: `yarn functions:deploy` (when ready)
 
-## 📚 Documentation
+## �� Documentation
 
+- [Project Rules & Guidelines](./PROJECT_RULES.md)
+- [MVP & Feature Plan](./Tasks.MD)
 - [Workspace Setup Guide](./docs/workspace-setup.md)
 - [Migration Notes](./docs/migration-notes.md)
 - [Architectural Plan](./architectural_plan.md)

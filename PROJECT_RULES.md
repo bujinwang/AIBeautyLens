@@ -1,6 +1,6 @@
 # AIBeautyLens Project Rules & Guidelines
 
-This document outlines the primary rules, conventions, and best practices to follow when developing the AIBeautyLens application. Adhering to these guidelines ensures consistency, maintainability, and collaboration efficiency.
+This document outlines the primary rules, conventions, and best practices to follow when developing the AIBeautyLens application. For project setup and workspace structure, see [README.md](./README.md). For product requirements and MVP plan, see [Tasks.MD](./Tasks.MD).
 
 ## 1. Core Technologies
 
@@ -10,28 +10,26 @@ This document outlines the primary rules, conventions, and best practices to fol
 *   **Styling:** React Native `StyleSheet` API
 *   **API Calls:** `axios`
 *   **Localization:** `i18next` with `react-i18next`
-*   **Linting:** ESLint (Configured in `.eslintrc.js` - *assuming standard location*)
+*   **Linting:** ESLint (Configured in `.eslintrc.js`)
 
 ## 2. Coding Style & Conventions
 
 *   **TypeScript:**
-    *   Utilize TypeScript for all new code (`.ts`, `.tsx`).
-    *   Define interfaces and types for props, state, and API payloads. Store shared types in `src/types/`.
-    *   Avoid `any` where possible. Use specific types or `unknown`.
+    *   Use TypeScript for all new code (`.ts`, `.tsx`).
+    *   Define interfaces/types for props, state, API payloads (in `src/types/`).
+    *   Avoid `any`; use specific types or `unknown`.
 *   **React:**
-    *   Use functional components with Hooks (`useState`, `useEffect`, etc.).
+    *   Use functional components with Hooks.
     *   Keep components small, focused, and reusable.
 *   **Naming:**
-    *   Components: `PascalCase` (e.g., `AnalysisScreen.tsx`, `AILogoIcon.tsx`)
-    *   Files: `PascalCase` for components/screens, `camelCase` for services/utilities (e.g., `geminiService.ts`).
+    *   Components/Files: `PascalCase` (e.g., `AnalysisScreen.tsx`)
+    *   Services/Utilities Files: `camelCase` (e.g., `geminiService.ts`).
     *   Variables/Functions: `camelCase`.
-    *   Constants: `UPPER_SNAKE_CASE` (e.g., `BORDER_RADIUS`, `PROCESSING_STEPS`).
+    *   Constants: `UPPER_SNAKE_CASE`.
 *   **Imports:**
-    *   Organize imports: React/RN -> Libraries -> Absolute Paths (`src/*`) -> Relative Paths (`./`, `../`).
-    *   Use path aliases if configured (e.g., `@components/`). *(Check `babel.config.js` or `tsconfig.json` if needed)*
+    *   Organize: React/RN -> Libraries -> Absolute Paths (`src/*`) -> Relative Paths (`./`, `../`).
 *   **Comments:**
-    *   Add comments to explain complex logic, workarounds, or non-obvious code sections.
-    *   Use `// TODO:` or `// FIXME:` prefixes for actionable comments.
+    *   Explain complex logic, workarounds. Use `// TODO:`, `// FIXME:`.
 
 ## 3. Directory Structure
 
@@ -54,40 +52,38 @@ src/
 
 ## 4. State Management
 
-*   **Local State:** Use `useState` for component-specific state.
-*   **Shared State:** For state shared between non-parent/child components, consider React Context API or lifting state up. If complexity grows significantly, discuss introducing a dedicated state management library (e.g., Zustand, Redux Toolkit).
+*   Prefer `useState` for local state.
+*   Use React Context or lift state for simple sharing. Discuss libraries like Zustand/Redux for complex needs.
 
 ## 5. Styling
 
-*   **Method:** Use `StyleSheet.create` for defining styles.
-*   **Theme:** Adhere strictly to the theme defined in `src/constants/theme.ts` (COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS, SHADOWS).
-*   **Inline Styles:** Avoid inline styles unless necessary for dynamic values or minor tweaks.
-*   **Responsiveness:** Use `Platform`, `Dimensions`, and flexible layout techniques (`flex`, percentages) to ensure layouts adapt to different screen sizes (iPhone, iPad) and orientations.
+*   Use `StyleSheet.create`.
+*   Strictly use the theme from `src/constants/theme.ts` (COLORS, SPACING, TYPOGRAPHY, etc.).
+*   Avoid inline styles unless necessary for dynamic values.
+*   Ensure responsiveness using `Platform`, `Dimensions`, `flex`.
 
 ## 6. API Calls
 
-*   **Location:** Centralize API logic within the `src/services/` directory.
-*   **Client:** Use the configured `axios` instance.
-*   **State Handling:** Implement proper loading and error states in components that trigger API calls. Provide user feedback during these states.
+*   Centralize in `src/services/`.
+*   Use the configured `axios` instance.
+*   Implement loading/error states in calling components.
 
 ## 7. Localization
 
-*   **Implementation:** Use the `useLocalization` hook provided by `src/i18n/localizationContext.tsx`.
-*   **Strings:** Define all user-facing strings within the `translations` object in the context file. Avoid hardcoding strings directly in components.
+*   Use the `useLocalization` hook.
+*   Define strings in `src/i18n/localizationContext.tsx`. No hardcoded UI strings.
 
 ## 8. Linting & Formatting
 
-*   **ESLint:** Ensure code adheres to the project's ESLint configuration. Run `npm run lint` (or `yarn lint`) and fix errors/warnings before committing code.
-*   **Formatting:** Use Prettier (if configured) or maintain consistent formatting according to the established style.
+*   Adhere to ESLint rules (`npm run lint`).
+*   Follow existing formatting style (Prettier if configured).
 
 ## 9. Dependencies
 
-*   **Adding:** Discuss with the team before adding new major dependencies to `package.json`.
-*   **Updating:** Update dependencies cautiously, testing thoroughly afterward.
+*   Consult before adding major dependencies.
 
 ## 10. Git Workflow
 
-*   *(Define your specific branch strategy, commit message format, PR process, etc. here)*
-    *   Example: Use feature branches (`feature/feature-name`).
-    *   Example: Write clear commit messages (e.g., `feat: Add processing indicator scroll view`).
-    *   Example: Require pull requests for merging into `main`/`develop`. 
+*   Use feature branches (`feature/feature-name`).
+*   Write clear commit messages (e.g., `feat: Add processing indicator scroll view`).
+*   Require pull requests for merging into `main`/`develop`. 

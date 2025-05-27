@@ -32,7 +32,7 @@ import { CliniciansModule } from '../clinicians/clinicians.module';
     ConfigModule, // Re-adding ConfigModule here. Even if global, ensuring it's explicitly
                   // available to AuthModule might help resolve DI for JwtModule.registerAsync.
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, ConfigService],
   controllers: [AuthController],
   exports: [AuthService],
 })

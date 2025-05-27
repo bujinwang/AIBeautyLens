@@ -43,7 +43,7 @@ exports.AuthModule = AuthModule = __decorate([
             }),
             config_1.ConfigModule,
         ],
-        providers: [auth_service_1.AuthService, local_strategy_1.LocalStrategy, jwt_strategy_1.JwtStrategy],
+        providers: [auth_service_1.AuthService, local_strategy_1.LocalStrategy, jwt_strategy_1.JwtStrategy, config_1.ConfigService],
         controllers: [auth_controller_1.AuthController],
         exports: [auth_service_1.AuthService],
     })

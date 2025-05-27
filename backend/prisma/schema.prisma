@@ -11,18 +11,34 @@ datasource db {
 }
 
 model Clinician {
-  clinician_id      String    @id @default(uuid())
-  name              String
-  email             String    @unique
-  hashed_password   String
-  salt              String
-  specialty         String?
-  organization_id   String?   // Foreign key to Organization
-  roles             String[]  @default([])
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  organization      Organization? @relation(fields: [organization_id], references: [organization_id])
-  patientAssignments ClinicianPatientAssignment[]
+  clinician_id             String    @id @default(uuid())
+  name                     String
+  email                    String    @unique
+  hashed_password          String
+  salt                     String
+  specialty                String?
+  organization_id          String?   // Foreign key to Organization
+  roles                    String[]  @default([])
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  
+  // Email verification
+  email_verified           Boolean   @default(false)
+  verification_token       String?   @unique
+  verification_token_expires DateTime?
+  
+  // Password reset
+  password_reset_token     String?   @unique
+  password_reset_expires   DateTime?
+  
+  // Refresh token
+  refresh_token            String?   @unique
+  refresh_token_expires    DateTime?
+  
+  // Relations
+  organization             Organization? @relation(fields: [organization_id], references: [organization_id])
+  patientAssignments       ClinicianPatientAssignment[]
+  treatmentRecords         TreatmentRecord[] // Added back-relation
 }
 
 model Patient {
@@ -35,6 +51,7 @@ model Patient {
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
   clinicianAssignments  ClinicianPatientAssignment[]
+  treatmentRecords      TreatmentRecord[] // Added back-relation
 }
 
 model Organization {
@@ -60,4 +77,31 @@ model ClinicianPatientAssignment {
   patient         Patient   @relation(fields: [patient_id], references: [patient_id], onDelete: Cascade)
 
   @@unique([clinician_id, patient_id])
+}
+
+model TreatmentType {
+  id               String            @id @default(uuid())
+  name             String            @unique // e.g., "Microdermabrasion", "Chemical Peel Level 1"
+  description      String?
+  isActive         Boolean           @default(true) // To allow soft-deleting or disabling types
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  treatmentRecords TreatmentRecord[] // Relation to TreatmentRecord model
+}
+
+model TreatmentRecord {
+  id                        String    @id @default(uuid())
+  date                      DateTime // Date and time the treatment was administered
+  notes                     String? // Optional clinician notes about this specific treatment instance
+  totalPrice                Decimal // Using Decimal for currency is recommended
+  currency                  String // e.g., "CAD", "USD" (ISO 4217 currency code)
+  patientId                 String
+  patient                   Patient   @relation(fields: [patientId], references: [patient_id], onDelete: Cascade)
+  clinicianId               String // Clinician who administered/recorded
+  clinician                 Clinician @relation(fields: [clinicianId], references: [clinician_id], onDelete: Cascade) // Assuming clinician_id is the PK in Clinician
+  treatmentTypeId           String
+  treatmentType             TreatmentType @relation(fields: [treatmentTypeId], references: [id], onDelete: Restrict) // Prevent deleting a type if records use it
+  firestoreAnalysisRecordId String? // ID of the AnalysisRecord in Firestore, if linked
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 }

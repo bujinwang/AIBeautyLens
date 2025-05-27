@@ -23,32 +23,85 @@
         *   `JwtStrategy` and `LocalStrategy` updated for clinician authentication.
         *   Role-Based Access Control (RBAC) basics: `Roles` decorator, `Role` enum, and `RolesGuard` created.
         *   `AuthController` updated with `RegisterClinicianDto`, `LoginDto`, and RBAC on profile route.
-*   **Frontend Core:** (Presumed to be in a basic runnable state, details to be filled).
+        *   Authentication flow thoroughly tested with unit tests for all components.
+        *   **Enhanced Security Features:**
+            *   Email verification system with token generation and validation
+            *   Password reset functionality with secure token-based flow
+            *   Refresh token rotation for improved JWT security
+            *   Account logout functionality that invalidates tokens
+            *   All endpoints implemented and tested
+        *   **Email Service Integration:**
+            *   Mailjet-based email service implemented
+            *   Verification and password reset emails are now sent via Mailjet
+            *   Environment variables and configuration documented
+    *   **Entity Modules:**
+        *   **Patients Module:**
+            *   Complete CRUD operations implemented and tested.
+            *   DTOs with validation using class-validator.
+            *   Role-based access control implemented on all endpoints.
+        *   **Organizations Module:**
+            *   Complete CRUD operations implemented and tested.
+            *   DTOs with validation using class-validator.
+            *   Role-based access control implemented on all endpoints.
+        *   **ClinicianPatientAssignments Module:**
+            *   Implemented to manage relationships between clinicians and patients.
+            *   Complete CRUD operations with proper validation.
+            *   Endpoints for finding assignments by clinician or patient.
+            *   Role-based access control implemented on all endpoints.
+    *   **Error Handling & Logging:**
+        *   Global exception filter implemented for standardized error responses.
+        *   Transform interceptor for consistent success response formatting.
+        *   Centralized logging service with file output and configurable log levels.
+        *   Custom error classes and response interfaces for type safety.
+*   **Frontend Core:** 
+    *   Basic React Native application structure with navigation.
+    *   Screen components for core functionality.
+    *   **Error Handling System:**
+        *   React Error Boundary component for catching rendering errors.
+        *   Global error context with toast notifications.
+        *   Robust API client with automatic token refresh and retry capabilities.
+        *   useApi hook for components to easily handle API calls and errors.
+        *   Sample ApiDataDisplay component demonstrating error handling patterns.
 *   **Memory Bank:** Initial core files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`) have been created with placeholder content. All memory bank files updated to reflect Prisma switch and Auth module progress.
 *   **Architectural Plan:** `database_strategy_plan.md` created and updated to reflect Prisma usage.
+*   **Documentation:** 
+    *   Comprehensive `ERROR_HANDLING.md` document created with detailed implementation and usage instructions.
+    *   `SECURITY_FEATURES.md` document outlining all security enhancements and best practices.
 
 ## 2. What's Left to Build (High-Level)
 
 *   **Backend:**
-    *   Refine and test Auth module (e.g., password reset, email verification if needed).
-    *   Implement remaining CRUD operations and business logic for Clinicians, Patients, Organizations.
     *   Full implementation of Users module (if still needed for other user types, or remove if clinicians are the only users).
     *   Full implementation of GCS module (successful signed URL generation).
     *   Integration with AI models (Gemini or alternatives).
-    *   Database integration and schema.
-    *   Error handling and logging.
-    *   Testing (unit, integration, e2e).
+    *   Add pagination/filtering to existing endpoints.
+    *   Additional testing (integration, e2e).
+    *   ~Enhanced error handling and logging.~ ✅
+    *   ~Password reset, email verification, JWT refresh token rotation, logout functionality.~ ✅
+    *   ~Email service integration for verification and password reset.~ ✅
+    *   Implement Analysis History: Refactor Firestore data model for images and analysis records.
+    *   Implement Analysis History: Develop API endpoints for triggering specific analyses and retrieving analysis history.
+    *   Implement Treatment Record Management: Define Prisma schema for `TreatmentTypes` and `TreatmentRecords`.
+    *   Implement Treatment Record Management: Develop `TreatmentsModule` (DTOs, services, controllers) for managing treatment types and records.
 *   **Frontend:**
     *   Complete UI/UX for all screens.
     *   Image capture/selection flow.
     *   API integration for all features.
     *   Display of analysis reports and recommendations.
-    *   State management.
+    *   State management implementation.
     *   Localization implementation.
     *   Testing.
+    *   ~Error handling and recovery mechanisms.~ ✅
+    *   Implement token refresh and secure storage in mobile app
+    *   Implement UI for account verification and password reset
+    *   Implement UI for triggering specific types of analyses on existing images.
+    *   Implement UI for displaying analysis history for an image.
+    *   Implement UI for managing treatment types (admin).
+    *   Implement UI for creating/viewing/updating treatment records.
 *   **Cloud Functions:**
     *   Implementation of `gemini-analysis` and `image-processor` functions.
     *   Deployment and integration with the backend.
+    *   Update `gemini-analysis` Cloud Function to trigger from `AnalysisRecords` collection and interact with the new data model.
 *   **Shared Library:**
     *   Define all necessary shared types, constants, and utility functions.
 *   **Documentation:**
@@ -61,26 +114,50 @@
 *   **Completed:**
     *   Initial setup of PostgreSQL database with Prisma ORM for core entities.
     *   Core clinician authentication (register, login, JWT, basic RBAC) implemented using Prisma.
-*   **Actively working on:** Updating memory bank files to reflect recent authentication work.
-*   **Next Steps (Backend):**
-    *   Thorough testing of the authentication flow.
-        *   Test clinician registration success and failure cases (e.g., existing email, invalid data).
-        *   Test clinician login success (correct credentials) and failure cases (e.g., incorrect password, non-existent user).
-        *   Verify JWT generation, structure, and expiration.
-        *   Test protected routes with valid and invalid JWTs.
-        *   Consider adding tests for password reset and email verification if these features are implemented later.
+    *   Authentication flow testing (success and failure cases for registration, login, JWT, protected routes).
     *   Implementation of NestJS modules for Patients and Organizations.
-    *   Development of services and controllers for managing Patients and Organizations using `PrismaService`.
-        *   Implement `GET /patients` to list all patients (consider pagination/filtering later).
-        *   Implement `GET /patients/:id` to retrieve a single patient.
-        *   Implement `POST /patients` to create a new patient.
-        *   Implement `PUT /patients/:id` to update a patient.
-        *   Implement `DELETE /patients/:id` to delete a patient.
-        *   Implement `GET /organizations` to list all organizations.
-        *   Implement `GET /organizations/:id` to retrieve a single organization.
-        *   Implement `POST /organizations` to create a new organization.
-        *   Implement `PUT /organizations/:id` to update an organization.
-        *   Implement `DELETE /organizations/:id` to delete an organization.
+    *   Implementation of ClinicianPatientAssignments module for managing clinician-patient relationships.
+    *   Role-based access control implemented across all controllers.
+    *   Enhanced DTOs with proper validation using class-validator.
+    *   Implemented pagination, filtering, and sorting for `patients` and `organizations` list endpoints, including DTOs and service logic.
+    *   Defined and migrated Prisma schema for `TreatmentTypes` and `TreatmentRecords`.
+    *   **Analysis History Feature:** Created `ImagesModule` (module, controller, service, DTOs) and integrated into `AppModule`.
+    *   **Treatment Record Management Feature:** Created `TreatmentsModule` (module, controller, service, DTOs) and integrated into `AppModule`.
+    *   **Comprehensive error handling system:**
+        *   Backend: Global exception filter, transform interceptor, logging service
+        *   Frontend: Error boundary component, error context, toast notifications, API client with retry and token refresh
+        *   Documentation: Detailed ERROR_HANDLING.md guide for developers
+    *   **Security enhancements:**
+        *   Email verification workflow (fully implemented)
+        *   Password reset functionality (fully implemented)
+        *   Refresh token rotation (fully implemented)
+        *   Secure logout mechanism (fully implemented)
+        *   Updated schema with security fields for clinicians
+        *   Comprehensive security documentation
+    *   **Email service integration:**
+        *   Mailjet-based email service implemented and in use for verification and password reset
+        *   Environment/configuration documented
+*   **Actively working on:** 
+    *   Additional unit testing for new modules.
+    *   Enhancing service methods to include relationship data in responses.
+    *   Further integration of error handling throughout the application.
+    *   **User-specific data scoping:**
+        *   Enforcing that clinicians can only access patients and assignments assigned to them
+        *   Updating service and controller logic for all relevant modules
+        *   Adding/expanding tests for data isolation
+*   **Next Steps (Backend):**
+    *   Implement account lockout after failed login attempts
+    *   Add rate limiting for sensitive endpoints
+    *   Consider implementing soft delete for entities rather than hard delete.
+    *   **Complete user-specific data scoping for all patient and assignment endpoints**
+    *   Develop `TreatmentsModule` backend logic (service implementation, controller endpoints).
+    *   Develop `ImagesModule` backend logic (service implementation for Firestore, controller endpoints).
+*   **Next Steps (Frontend):**
+    *   Complete API integration with the newly implemented error handling and security flows.
+    *   Enhance user feedback for error states in all screens.
+    *   Implement offline capability with error recovery.
+    *   Create screens for account verification and password reset
+    *   Develop frontend UI for Treatment Record Management.
 *   **Resolved (GCS Signing):** The `@google-cloud/storage` library now successfully generates signed URLs locally by using a service account key. The previous issues related to "Cannot sign data without `client_email`" and policy restrictions (org and service account level disabling key creation) have been troubleshooted and resolved, allowing a service account key to be used for local development.
 
 ## 4. Known Issues
@@ -88,6 +165,8 @@
 *   **AI Model Accessibility in China:** Gemini API accessibility is a known concern for users in China; alternatives or proxy solutions need to be considered.
 *   **Memory Bank Population:** Core Memory Bank files are placeholders and need to be filled with detailed project-specific information.
 *   **Missing .clinerules file:** This file, intended for project-specific AI guidance, has not yet been created or discussed.
+*   **Authorization Granularity:** The current implementation of the RBAC system is basic; more fine-grained access control may be needed for production.
+*   **Data Validation:** While basic validation is in place, more comprehensive validation logic might be needed for domain-specific rules.
 
 ---
-*Self-Correction: This is an initial draft. Please review and update this document regularly to reflect the project's actual progress and challenges.*
+*Last Updated: July 19, 2023*

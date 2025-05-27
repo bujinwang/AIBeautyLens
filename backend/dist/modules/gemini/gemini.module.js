@@ -13,14 +13,19 @@ const config_1 = require("@nestjs/config");
 const gemini_service_1 = require("./gemini.service");
 const gemini_controller_1 = require("./gemini.controller");
 const prompt_template_service_1 = require("./prompt-template.service");
+const gcs_module_1 = require("../gcs/gcs.module");
 let GeminiModule = class GeminiModule {
 };
 exports.GeminiModule = GeminiModule;
 exports.GeminiModule = GeminiModule = __decorate([
     (0, common_1.Module)({
-        imports: [axios_1.HttpModule, config_1.ConfigModule],
+        imports: [
+            axios_1.HttpModule,
+            config_1.ConfigModule,
+            gcs_module_1.GcsModule
+        ],
         providers: [gemini_service_1.GeminiService, prompt_template_service_1.PromptTemplateService],
         controllers: [gemini_controller_1.GeminiController],
-        exports: [gemini_service_1.GeminiService],
+        exports: [gemini_service_1.GeminiService, prompt_template_service_1.PromptTemplateService],
     })
 ], GeminiModule);

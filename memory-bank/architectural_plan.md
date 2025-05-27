@@ -34,7 +34,9 @@
     *   Handles core business logic (e.g., patient management if using PostgreSQL for that).
     *   Generates GCS pre-signed URLs for client uploads.
     *   Receives upload completion notifications from the client.
-    *   Writes image metadata (GCS path, patientId, clinicianId, promptConfigId, initial status like 'uploaded') to **Cloud Firestore**.
+    *   Creates an `Image` document in Firestore. If an initial analysis is requested, also creates an `AnalysisRecord` document in Firestore, linking to the new image and triggering the analysis.
+    *   Provides API endpoints for clients to request specific new analyses on existing images (creating new `AnalysisRecord` documents).
+    *   Provides API endpoints for clients to retrieve analysis history for an image (querying `AnalysisRecords`).
     *   (Optional but recommended for notifications) Subscribes to a Pub/Sub topic for analysis completion events and relays these to connected clients via WebSockets.
     *   Provides API endpoints for clients to poll for analysis status/results if WebSockets are not used initially.
 
@@ -44,32 +46,45 @@
     *   Images are uploaded directly by the client using pre-signed URLs.
 
 4.  **Metadata & Prompt Storage (Cloud Firestore):**
-    *   **Image Metadata Collection:** Stores documents containing:
-        *   `gcsPath` (string, e.g., `your-bucket-name/patient-uploads/image123.jpg`)
-        *   `patientId` (string/reference)
-        *   `clinicianId` (string/reference)
-        *   `promptConfigurationId` (string/reference)
+    *   **`Images` Collection:** Stores metadata about the uploaded image itself. Each document represents one uploaded image.
+        *   `imageId` (string, PK - unique ID for the image)
+        *   `gcsPath` (string - path to the image in Google Cloud Storage)
+        *   `patientId` (string/reference - to PostgreSQL `patients` table)
+        *   `clinicianId` (string/reference - uploader/owner, to PostgreSQL `clinicians` table)
         *   `uploadTimestamp` (timestamp)
-        *   `analysisStatus` (string, e.g., 'uploaded', 'processing', 'completed', 'failed')
-        *   `analysisResult` (map/object, to store Gemini output or summary)
-        *   Other relevant fields.
-    *   **Prompt Templates Collection:** Stores documents containing:
-        *   `promptConfigurationId` (string)
+        *   `originalFileName` (string, optional)
+        *   `contentType` (string, e.g., "image/jpeg", optional)
+        *   `imageNotes` (string, optional, by clinician)
+    *   **`AnalysisRecords` Collection:** Stores individual analysis events. Each document represents one analysis performed on an image.
+        *   `analysisId` (string, PK - unique ID for this specific analysis event)
+        *   `imageId` (string, FK - referencing `Images.imageId`)
+        *   `analysisTimestamp` (timestamp - when this analysis was initiated/completed)
+        *   `analysisType` (string - e.g., "skin_hydration_v1", "pore_analysis_detailed")
+        *   `promptConfigurationId` (string/reference - FK to `PromptTemplates` collection, if a specific template was used)
+        *   `analysisParameters` (map - any specific settings or inputs for this particular analysis run)
+        *   `analysisStatus` (string - e.g., 'pending', 'processing', 'completed', 'failed')
+        *   `analysisResult` (map/object - the structured JSON output from the AI model)
+        *   `errorMessage` (string - if `analysisStatus` is 'failed')
+        *   `initiatedByClinicianId` (string/reference - FK to `clinicians`, if a clinician specifically triggered this analysis)
+    *   **`PromptTemplates` Collection:** Stores documents containing:
+        *   `promptConfigurationId` (string, PK)
         *   `promptText` (string) or structured prompt components.
     *   Must be configured for HIPAA compliance (BAA with Google Cloud, Firestore Security Rules, server-side encryption).
 
 5.  **Automated Gemini Vision Analysis (Google Cloud Function):**
-    *   **Trigger:** Firestore trigger (e.g., `onCreate` for new documents in the Image Metadata Collection).
+    *   **Trigger:** Firestore trigger (e.g., `onCreate` for new documents in the `AnalysisRecords` Collection, specifically when `analysisStatus` is 'pending' or a similar initial state).
     *   **Runtime:** Node.js (to align with backend stack, or Python if preferred for ML tasks).
     *   **Logic:**
-        1.  Receives the image metadata document from the Firestore event.
-        2.  Fetches the appropriate prompt from the Firestore `PromptTemplates` collection using `promptConfigurationId` from the metadata.
-        3.  Constructs the Gemini API request, using the GCS URI (`gs://...`) of the image and the fetched prompt.
-        4.  Calls the Gemini Vision API directly using the Google Cloud AI Platform client libraries or REST API.
-        5.  Receives the analysis result (JSON) from Gemini.
-        6.  Updates the corresponding image metadata document in Firestore with the analysis results and sets `analysisStatus` to 'completed' (or 'failed' with error details).
-        7.  (Optional) Publishes a message to a Google Cloud Pub/Sub topic upon completion/failure.
-    *   **Permissions:** The Cloud Function's service account needs IAM permissions to read from GCS, read from Firestore (prompts collection), write to Firestore (metadata collection), call the Gemini API, and (optionally) publish to Pub/Sub.
+        1.  Receives the newly created `AnalysisRecords` document data from the Firestore event.
+        2.  Extracts `imageId`, `analysisType`, `promptConfigurationId`, `analysisParameters` from the `AnalysisRecords` document.
+        3.  Fetches the corresponding `Images` document from the `Images` collection using `imageId` to get the `gcsPath`.
+        4.  If `promptConfigurationId` is present, fetches the prompt from the `PromptTemplates` collection.
+        5.  Constructs the Gemini API request using the `gcsPath` (from the `Images` document), the fetched prompt (if any, or a default/dynamic prompt based on `analysisType`), and `analysisParameters` (from the `AnalysisRecords` document).
+        6.  Calls the Gemini Vision API directly using the Google Cloud AI Platform client libraries or REST API.
+        7.  Receives the analysis result (JSON) from Gemini.
+        8.  Updates the *triggering* `AnalysisRecords` document in Firestore with the `analysisResult` and sets `analysisStatus` to 'completed' (or 'failed' with `errorMessage`).
+        9.  (Optional) Publishes a message to a Google Cloud Pub/Sub topic upon completion/failure.
+    *   **Permissions:** The Cloud Function's service account needs IAM permissions to read from GCS, read from Firestore (`Images`, `PromptTemplates`, and `AnalysisRecords` collections), write to Firestore (`AnalysisRecords` collection), call the Gemini API, and (optionally) publish to Pub/Sub.
 
 6.  **Asynchronous Client Notification (Recommended):**
     *   **Google Cloud Pub/Sub:** A topic (e.g., `analysis-completion-topic`) to which the analysis Cloud Function publishes messages.
@@ -83,34 +98,47 @@ sequenceDiagram
     participant ClientApp as React Native App
     participant NestJSAPI as NestJS Backend
     participant GCS as Google Cloud Storage
-    participant FirestoreMeta as Firestore (Image Metadata)
-    participant FirestorePrompts as Firestore (Prompts)
-    participant CloudFunction as Google Cloud Function (Direct Gemini Call)
+    participant ImagesFS as Firestore (Images Collection)
+    participant AnalysisRecordsFS as Firestore (AnalysisRecords Collection)
+    participant PromptsFS as Firestore (Prompts Collection)
+    participant CloudFunction as Google Cloud Function
     participant GeminiVisionAPI as Gemini Vision API
-    participant PubSub as Google Cloud Pub/Sub (Optional for Notifications)
 
-    %% Upload & Metadata Registration %%
-    ClientApp->>NestJSAPI: 1. Request Pre-signed URL for GCS (auth token)
-    NestJSAPI->>GCS: 2. Generate GCS Pre-signed Upload URL
-    GCS-->>NestJSAPI: 3. GCS Pre-signed Upload URL
-    NestJSAPI-->>ClientApp: 4. Return GCS Pre-signed URL
-    ClientApp->>GCS: 5. PUT image directly to GCS using Pre-signed URL
-    GCS-->>ClientApp: 6. Upload success (200 OK)
-    ClientApp->>NestJSAPI: 7. Notify upload complete (GCS object name, patientId, promptConfigId)
-    NestJSAPI->>FirestoreMeta: 8. Create image metadata document (status: 'uploaded')
+    alt New Image Upload & Initial Analysis
+        ClientApp->>NestJSAPI: 1. Request Pre-signed URL
+        NestJSAPI->>GCS: 2. Generate URL
+        GCS-->>NestJSAPI: 3. URL
+        NestJSAPI-->>ClientApp: 4. Return URL
+        ClientApp->>GCS: 5. PUT image
+        GCS-->>ClientApp: 6. Upload OK
+        ClientApp->>NestJSAPI: 7. Notify upload complete (gcsPath, patientId, initialAnalysisType)
+        NestJSAPI->>ImagesFS: 8. Create Image document (returns imageId)
+        NestJSAPI->>AnalysisRecordsFS: 9. Create AnalysisRecord (imageId, initialAnalysisType, status: 'pending')
+    end
 
-    %% Automated Analysis Trigger %%
-    FirestoreMeta-->>CloudFunction: 9. Event: New metadata document created (triggers function)
-    CloudFunction->>FirestorePrompts: 10. Fetch prompt using promptConfigId from metadata
-    FirestorePrompts-->>CloudFunction: 11. Prompt content
-    CloudFunction->>GeminiVisionAPI: 12. Analyze image (using gs:// URI from metadata & fetched prompt)
-    GeminiVisionAPI-->>CloudFunction: 13. Analysis JSON result
-    CloudFunction->>FirestoreMeta: 14. Update metadata document in Firestore (status: 'completed', add results)
+    alt Request New/Different Analysis for Existing Image
+        ClientApp->>NestJSAPI: 1. POST /images/{imageId}/analyses (analysisType, params)
+        NestJSAPI->>AnalysisRecordsFS: 2. Create AnalysisRecord (imageId, analysisType, params, status: 'pending')
+    end
 
-    %% Optional Asynchronous Notification via Pub/Sub & NestJS %%
-    CloudFunction->>PubSub: 15. Publish 'analysis_complete' event (e.g., fileId, patientId)
-    PubSub-->>NestJSAPI: 16. NestJS backend receives event (subscribes to topic)
-    NestJSAPI-->>ClientApp: 17. Push update/results to relevant client (e.g., via WebSocket)
+    %% Common Analysis Trigger Flow (applies to both scenarios above)
+    AnalysisRecordsFS-->>CloudFunction: 10. Event: New AnalysisRecord created (status: 'pending')
+    CloudFunction->>ImagesFS: 11. Get Image document (for gcsPath using imageId from AnalysisRecord)
+    ImagesFS-->>CloudFunction: 12. Image document (with gcsPath)
+    opt Fetch Prompt
+        CloudFunction->>PromptsFS: 13. Get Prompt (if promptConfigurationId in AnalysisRecord)
+        PromptsFS-->>CloudFunction: 14. Prompt content
+    end
+    CloudFunction->>GeminiVisionAPI: 15. Analyze image (gcsPath, prompt, params from AnalysisRecord)
+    GeminiVisionAPI-->>CloudFunction: 16. Analysis JSON result
+    CloudFunction->>AnalysisRecordsFS: 17. Update AnalysisRecord (set result, status: 'completed'/'failed')
+
+    alt Retrieve Analysis History
+        ClientApp->>NestJSAPI: 1. GET /images/{imageId}/analyses
+        NestJSAPI->>AnalysisRecordsFS: 2. Query AnalysisRecords by imageId
+        AnalysisRecordsFS-->>NestJSAPI: 3. List of Analysis Records
+        NestJSAPI-->>ClientApp: 4. Return list
+    end
 ```
 
 ## III. Key HIPAA Compliance Considerations:

@@ -39,9 +39,17 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const dotenv = __importStar(require("dotenv"));
 const path = __importStar(require("path"));
+const http_exception_filter_1 = require("./common/filters/http-exception.filter");
+const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
+const logging_service_1 = require("./common/services/logging.service");
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const logger = new logging_service_1.AppLoggerService();
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: logger,
+        bufferLogs: true,
+    });
+    app.useLogger(logger);
     const configService = app.get(config_1.ConfigService);
     app.enableCors({
         origin: configService.get('CORS_ORIGIN', '*'),
@@ -51,10 +59,25 @@ async function bootstrap() {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
+        exceptionFactory: (errors) => {
+            const formattedErrors = errors.map((error) => {
+                const constraints = error.constraints ? Object.values(error.constraints) : ['Invalid value'];
+                return `${error.property}: ${constraints.join(', ')}`;
+            });
+            return {
+                message: formattedErrors,
+                statusCode: 400,
+            };
+        },
     }));
+    app.useGlobalFilters(new http_exception_filter_1.GlobalExceptionFilter());
+    app.useGlobalInterceptors(new transform_interceptor_1.TransformInterceptor());
     app.setGlobalPrefix('api');
     const port = configService.get('PORT', 3000);
     await app.listen(port);
-    console.log(`🚀 AI Beauty Lens Backend running on port ${port}`);
+    logger.log(`🚀 AI Beauty Lens Backend running on port ${port}`, 'Bootstrap');
 }
-bootstrap();
+bootstrap().catch((error) => {
+    console.error('Failed to start application:', error);
+    process.exit(1);
+});

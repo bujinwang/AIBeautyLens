@@ -8,6 +8,8 @@ import { setGlobalNavigationRef } from './services/geminiService';
 import { LocalizationProvider } from './i18n/localizationContext';
 import ScreenWrapper from './components/ScreenWrapper';
 import { withFeedbackButton } from './components/withFeedbackButton';
+import ErrorBoundary from './components/ErrorBoundary';
+import { ErrorProvider } from './contexts/ErrorContext';
 
 // Import our screens
 import CameraScreen from './screens/CameraScreen';
@@ -26,6 +28,7 @@ import EyeTreatmentsScreen from './screens/EyeTreatmentsScreen'; // Import the n
 import HairScalpAnalysisScreen from './screens/HairScalpAnalysisScreen';
 import HairTreatmentsScreen from './screens/HairTreatmentsScreen'; // Import the Hair Treatments screen
 import { HairScalpAnalysisResult } from './types/hairScalpAnalysis';
+import { COLORS } from './constants/theme';
 
 // Define our route parameters
 export type RootStackParamList = {
@@ -99,39 +102,6 @@ export type RootStackParamList = {
 
 // Create the navigation stack
 const Stack = createStackNavigator<RootStackParamList>();
-
-// Error boundary component
-class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
-  constructor(props: {children: React.ReactNode}) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log the error to console
-    console.error("App crashed with error:", error);
-    console.error("Component stack:", errorInfo.componentStack);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      // Render fallback UI
-      return (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Something went wrong</Text>
-          <Text style={styles.errorMessage}>{this.state.error?.toString()}</Text>
-        </View>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 // Create wrapped screen components with feedback button
 const WrappedHomeScreen = withFeedbackButton((props: any) => (
@@ -250,176 +220,64 @@ export default function App() {
     // Intentionally empty to prevent logging while keeping the function reference
   };
 
-  console.log("App.tsx: Rendering, isInitialized =", isInitialized);
+  const screenOptions = {
+    headerStyle: {
+      backgroundColor: COLORS.primary.main,
+    },
+    headerTintColor: COLORS.primary.contrast,
+    headerBackTitle: "",
+  };
+
+  if (!isInitialized) {
+    // Display loading screen while initializing
+    return (
+      <View style={styles.container}>
+        <StatusBar style="auto" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ErrorBoundary>
-      <LocalizationProvider>
+      <ErrorProvider>
         <SafeAreaProvider>
-          <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
-            <Stack.Navigator initialRouteName="Home">
-              <Stack.Screen 
-                name="Home" 
-                component={WrappedHomeScreen} 
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="Camera" 
-                component={WrappedCameraScreen}
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="Analysis" 
-                component={WrappedAnalysisScreen} 
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen 
-                name="EyeAnalysis" 
-                component={EyeAnalysisScreen} 
-                options={{
-                  title: 'Eye Area Analysis',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="BeforeAfterAnalysis" 
-                component={WrappedBeforeAfterAnalysisScreen} 
-                options={{
-                  title: 'Before & After Analysis',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="BeforeAfterComparisonReport" 
-                component={WrappedBeforeAfterComparisonReportScreen} 
-                options={{
-                  title: 'Comparison Results',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="Treatment" 
-                component={WrappedTreatmentScreen} 
-                options={{
-                  title: 'Select Treatments',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="RecommendedTreatments" 
-                component={WrappedRecommendedTreatmentsScreen} 
-                options={{
-                  title: 'Recommended Treatments',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="EyeTreatments" 
-                component={WrappedEyeTreatmentsScreen} 
-                options={{
-                  title: 'Eye Treatments',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="HairScalpAnalysis" 
-                component={WrappedHairScalpAnalysisScreen} 
-                options={{
-                  title: 'Hair & Scalp Analysis',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="HairTreatments" 
-                component={WrappedHairTreatmentsScreen} 
-                options={{
-                  title: 'Hair Treatments',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="Report" 
-                component={WrappedReportScreen} 
-                options={{
-                  title: 'Analysis Report',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="PrivacyPolicy" 
-                component={WrappedPrivacyPolicyScreen} 
-                options={{
-                  title: 'Privacy Policy',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-              <Stack.Screen 
-                name="Settings"
-                component={WrappedSettingsScreen}
-                options={{
-                  title: 'Settings',
-                  headerStyle: {
-                    backgroundColor: '#4A90E2',
-                  },
-                  headerTintColor: '#fff',
-                }}
-              />
-            </Stack.Navigator>
-          </NavigationContainer>
-          <StatusBar style="auto" />
+          <LocalizationProvider>
+            <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
+              <StatusBar style="light" />
+              <Stack.Navigator
+                initialRouteName="Home"
+                screenOptions={screenOptions}
+              >
+                <Stack.Screen name="Home" component={WrappedHomeScreen} />
+                <Stack.Screen name="Camera" component={WrappedCameraScreen} />
+                <Stack.Screen name="Analysis" component={WrappedAnalysisScreen} />
+                <Stack.Screen name="Treatment" component={WrappedTreatmentScreen} />
+                <Stack.Screen name="RecommendedTreatments" component={WrappedRecommendedTreatmentsScreen} />
+                <Stack.Screen name="Report" component={WrappedReportScreen} />
+                <Stack.Screen name="LogoGenerator" component={WrappedLogoGenerator} />
+                <Stack.Screen name="PrivacyPolicy" component={WrappedPrivacyPolicyScreen} />
+                <Stack.Screen name="Settings" component={WrappedSettingsScreen} />
+                <Stack.Screen name="EyeAnalysis" component={WrappedEyeAnalysisScreen} />
+                <Stack.Screen name="BeforeAfterAnalysis" component={WrappedBeforeAfterAnalysisScreen} />
+                <Stack.Screen name="BeforeAfterComparisonReport" component={WrappedBeforeAfterComparisonReportScreen} />
+                <Stack.Screen name="EyeTreatments" component={WrappedEyeTreatmentsScreen} />
+                <Stack.Screen name="HairScalpAnalysis" component={WrappedHairScalpAnalysisScreen} />
+                <Stack.Screen name="HairTreatments" component={WrappedHairTreatmentsScreen} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </LocalizationProvider>
         </SafeAreaProvider>
-      </LocalizationProvider>
+      </ErrorProvider>
     </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
-  errorContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: COLORS.background.default,
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f8f9fa'
+    justifyContent: 'center',
   },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#dc3545'
-  },
-  errorMessage: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#343a40'
-  }
 });

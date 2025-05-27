@@ -14,6 +14,7 @@
 
 *   (To be filled: Describe the core user flow, from onboarding to receiving analysis and recommendations.)
 *   (To be filled: Key features and functionalities.)
+*   Store and display a history of multiple, distinct AI analyses performed on each image, including the type of analysis and results.
 
 ## 4. User Experience (UX) Goals
 

@@ -9,7 +9,7 @@
 1.  **Primary Choice for Clinician & Core Patient Data:** **Managed PostgreSQL** (e.g., Google Cloud SQL or AWS RDS).
     *   This will store clinician profiles, authentication details, relationships with patients, organizational affiliations, and core patient demographic data.
 2.  **Complementary Choice for Operational Data:** **Cloud Firestore** (as outlined in `architectural_plan.md`).
-    *   This will continue to store image analysis metadata (including `clinicianId` and `patientId` references from PostgreSQL), AI prompt templates, and facilitate the event-driven AI analysis workflow.
+    *   This will store metadata for uploaded images in an `Images` collection and individual analysis events (including type, parameters, status, and results) in an `AnalysisRecords` collection. It will also continue to store AI prompt templates and facilitate the event-driven AI analysis workflow. Both `Images` and `AnalysisRecords` will include `clinicianId` and `patientId` references from PostgreSQL.
 
 ## II. Rationale for PostgreSQL for Clinician & Core Patient Data
 
@@ -47,8 +47,8 @@
 *   The NestJS backend will be responsible for:
     1.  Authenticating clinicians against the PostgreSQL database.
     2.  Managing clinician and patient records in PostgreSQL.
-    3.  When an image analysis is initiated, the NestJS backend will retrieve the `clinician_id` and relevant `patient_id` from PostgreSQL.
-    4.  These IDs will then be included in the metadata document written to the **Cloud Firestore** `ImageMetadata` collection (as detailed in `architectural_plan.md`). This links the operational analysis data back to the core entities.
+    3.  When an image analysis is initiated (either an initial analysis upon upload or a subsequent specific analysis request), the NestJS backend will retrieve the `clinician_id` and relevant `patient_id` from PostgreSQL.
+    4.  These IDs will then be included in the document written to the **Cloud Firestore** `Images` collection (for the image itself) and the corresponding document(s) in the `AnalysisRecords` collection (for each analysis event). This links the operational analysis data back to the core entities.
 
 ## V. Conceptual Data Model Diagram
 
@@ -66,8 +66,12 @@ graph TD
     end
 
     subgraph "Cloud Firestore (Operational & Analysis Data)"
-        ImageMetadataFs[("Image Analysis Metadata (Document) \n - imageId \n - gcsPath \n - clinician_id (references PostgreSQL clinicians.clinician_id) \n - patient_id (references PostgreSQL patients.patient_id) \n - analysisStatus \n - analysisResult \n - promptConfigurationId")]
-        PromptTemplatesFs[("Prompt Templates (Document) \n - promptConfigurationId \n - promptText")]
+        ImagesFs[("Images Collection \n - imageId (PK) \n - gcsPath \n - clinician_id (ref PostgreSQL) \n - patient_id (ref PostgreSQL) \n - uploadTimestamp \n ...")]
+        AnalysisRecordsFs[("AnalysisRecords Collection \n - analysisId (PK) \n - imageId (FK to ImagesFs) \n - analysisTimestamp \n - analysisType \n - analysisStatus \n - analysisResult \n - promptConfigurationId (FK) \n ...")]
+        PromptTemplatesFs[("Prompt Templates Collection \n - promptConfigurationId (PK) \n - promptText \n ...")]
+
+        ImagesFs -- "0..N Analysis Records" --> AnalysisRecordsFs
+        AnalysisRecordsFs -- "Uses 0..1" --> PromptTemplatesFs
     end
 
     NestJSBackend[NestJS Backend API]
@@ -76,12 +80,15 @@ graph TD
     NestJSBackend -- "Manages CRUD for" --> PatientsDb
     NestJSBackend -- "Manages CRUD for" --> OrganizationsDb
     NestJSBackend -- "Manages CRUD for" --> ClinicianPatientAssignmentsDb
-    NestJSBackend -- "Writes metadata with IDs from PostgreSQL" --> ImageMetadataFs
+    NestJSBackend -- "Writes/Reads" --> ImagesFs
+    NestJSBackend -- "Writes/Reads" --> AnalysisRecordsFs
     NestJSBackend -- "Reads/Writes" --> PromptTemplatesFs
 
     %% Conceptual Linkage of IDs
-    ImageMetadataFs -. "references" .-> CliniciansDb
-    ImageMetadataFs -. "references" .-> PatientsDb
+    ImagesFs -. "references clinician_id" .-> CliniciansDb
+    ImagesFs -. "references patient_id" .-> PatientsDb
+    AnalysisRecordsFs -. "references clinician_id (e.g. initiatedBy)" .-> CliniciansDb
+    AnalysisRecordsFs -. "references imageId" .-> ImagesFs
 ```
 
 ## VI. Next Steps (Post-Plan Approval - Prisma Workflow)

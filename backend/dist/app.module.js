@@ -15,6 +15,8 @@ const auth_module_1 = require("./modules/auth/auth.module");
 const users_module_1 = require("./modules/users/users.module");
 const gcs_module_1 = require("./modules/gcs/gcs.module");
 const prisma_module_1 = require("./prisma/prisma.module");
+const logging_module_1 = require("./common/modules/logging.module");
+const gemini_module_1 = require("./modules/gemini/gemini.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,10 +27,12 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            logging_module_1.LoggingModule,
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             gcs_module_1.GcsModule,
+            gemini_module_1.GeminiModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

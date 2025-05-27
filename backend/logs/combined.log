@@ -1,0 +1,180 @@
+[2025-05-27T17:31:52.607Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:31:52.670Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:31:52.918Z] [INFO] [NestFactory] Starting Nest application...
+[2025-05-27T17:31:52.918Z] [INFO] [PromptTemplateService] Firestore connection initialized for prompt templates
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] LoggingModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] PrismaModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] PassportModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] HttpModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] CliniciansModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] ConfigHostModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] AppModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] JwtModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] UsersModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] GcsModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] GeminiModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [InstanceLoader] AuthModule dependencies initialized
+[2025-05-27T17:31:52.918Z] [INFO] [RoutesResolver] AppController {/api}:
+[2025-05-27T17:31:52.918Z] [INFO] [RouterExplorer] Mapped {/api, GET} route
+[2025-05-27T17:31:52.918Z] [INFO] [RouterExplorer] Mapped {/api/health, GET} route
+[2025-05-27T17:31:52.918Z] [INFO] [RoutesResolver] AuthController {/api/auth}:
+[2025-05-27T17:31:52.918Z] [INFO] [RouterExplorer] Mapped {/api/auth/register, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/login, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/profile, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/refresh-token, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/verify-email, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/request-password-reset, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/reset-password, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/logout, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/auth/resend-verification, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RoutesResolver] UsersController {/api/users}:
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/users/profile, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, PUT} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, DELETE} route
+[2025-05-27T17:31:52.919Z] [INFO] [RoutesResolver] GcsController {/api/gcs}:
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gcs/signed-url, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-success, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-failure, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-health, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-signed-url, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RoutesResolver] GeminiController {/api/gemini}:
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-eye, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-hair-scalp, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-gcs, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after-gcs, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/by-type, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, GET} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, POST} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, PATCH} route
+[2025-05-27T17:31:52.919Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, DELETE} route
+[2025-05-27T17:31:52.919Z] [INFO] [UserRefreshClient] AuthClient type resolved by auth.getClient():
+[2025-05-27T17:31:52.919Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-05-27T17:31:52.919Z] [INFO] [GcsService] Storage client initialized to use implicit Application Default Credentials.
+[2025-05-27T17:31:52.919Z] [INFO] [NestApplication] Nest application successfully started
+[2025-05-27T17:31:52.919Z] [INFO] [Bootstrap] 🚀 AI Beauty Lens Backend running on port 3000
+[2025-05-27T17:32:06.854Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:32:06.905Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:32:06.920Z] [INFO] [NestFactory] Starting Nest application...
+[2025-05-27T17:32:06.920Z] [INFO] [PromptTemplateService] Firestore connection initialized for prompt templates
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] LoggingModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] PrismaModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] PassportModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] HttpModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] CliniciansModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] ConfigHostModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] AppModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] JwtModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] UsersModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] GcsModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] GeminiModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [InstanceLoader] AuthModule dependencies initialized
+[2025-05-27T17:32:06.920Z] [INFO] [RoutesResolver] AppController {/api}:
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/health, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RoutesResolver] AuthController {/api/auth}:
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/register, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/login, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/profile, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/refresh-token, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/verify-email, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/request-password-reset, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/reset-password, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/logout, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/auth/resend-verification, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RoutesResolver] UsersController {/api/users}:
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/users/profile, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, PUT} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, DELETE} route
+[2025-05-27T17:32:06.920Z] [INFO] [RoutesResolver] GcsController {/api/gcs}:
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gcs/signed-url, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-success, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-failure, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-health, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-signed-url, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RoutesResolver] GeminiController {/api/gemini}:
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-eye, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-hair-scalp, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-gcs, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after-gcs, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/by-type, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, GET} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, POST} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, PATCH} route
+[2025-05-27T17:32:06.920Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, DELETE} route
+[2025-05-27T17:32:06.920Z] [INFO] [UserRefreshClient] AuthClient type resolved by auth.getClient():
+[2025-05-27T17:32:06.920Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-05-27T17:32:06.920Z] [INFO] [GcsService] Storage client initialized to use implicit Application Default Credentials.
+[2025-05-27T17:32:06.920Z] [INFO] [NestApplication] Nest application successfully started
+[2025-05-27T17:32:06.921Z] [INFO] [Bootstrap] 🚀 AI Beauty Lens Backend running on port 3000
+[2025-05-27T17:33:37.389Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:33:37.453Z] [INFO] Application started in development environment with log level: debug
+[2025-05-27T17:33:37.467Z] [INFO] [NestFactory] Starting Nest application...
+[2025-05-27T17:33:37.467Z] [INFO] [PromptTemplateService] Firestore connection initialized for prompt templates
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] LoggingModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] PrismaModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] PassportModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] HttpModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] CliniciansModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] ConfigHostModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] AppModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] ConfigModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] JwtModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] UsersModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] GcsModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] GeminiModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [InstanceLoader] AuthModule dependencies initialized
+[2025-05-27T17:33:37.467Z] [INFO] [RoutesResolver] AppController {/api}:
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/health, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RoutesResolver] AuthController {/api/auth}:
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/register, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/login, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/profile, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/refresh-token, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/verify-email, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/request-password-reset, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/reset-password, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/logout, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/auth/resend-verification, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RoutesResolver] UsersController {/api/users}:
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/users/profile, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, PUT} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/users/:id, DELETE} route
+[2025-05-27T17:33:37.467Z] [INFO] [RoutesResolver] GcsController {/api/gcs}:
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gcs/signed-url, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-success, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gcs/log-upload-failure, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-health, GET} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gcs/test-signed-url, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RoutesResolver] GeminiController {/api/gemini}:
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-eye, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-hair-scalp, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-gcs, POST} route
+[2025-05-27T17:33:37.467Z] [INFO] [RouterExplorer] Mapped {/api/gemini/analyze-before-after-gcs, POST} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, GET} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/by-type, POST} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, GET} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts, POST} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, PATCH} route
+[2025-05-27T17:33:37.468Z] [INFO] [RouterExplorer] Mapped {/api/gemini/prompts/:id, DELETE} route
+[2025-05-27T17:33:37.468Z] [INFO] [UserRefreshClient] AuthClient type resolved by auth.getClient():
+[2025-05-27T17:33:37.468Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-05-27T17:33:37.468Z] [INFO] [GcsService] Storage client initialized to use implicit Application Default Credentials.
+[2025-05-27T17:33:37.468Z] [INFO] [NestApplication] Nest application successfully started
+[2025-05-27T17:33:37.468Z] [INFO] [Bootstrap] 🚀 AI Beauty Lens Backend running on port 3000

@@ -1,73 +1,119 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Clinician, Prisma } from '@prisma/client'; // Prisma will generate these types
+import { Prisma, Clinician } from '@prisma/client'; // Import Clinician type
+import * as bcrypt from 'bcrypt';
+import { Role } from '../auth/enums/role.enum';
 
 @Injectable()
 export class CliniciansService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.ClinicianCreateInput): Promise<Clinician> {
-    return this.prisma.clinician.create({
-      data,
+    // TODO: Implement clinician creation logic using prisma.clinician.create
+    const newClinician = await this.prisma.clinician.create({
+        data: { 
+            ...data,
+            roles: data.roles || [Role.Clinician], // Default role if not provided
+         }
     });
-  }
-
-  async findAll(): Promise<Clinician[]> {
-    return this.prisma.clinician.findMany();
-  }
-
-  async findOneById(id: string): Promise<Clinician | null> {
-    const clinician = await this.prisma.clinician.findUnique({
-      where: { clinician_id: id },
-    });
-    if (!clinician) {
-      // Optional: throw new NotFoundException(`Clinician with ID "${id}" not found`);
-      return null;
-    }
-    return clinician;
+      return newClinician;
   }
 
   async findOneByEmail(email: string): Promise<Clinician | null> {
-    const clinician = await this.prisma.clinician.findUnique({
-      where: { email },
-    });
-    // Optional: if (!clinician) { throw new NotFoundException(`Clinician with email "${email}" not found`); }
-    return clinician;
+     // TODO: Implement finding clinician by email
+     return this.prisma.clinician.findUnique({
+         where: { email },
+     });
   }
 
-  async update(id: string, data: Prisma.ClinicianUpdateInput): Promise<Clinician | null> {
+  async findOneById(id: string): Promise<Clinician | null> {
+      // TODO: Implement finding clinician by ID
+      return this.prisma.clinician.findUnique({
+          where: { clinician_id: id },
+      });
+   }
+
+  async findOneByVerificationToken(token: string): Promise<Clinician | null> {
+      return this.prisma.clinician.findUnique({
+          where: { verification_token: token },
+      });
+  }
+
+  async findOneByResetToken(token: string): Promise<Clinician | null> {
+      return this.prisma.clinician.findUnique({
+          where: { password_reset_token: token },
+      });
+  }
+
+  async findOneByRefreshToken(token: string): Promise<Clinician | null> {
+      return this.prisma.clinician.findUnique({
+          where: { refresh_token: token },
+      });
+  }
+
+  async findOne(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
+    // TODO: Implement logic to find a single clinician by ID using prisma.clinician.findUnique
+    const clinician = await this.prisma.clinician.findUnique({
+      where: { clinician_id: id },
+      include: { // Include related patient assignments
+          patientAssignments: {
+              include: { patient: true } // Include patient details in assignments
+          }
+      }
+    });
+
+    if (!clinician) {
+      throw new NotFoundException(`Clinician with ID ${id} not found`);
+    }
+
+    return this.excludePasswordFields(clinician);
+  }
+
+  async findAll(): Promise<Omit<Clinician, 'hashed_password' | 'salt'>[]> {
+      // TODO: Implement logic to find all clinicians using prisma.clinician.findMany
+       const clinicians = await this.prisma.clinician.findMany({ }); // Consider including assignments here if needed
+       return clinicians.map(clinician => this.excludePasswordFields(clinician));
+  }
+
+  async update(id: string, data: Prisma.ClinicianUpdateInput): Promise<Omit<Clinician, 'hashed_password' | 'salt'>> {
+    // TODO: Implement logic to update a clinician by ID using prisma.clinician.update
     try {
-      return await this.prisma.clinician.update({
+      const updatedClinician = await this.prisma.clinician.update({
         where: { clinician_id: id },
         data,
       });
+      return this.excludePasswordFields(updatedClinician);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        // P2025: Record to update not found
-        throw new NotFoundException(`Clinician with ID "${id}" not found`);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') { 
+          throw new NotFoundException(`Clinician with ID ${id} not found`);
+        }
       }
-      throw error; // Re-throw other errors
+      throw error;
     }
   }
 
-  async remove(id: string): Promise<Clinician | null> {
+  async remove(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
+    // TODO: Implement logic to delete a clinician by ID using prisma.clinician.delete
     try {
-      return await this.prisma.clinician.delete({
+        const deletedClinician = await this.prisma.clinician.delete({
         where: { clinician_id: id },
       });
+        return this.excludePasswordFields(deletedClinician);
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        // P2025: Record to delete not found
-        throw new NotFoundException(`Clinician with ID "${id}" not found`);
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === 'P2025') { 
+              throw new NotFoundException(`Clinician with ID ${id} not found`);
+            }
       }
-      throw error; // Re-throw other errors
+          throw error;
     }
   }
 
-  // Helper to exclude password fields when returning clinician data
+  // Helper function to exclude hashed_password and salt from results
   excludePasswordFields(clinician: Clinician): Omit<Clinician, 'hashed_password' | 'salt'> {
-    if (!clinician) return null;
     const { hashed_password, salt, ...result } = clinician;
     return result;
   }
+
 }

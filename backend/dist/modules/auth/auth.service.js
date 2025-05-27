@@ -48,10 +48,13 @@ const clinicians_service_1 = require("../clinicians/clinicians.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
 const role_enum_1 = require("./enums/role.enum");
+const config_1 = require("@nestjs/config");
+const crypto = __importStar(require("crypto"));
 let AuthService = class AuthService {
-    constructor(cliniciansService, jwtService) {
+    constructor(cliniciansService, jwtService, configService) {
         this.cliniciansService = cliniciansService;
         this.jwtService = jwtService;
+        this.configService = configService;
     }
     async register(registrationData) {
         const existingClinician = await this.cliniciansService.findOneByEmail(registrationData.email);
@@ -60,6 +63,8 @@ let AuthService = class AuthService {
         }
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(registrationData.password, salt);
+        const verificationToken = this.generateToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
         const createInput = {
             email: registrationData.email,
             name: registrationData.name,
@@ -67,8 +72,12 @@ let AuthService = class AuthService {
             hashed_password: hashedPassword,
             salt: salt,
             roles: [role_enum_1.Role.Clinician],
+            verification_token: verificationToken,
+            verification_token_expires: verificationExpires,
+            email_verified: false,
         };
         const newClinician = await this.cliniciansService.create(createInput);
+        await this.sendVerificationEmail(newClinician.email, verificationToken);
         return this.cliniciansService.excludePasswordFields(newClinician);
     }
     async validateUser(email, pass) {
@@ -87,14 +96,140 @@ let AuthService = class AuthService {
             sub: clinician.clinician_id,
             roles: clinician.roles,
         };
+        const accessToken = this.jwtService.sign(payload);
+        const refreshToken = this.generateRefreshToken();
+        const refreshTokenExpires = new Date(Date.now() + Number(this.configService.get('JWT_REFRESH_EXPIRATION_TIME', 7 * 24 * 60 * 60 * 1000)));
+        await this.cliniciansService.update(clinician.clinician_id, {
+            refresh_token: refreshToken,
+            refresh_token_expires: refreshTokenExpires,
+        });
         return {
-            access_token: this.jwtService.sign(payload),
+            accessToken,
+            refreshToken,
         };
+    }
+    async refreshToken(refreshToken) {
+        const clinician = await this.findClinicianByRefreshToken(refreshToken);
+        if (!clinician) {
+            throw new common_1.UnauthorizedException('Invalid refresh token');
+        }
+        if (clinician.refresh_token_expires && clinician.refresh_token_expires < new Date()) {
+            throw new common_1.UnauthorizedException('Refresh token expired');
+        }
+        const payload = {
+            email: clinician.email,
+            sub: clinician.clinician_id,
+            roles: clinician.roles,
+        };
+        const accessToken = this.jwtService.sign(payload);
+        const newRefreshToken = this.generateRefreshToken();
+        const refreshTokenExpires = new Date(Date.now() + Number(this.configService.get('JWT_REFRESH_EXPIRATION_TIME', 7 * 24 * 60 * 60 * 1000)));
+        await this.cliniciansService.update(clinician.clinician_id, {
+            refresh_token: newRefreshToken,
+            refresh_token_expires: refreshTokenExpires,
+        });
+        return {
+            accessToken,
+            refreshToken: newRefreshToken,
+        };
+    }
+    async verifyEmail(token) {
+        const clinician = await this.findClinicianByVerificationToken(token);
+        if (!clinician) {
+            throw new common_1.NotFoundException('Invalid verification token');
+        }
+        if (clinician.verification_token_expires && clinician.verification_token_expires < new Date()) {
+            throw new common_1.BadRequestException('Verification token expired');
+        }
+        await this.cliniciansService.update(clinician.clinician_id, {
+            email_verified: true,
+            verification_token: null,
+            verification_token_expires: null,
+        });
+    }
+    async requestPasswordReset(email) {
+        const clinician = await this.cliniciansService.findOneByEmail(email);
+        if (!clinician) {
+            return;
+        }
+        const resetToken = this.generateToken();
+        const resetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
+        await this.cliniciansService.update(clinician.clinician_id, {
+            password_reset_token: resetToken,
+            password_reset_expires: resetExpires,
+        });
+        await this.sendPasswordResetEmail(email, resetToken);
+    }
+    async resetPassword(token, password, passwordConfirmation) {
+        if (password !== passwordConfirmation) {
+            throw new common_1.BadRequestException('Passwords do not match');
+        }
+        const clinician = await this.findClinicianByResetToken(token);
+        if (!clinician) {
+            throw new common_1.NotFoundException('Invalid reset token');
+        }
+        if (clinician.password_reset_expires && clinician.password_reset_expires < new Date()) {
+            throw new common_1.BadRequestException('Reset token expired');
+        }
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        await this.cliniciansService.update(clinician.clinician_id, {
+            hashed_password: hashedPassword,
+            salt,
+            password_reset_token: null,
+            password_reset_expires: null,
+            refresh_token: null,
+            refresh_token_expires: null,
+        });
+    }
+    async logout(clinicianId) {
+        await this.cliniciansService.update(clinicianId, {
+            refresh_token: null,
+            refresh_token_expires: null,
+        });
+    }
+    async resendVerificationEmail(email) {
+        const clinician = await this.cliniciansService.findOneByEmail(email);
+        if (!clinician) {
+            return;
+        }
+        if (clinician.email_verified) {
+            throw new common_1.BadRequestException('Email already verified');
+        }
+        const verificationToken = this.generateToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await this.cliniciansService.update(clinician.clinician_id, {
+            verification_token: verificationToken,
+            verification_token_expires: verificationExpires,
+        });
+        await this.sendVerificationEmail(email, verificationToken);
+    }
+    generateToken() {
+        return crypto.randomBytes(32).toString('hex');
+    }
+    generateRefreshToken() {
+        return crypto.randomBytes(40).toString('hex');
+    }
+    async findClinicianByVerificationToken(token) {
+        return this.cliniciansService.findOneByVerificationToken(token);
+    }
+    async findClinicianByResetToken(token) {
+        return this.cliniciansService.findOneByResetToken(token);
+    }
+    async findClinicianByRefreshToken(token) {
+        return this.cliniciansService.findOneByRefreshToken(token);
+    }
+    async sendVerificationEmail(email, token) {
+        console.log(`Verification link for ${email}: ${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token=${token}`);
+    }
+    async sendPasswordResetEmail(email, token) {
+        console.log(`Password reset link for ${email}: ${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token=${token}`);
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [clinicians_service_1.CliniciansService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        config_1.ConfigService])
 ], AuthService);

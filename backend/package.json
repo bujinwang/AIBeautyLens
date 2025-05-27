@@ -33,6 +33,7 @@
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.0.0",
+    "@nestjs/throttler": "^6.4.0",
     "@nestjs/websockets": "^10.0.0",
     "@prisma/client": "^6.8.2",
     "axios": "^1.4.0",
@@ -40,12 +41,14 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "express-rate-limit": "^7.5.0",
+    "node-mailjet": "^6.0.8",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.7.0"
+    "socket.io": "^4.7.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -58,6 +61,7 @@
     "@types/passport-jwt": "^3.0.9",
     "@types/passport-local": "^1.0.35",
     "@types/supertest": "^2.0.12",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.42.0",

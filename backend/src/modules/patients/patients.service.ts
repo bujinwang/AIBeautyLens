@@ -21,7 +21,9 @@ export class PatientsService {
     const pageOptions = filterPatientDto as PageOptionsDto;
     const { fullName, email, organizationId } = filterPatientDto;
 
-    const where: Prisma.PatientWhereInput = {};
+    const where: Prisma.PatientWhereInput = {
+      is_deleted: false, // Only retrieve non-deleted patients
+    };
 
     if (fullName) {
       where.full_name = { contains: fullName, mode: 'insensitive' };
@@ -34,6 +36,7 @@ export class PatientsService {
         some: {
           clinician: {
             organization_id: organizationId,
+            is_deleted: false, // Ensure clinician is not deleted
           },
         },
       };
@@ -43,6 +46,7 @@ export class PatientsService {
       where.clinicianAssignments = {
         some: {
           clinician_id: clinicianId,
+          is_deleted: false, // Ensure assignment is not deleted
         },
       };
     }
@@ -67,17 +71,18 @@ export class PatientsService {
   }
 
   async findOne(id: string, clinicianId?: string) {
-    const whereClause: Prisma.PatientWhereUniqueInput = { patient_id: id };
+    const whereClause: Prisma.PatientWhereInput = { patient_id: id, is_deleted: false };
 
     if (clinicianId) {
       whereClause.clinicianAssignments = {
         some: {
           clinician_id: clinicianId,
+          is_deleted: false, // Ensure assignment is not deleted
         },
       };
     }
 
-    const patient = await this.prisma.patient.findUnique({
+    const patient = await this.prisma.patient.findFirst({
       where: whereClause,
       include: {
         clinicianAssignments: {
@@ -113,22 +118,23 @@ export class PatientsService {
     }
   }
 
-  async remove(id: string): Promise<Patient | null> {
-    // Implement logic to delete a patient by ID using prisma.patient.delete
-    // console.log('Removing patient with id:', id);
+  async remove(id: string): Promise<Patient> {
     try {
-      const patient = await this.prisma.patient.delete({
+      const softDeletedPatient = await this.prisma.patient.update({
         where: { patient_id: id },
+        data: {
+          is_deleted: true,
+          deleted_at: new Date(),
+        },
       });
-      return patient;
+      return softDeletedPatient;
     } catch (error) {
-        // Handle case where patient with id does not exist
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          if (error.code === 'P2025') { // P2025 is the error code for record not found
-            throw new NotFoundException(`Patient with ID ${id} not found`);
-          }
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Patient with ID ${id} not found`);
         }
-        throw error; // Re-throw other errors
       }
+      throw error;
+    }
   }
 }

@@ -34,6 +34,15 @@ model Clinician {
   // Refresh token
   refresh_token            String?   @unique
   refresh_token_expires    DateTime?
+
+  // Account lockout
+  failed_login_attempts    Int       @default(0)
+  lockout_until            DateTime?
+  is_locked_out            Boolean   @default(false)
+
+  // Soft delete
+  is_deleted               Boolean   @default(false)
+  deleted_at               DateTime?
   
   // Relations
   organization             Organization? @relation(fields: [organization_id], references: [organization_id])
@@ -50,6 +59,9 @@ model Patient {
   additional_phi_details String?   // Consider encryption for PII
   created_at            DateTime  @default(now())
   updated_at            DateTime  @updatedAt
+  // Soft delete
+  is_deleted            Boolean   @default(false)
+  deleted_at            DateTime?
   clinicianAssignments  ClinicianPatientAssignment[]
   treatmentRecords      TreatmentRecord[] // Added back-relation
 }
@@ -61,6 +73,9 @@ model Organization {
   contact_info    String?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
+  // Soft delete
+  is_deleted      Boolean     @default(false)
+  deleted_at      DateTime?
   clinicians      Clinician[]
 }
 
@@ -72,6 +87,9 @@ model ClinicianPatientAssignment {
   status          String    @default("active") // e.g., active, inactive
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
+  // Soft delete
+  is_deleted      Boolean   @default(false)
+  deleted_at      DateTime?
 
   clinician       Clinician @relation(fields: [clinician_id], references: [clinician_id], onDelete: Cascade)
   patient         Patient   @relation(fields: [patient_id], references: [patient_id], onDelete: Cascade)
@@ -86,6 +104,9 @@ model TreatmentType {
   isActive         Boolean           @default(true) // To allow soft-deleting or disabling types
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  // Soft delete
+  is_deleted       Boolean           @default(false)
+  deleted_at       DateTime?
   treatmentRecords TreatmentRecord[] // Relation to TreatmentRecord model
 }
 
@@ -104,4 +125,7 @@ model TreatmentRecord {
   firestoreAnalysisRecordId String? // ID of the AnalysisRecord in Firestore, if linked
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
+  // Soft delete
+  is_deleted                Boolean   @default(false)
+  deleted_at                DateTime?
 }

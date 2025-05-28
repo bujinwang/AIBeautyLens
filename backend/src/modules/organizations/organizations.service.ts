@@ -21,7 +21,9 @@ export class OrganizationsService {
     const pageOptions = filterOrganizationDto as PageOptionsDto;
     const { name, address } = filterOrganizationDto;
 
-    const where: Prisma.OrganizationWhereInput = {};
+    const where: Prisma.OrganizationWhereInput = {
+      is_deleted: false, // Only retrieve non-deleted organizations
+    };
 
     if (name) {
       where.name = { contains: name, mode: 'insensitive' };
@@ -50,10 +52,8 @@ export class OrganizationsService {
   }
 
   async findOne(id: string) {
-    // Implement logic to find a single organization by ID using prisma.organization.findUnique
-    // console.log('Finding organization with id:', id);
     const organization = await this.prisma.organization.findUnique({
-      where: { organization_id: id },
+      where: { organization_id: id, is_deleted: false },
     });
 
     if (!organization) {
@@ -83,22 +83,23 @@ export class OrganizationsService {
     }
   }
 
-  async remove(id: string) {
-    // Implement logic to delete an organization by ID using prisma.organization.delete
-    // console.log('Removing organization with id:', id);
+  async remove(id: string): Promise<Organization> {
     try {
-      const organization = await this.prisma.organization.delete({
+      const softDeletedOrganization = await this.prisma.organization.update({
         where: { organization_id: id },
+        data: {
+          is_deleted: true,
+          deleted_at: new Date(),
+        },
       });
-      return organization;
+      return softDeletedOrganization;
     } catch (error) {
-        // Handle case where organization with id does not exist
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          if (error.code === 'P2025') { // P2025 is the error code for record not found
-            throw new NotFoundException(`Organization with ID ${id} not found`);
-          }
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Organization with ID ${id} not found`);
         }
-        throw error; // Re-throw other errors
       }
+      throw error;
+    }
   }
 }

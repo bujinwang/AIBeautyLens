@@ -23,7 +23,13 @@ export class AuthService {
     private cliniciansService: CliniciansService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.MAX_LOGIN_ATTEMPTS = this.configService.get<number>('MAX_LOGIN_ATTEMPTS', 5);
+    this.LOCKOUT_DURATION_MINUTES = this.configService.get<number>('LOCKOUT_DURATION_MINUTES', 30);
+  }
+
+  private readonly MAX_LOGIN_ATTEMPTS: number;
+  private readonly LOCKOUT_DURATION_MINUTES: number;
 
   // Expect a DTO-like structure with raw password, then construct ClinicianCreateInput
   async register(
@@ -65,10 +71,49 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
     const clinician = await this.cliniciansService.findOneByEmail(email);
 
-    if (clinician && clinician.hashed_password && clinician.salt) {
+    if (!clinician) {
+      // For security, do not specify whether the email or password was incorrect
+      return null;
+    }
+
+    // Check for account lockout
+    if (clinician.is_locked_out && clinician.lockout_until && clinician.lockout_until > new Date()) {
+      throw new UnauthorizedException('Account locked. Please try again later.');
+    }
+
+    if (clinician.hashed_password && clinician.salt) {
       const isPasswordMatching = await bcrypt.compare(pass, clinician.hashed_password);
+
       if (isPasswordMatching) {
+        // Reset failed login attempts on successful login
+        if (clinician.failed_login_attempts > 0 || clinician.is_locked_out) {
+          await this.cliniciansService.update(clinician.clinician_id, {
+            failed_login_attempts: 0,
+            is_locked_out: false,
+            lockout_until: null,
+          });
+        }
         return this.cliniciansService.excludePasswordFields(clinician);
+      } else {
+        // Increment failed login attempts
+        const updatedAttempts = (clinician.failed_login_attempts || 0) + 1;
+        let lockoutUntil: Date | null = null;
+        let isLockedOut = false;
+
+        if (updatedAttempts >= this.MAX_LOGIN_ATTEMPTS) {
+          isLockedOut = true;
+          lockoutUntil = new Date(Date.now() + this.LOCKOUT_DURATION_MINUTES * 60 * 1000);
+        }
+
+        await this.cliniciansService.update(clinician.clinician_id, {
+          failed_login_attempts: updatedAttempts,
+          is_locked_out: isLockedOut,
+          lockout_until: lockoutUntil,
+        });
+
+        if (isLockedOut) {
+          throw new UnauthorizedException('Too many failed login attempts. Account locked.');
+        }
       }
     }
     // For security, do not specify whether the email or password was incorrect

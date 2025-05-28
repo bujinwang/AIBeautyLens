@@ -37,7 +37,9 @@ echo "📋 Deploying to project: $PROJECT_ID"
 
 # Deploy Gemini Analysis Function
 echo "🔍 Deploying Gemini Analysis Function..."
-cd gemini-analysis
+cd cloud-functions/gemini-analysis
+echo "📦 Installing dependencies for Gemini Analysis Function..."
+yarn install --frozen-lockfile || yarn install # Use --frozen-lockfile for CI/CD, fallback to install
 npm run build
 gcloud functions deploy analyzeImage \
     --runtime nodejs20 \
@@ -48,16 +50,17 @@ gcloud functions deploy analyzeImage \
     --source . \
     --entry-point analyzeImage
 
-cd ..
+cd ../.. # Go back to the root directory
 
 # Deploy Image Processor Function
 echo "🖼️  Deploying Image Processor Function..."
-cd image-processor
+cd cloud-functions/image-processor
+echo "📦 Installing dependencies for Image Processor Function..."
+yarn install --frozen-lockfile || yarn install # Use --frozen-lockfile for CI/CD, fallback to install
 npm run build
 gcloud functions deploy processImage \
     --runtime nodejs20 \
     --trigger-http \
-    --allow-unauthenticated \
     --memory 1GB \
     --timeout 300s \
     --region us-central1 \

@@ -20,37 +20,37 @@ export class CliniciansService {
 
   async findOneByEmail(email: string): Promise<Clinician | null> {
      return this.prisma.clinician.findUnique({
-         where: { email },
+         where: { email, is_deleted: false },
      });
   }
 
   async findOneById(id: string): Promise<Clinician | null> {
       return this.prisma.clinician.findUnique({
-          where: { clinician_id: id },
+          where: { clinician_id: id, is_deleted: false },
       });
    }
 
   async findOneByVerificationToken(token: string): Promise<Clinician | null> {
       return this.prisma.clinician.findUnique({
-          where: { verification_token: token },
+          where: { verification_token: token, is_deleted: false },
       });
   }
 
   async findOneByResetToken(token: string): Promise<Clinician | null> {
       return this.prisma.clinician.findUnique({
-          where: { password_reset_token: token },
+          where: { password_reset_token: token, is_deleted: false },
       });
   }
 
   async findOneByRefreshToken(token: string): Promise<Clinician | null> {
       return this.prisma.clinician.findUnique({
-          where: { refresh_token: token },
+          where: { refresh_token: token, is_deleted: false },
       });
   }
 
   async findOne(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
     const clinician = await this.prisma.clinician.findUnique({
-      where: { clinician_id: id },
+      where: { clinician_id: id, is_deleted: false },
       include: { // Include related patient assignments
           patientAssignments: {
               include: { patient: true } // Include patient details in assignments
@@ -67,6 +67,7 @@ export class CliniciansService {
 
   async findAll(): Promise<Omit<Clinician, 'hashed_password' | 'salt'>[]> {
       const clinicians = await this.prisma.clinician.findMany({
+          where: { is_deleted: false },
           include: { // Include related patient assignments
               patientAssignments: {
                   include: { patient: true } // Include patient details in assignments
@@ -93,19 +94,23 @@ export class CliniciansService {
     }
   }
 
-  async remove(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
+  async remove(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'>> {
     try {
-        const deletedClinician = await this.prisma.clinician.delete({
+      const softDeletedClinician = await this.prisma.clinician.update({
         where: { clinician_id: id },
+        data: {
+          is_deleted: true,
+          deleted_at: new Date(),
+        },
       });
-        return this.excludePasswordFields(deletedClinician);
+      return this.excludePasswordFields(softDeletedClinician);
     } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            if (error.code === 'P2025') { 
-              throw new NotFoundException(`Clinician with ID ${id} not found`);
-            }
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Clinician with ID ${id} not found`);
+        }
       }
-          throw error;
+      throw error;
     }
   }
 

@@ -7,6 +7,7 @@ import * as path from 'path';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AppLoggerService } from './common/services/logging.service';
+import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -57,6 +58,9 @@ async function bootstrap() {
   
   // Global transform interceptor
   app.useGlobalInterceptors(new TransformInterceptor());
+
+  // Apply ThrottlerBehindProxyGuard globally
+  app.useGlobalGuards(new ThrottlerBehindProxyGuard(configService));
   
   // Global prefix
   app.setGlobalPrefix('api');

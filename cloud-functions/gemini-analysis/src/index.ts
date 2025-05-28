@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import { Firestore } from '@google-cloud/firestore';
+import { Firestore, FieldValue } from '@google-cloud/firestore';
 import { PredictionServiceClient } from '@google-cloud/aiplatform';
 
 const storage = new Storage();
@@ -106,7 +106,7 @@ export const analyzeImage = async (message: any) => { // Changed type from Pubsu
       gcsUri: imagePath,
       analysisResult: analysisResult,
       modelUsed: MODEL,
-      analysisDate: Firestore.FieldValue.serverTimestamp(), // Corrected Timestamp usage
+      analysisDate: FieldValue.serverTimestamp(), // Use FieldValue directly
       status: 'completed',
     });
     console.log(`Analysis results stored in Firestore for image ${imageId} with record ID: ${analysisRecordRef.id}`);
@@ -117,7 +117,7 @@ export const analyzeImage = async (message: any) => { // Changed type from Pubsu
     await imageRef.update({
       latestAnalysisRecordId: analysisRecordRef.id,
       status: 'analyzed',
-      updatedAt: Firestore.FieldValue.serverTimestamp(), // Corrected Timestamp usage
+      updatedAt: FieldValue.serverTimestamp(), // Use FieldValue directly
     });
     console.log(`Image document ${imageId} updated with latest analysis record ID.`);
     

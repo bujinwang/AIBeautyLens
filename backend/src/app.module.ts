@@ -3,15 +3,17 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { GcsModule } from './modules/gcs/gcs.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoggingModule } from './common/modules/logging.module';
 import { GeminiModule } from './modules/gemini/gemini.module';
-import { ImagesModule } from './modules/images/images.module'; // Added ImagesModule
-import { TreatmentsModule } from './modules/treatments/treatments.module'; // Added TreatmentsModule
+import { ImagesModule } from './modules/images/images.module';
+import { TreatmentsModule } from './modules/treatments/treatments.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, Reflector } from '@nestjs/core';
+import { PatientsModule } from './modules/patients/patients.module';
+import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { ClinicianPatientAssignmentsModule } from './modules/clinician-patient-assignments/clinician-patient-assignments.module';
+import { CliniciansModule } from './modules/clinicians/clinicians.module';
 
 @Module({
   imports: [
@@ -21,20 +23,20 @@ import { APP_GUARD, Reflector } from '@nestjs/core';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 900000, // 15 minutes in ms
-        limit: 100,  // 100 requests per 15 minutes per IP
+        ttl: 60000, // 1 minute
+        limit: 10,  // 10 requests per minute per IP
       },
     ]),
     LoggingModule,
     PrismaModule,
     AuthModule,
-    UsersModule,
-    GcsModule,
+    CliniciansModule,
+    PatientsModule,
+    OrganizationsModule,
+    ClinicianPatientAssignmentsModule,
+    TreatmentsModule,
+    ImagesModule,
     GeminiModule,
-    ImagesModule, // Added ImagesModule
-    TreatmentsModule, // Added TreatmentsModule
-    // AnalysisModule,
-    // UploadModule,
   ],
   controllers: [AppController],
   providers: [

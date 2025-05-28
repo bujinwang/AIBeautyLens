@@ -13,10 +13,10 @@ export class ClinicianPatientAssignmentsService {
     try {
       const assignment = await this.prisma.clinicianPatientAssignment.create({
         data,
-        include: { // Include related clinician and patient in the response
-          clinician: true,
-          patient: true,
-        },
+          include: { // Include related clinician and patient in the response
+            clinician: true,
+            patient: true,
+          },
       });
       return assignment;
     } catch (error) {
@@ -35,51 +35,49 @@ export class ClinicianPatientAssignmentsService {
   }
 
   async findAll(clinicianId?: string) {
-      const where: Prisma.ClinicianPatientAssignmentWhereInput = {};
+      const where: Prisma.ClinicianPatientAssignmentWhereInput = {
+        is_deleted: false, // Only retrieve non-deleted assignments
+      };
       if (clinicianId) {
           where.clinician_id = clinicianId;
       }
       const assignments = await this.prisma.clinicianPatientAssignment.findMany({
           where,
           include: { // Include related clinician and patient
-              clinician: true,
-              patient: true,
+              clinician: { where: { is_deleted: false } }, // Ensure clinician is not deleted
+              patient: { where: { is_deleted: false } }, // Ensure patient is not deleted
             },
       });
       return assignments;
   }
 
   async findAssignmentsForClinician(clinicianId: string) {
-    // Implement logic to find assignments for a specific clinician
     const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-      where: { clinician_id: clinicianId },
-      include: { patient: true }, // Include patient details
+      where: { clinician_id: clinicianId, is_deleted: false },
+      include: { patient: { where: { is_deleted: false } } }, // Include patient details, ensure patient is not deleted
     });
-     // Optional: Check if the clinician exists if an empty array is ambiguous
     return assignments;
   }
 
   async findAssignmentsForPatient(patientId: string) {
-     // Implement logic to find assignments for a specific patient
      const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-       where: { patient_id: patientId },
-       include: { clinician: true }, // Include clinician details
+       where: { patient_id: patientId, is_deleted: false },
+       include: { clinician: { where: { is_deleted: false } } }, // Include clinician details, ensure clinician is not deleted
      });
-     // Optional: Check if the patient exists if an empty array is ambiguous
      return assignments;
    }
 
    async findOne(assignmentId: string, clinicianId?: string) {
-      const whereClause: Prisma.ClinicianPatientAssignmentWhereUniqueInput = { assignment_id: assignmentId };
+      const whereClause: Prisma.ClinicianPatientAssignmentWhereInput = { assignment_id: assignmentId, is_deleted: false };
       if (clinicianId) {
           whereClause.clinician_id = clinicianId;
       }
 
-      const assignment = await this.prisma.clinicianPatientAssignment.findUnique({
+      const assignment = await this.prisma.clinicianPatientAssignment.findFirst({
         where: whereClause,
         include: { // Include related clinician and patient
-            clinician: true,
-            patient: true,
+            clinician: { where: { is_deleted: false } },
+            patient: { where: { is_deleted: false } },
           },
       });
       if (!assignment) {
@@ -113,23 +111,27 @@ export class ClinicianPatientAssignmentsService {
         }
       }
 
-   async remove(assignmentId: string, clinicianId?: string) {
+   async remove(assignmentId: string, clinicianId?: string): Promise<ClinicianPatientAssignment> {
        const whereClause: Prisma.ClinicianPatientAssignmentWhereUniqueInput = { assignment_id: assignmentId };
        if (clinicianId) {
            whereClause.clinician_id = clinicianId;
        }
        try {
-           const assignment = await this.prisma.clinicianPatientAssignment.delete({
+           const softDeletedAssignment = await this.prisma.clinicianPatientAssignment.update({
              where: whereClause,
+             data: {
+               is_deleted: true,
+               deleted_at: new Date(),
+             },
            });
-           return assignment; // Or return a success indicator
+           return softDeletedAssignment;
          } catch (error) {
              if (error instanceof Prisma.PrismaClientKnownRequestError) {
-               if (error.code === 'P2025') { // P2025 is the error code for record not found
+               if (error.code === 'P2025') {
                  throw new NotFoundException(`Assignment with ID ${assignmentId} not found`);
                }
              }
-             throw error; // Re-throw other errors
+             throw error;
            }
      }
 }

@@ -116,8 +116,7 @@
     *   Implement UI for creating/viewing/updating treatment records.
 *   **Cloud Functions:**
     *   ~Implementation of `gemini-analysis` and `image-processor` functions.~ ✅
-    *   Deployment blocked by organization IAM policy error; function code and build are correct.
-    *   Next: Resolve org policy/IAM issue to enable successful deployment and integration testing.
+    *   ~Deployment blocked by organization IAM policy error; function code and build are correct.~ ✅
 *   **Shared Library:**
     *   Define all necessary shared types, constants, and utility functions.
 *   **Documentation:**
@@ -175,9 +174,9 @@
   *   Enhancing service methods to include relationship data in responses.
     *   Further integration of error handling throughout the application.
 *   **Next Steps (Backend):**
-    *   Implement account lockout after failed login attempts
-    *   Add rate limiting for sensitive endpoints
-    *   Consider implementing soft delete for entities rather than hard delete.
+    *   Additional unit testing for new modules.
+    *   Enhancing service methods to include relationship data in responses.
+    *   Further integration of error handling throughout the application.
 *   **Next Steps (Frontend):**
     *   Complete API integration with the newly implemented error handling and security flows.
     *   Enhance user feedback for error states in all screens.
@@ -195,4 +194,4 @@
 *   **Data Validation:** While basic validation is in place, more comprehensive validation logic might be needed for domain-specific rules.
 
 ---
-*Last Updated: May 27, 2025*
+*Last Updated: May 28, 2025*

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
@@ -9,8 +9,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
-// import { CurrentUser } from '../auth/decorators/current-user.decorator'; // Assuming a CurrentUser decorator
-// import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface'; // Assuming an interface for the user object
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 
 @ApiTags('Images & Analyses')
 @ApiBearerAuth()
@@ -28,9 +28,14 @@ export class ImagesController {
   @ApiResponse({ status: 403, description: 'Forbidden resource.' })
   async notifyUpload(
     @Body() createImageDto: CreateImageDto,
-    // @CurrentUser() user: AuthenticatedUser, // TODO: Get clinicianId from authenticated user
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ImageResponseDto> {
-    const clinicianId = 'mock-clinician-id'; // Placeholder: Replace with actual clinicianId from user
+    // clinicianId is user.userId when the user is a Clinician
+    if (!user.roles.includes(Role.Clinician)) {
+      // This should ideally be caught by RolesGuard, but as a safeguard:
+      throw new ForbiddenException('User is not authorized to create image records.');
+    }
+    const clinicianId = user.userId;
     return this.imagesService.createImageRecord(createImageDto, clinicianId);
   }
 
@@ -45,14 +50,18 @@ export class ImagesController {
   async requestAnalysis(
     @Param('imageId') imageId: string,
     @Body() requestAnalysisDto: RequestAnalysisDto,
-    // @CurrentUser() user: AuthenticatedUser, // TODO: Get clinicianId from authenticated user
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<AnalysisRecordResponseDto> {
-    const clinicianId = 'mock-clinician-id'; // Placeholder: Replace with actual clinicianId from user
-    return this.imagesService.requestNewAnalysis(imageId, clinicianId, requestAnalysisDto);
+    if (!user.roles.includes(Role.Clinician)) {
+      // This check might be redundant if RolesGuard is effective, but good for defense in depth.
+      throw new ForbiddenException('User is not authorized to request analyses.');
+    }
+    const clinicianId = user.userId; // The authenticated user is the one initiating.
+    return this.imagesService.requestNewAnalysis(imageId, clinicianId, requestAnalysisDto, user);
   }
 
   @Get(':imageId/analyses')
-  @Roles(Role.Clinician) // Only Clinicians can access for now
+  @Roles(Role.Clinician, Role.Patient) // Allow Patients to view their own image analyses
   @ApiOperation({ summary: 'Get all analysis records for a specific image.' })
   @ApiResponse({ status: 200, description: 'List of analysis records.', type: [AnalysisRecordResponseDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -60,16 +69,14 @@ export class ImagesController {
   @ApiResponse({ status: 404, description: 'Image not found.'})
   async getAnalysisHistoryForImage(
     @Param('imageId') imageId: string,
-    // @CurrentUser() user: AuthenticatedUser, // TODO: Add logic to ensure user is authorized for this image
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<AnalysisRecordResponseDto[]> {
-    // TODO: Add authorization check:
-    // - If user is Patient, ensure imageId belongs to them.
-    // - If user is Clinician, ensure they are assigned to the patient owning the image.
-    return this.imagesService.getAnalysesForImage(imageId);
+    // Authorization logic is now handled in the ImagesService.
+    return this.imagesService.getAnalysesForImage(imageId, user);
   }
 
-  @Get('analyses/:analysisId') // Path changed for consistency
-  @Roles(Role.Clinician) // Assuming Clinician access for now
+  @Get('analyses/:analysisId')
+  @Roles(Role.Clinician, Role.Patient) // Allow Patients to view their own specific analysis
   @ApiOperation({ summary: 'Get a specific analysis record by its ID.' })
   @ApiResponse({ status: 200, description: 'The analysis record.', type: AnalysisRecordResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -77,16 +84,14 @@ export class ImagesController {
   @ApiResponse({ status: 404, description: 'Analysis record not found.'})
   async getSpecificAnalysisRecord(
     @Param('analysisId') analysisId: string,
-    // @CurrentUser() user: AuthenticatedUser, // TODO: Add authorization logic
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<AnalysisRecordResponseDto> {
-    // TODO: Add authorization check:
-    // - Ensure the user (Clinician/Patient) is authorized to view this specific analysis.
-    //   This might involve checking the associated image and its ownership/assignments.
-    return this.imagesService.getAnalysisById(analysisId);
+    // Authorization logic is now handled in the ImagesService.
+    return this.imagesService.getAnalysisById(analysisId, user);
   }
 
   @Get(':imageId')
-  @Roles(Role.Clinician) // Assuming Clinician access for now
+  @Roles(Role.Clinician, Role.Patient) // Allow Patients to view their own image details
   @ApiOperation({ summary: 'Get image details and its full analysis history.' })
   @ApiResponse({ status: 200, description: 'Image details with analysis history.', type: ImageResponseDto })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
@@ -94,9 +99,9 @@ export class ImagesController {
   @ApiResponse({ status: 404, description: 'Image not found.'})
   async getImageDetailsWithHistory(
     @Param('imageId') imageId: string,
-    // @CurrentUser() user: AuthenticatedUser, // TODO: Add authorization logic
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ImageResponseDto> {
-    // TODO: Add authorization check
-    return this.imagesService.getImageWithHistory(imageId);
+    // Authorization logic is now handled in the ImagesService.
+    return this.imagesService.getImageWithHistory(imageId, user);
   }
 }

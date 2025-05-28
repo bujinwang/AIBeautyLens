@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 // import { GcsService } from '../gcs/gcs.service'; // If direct GCS interaction is needed
-// import { PrismaService } from '../../prisma/prisma.service'; // For fetching clinician/patient details
+import { PrismaService } from '../../prisma/prisma.service'; // For fetching clinician/patient details
 import { CreateImageDto } from './dto/create-image.dto';
 import { RequestAnalysisDto } from './dto/request-analysis.dto';
 import { ImageResponseDto } from './dto/image-response.dto';
 import { AnalysisRecordResponseDto } from './dto/analysis-record-response.dto';
+import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { Role } from '../auth/enums/role.enum';
 // Firestore Admin SDK
 import * as admin from 'firebase-admin';
 
@@ -14,8 +16,8 @@ export class ImagesService {
   private firestore: admin.firestore.Firestore;
 
   constructor(
+    private readonly prisma: PrismaService, // Injected PrismaService
     // private readonly gcsService: GcsService, // Example injection
-    // private readonly prisma: PrismaService, // Example injection
   ) {
     // Ensure Firebase Admin is initialized (typically in main.ts or a Firebase module)
     if (admin.apps.length === 0) {
@@ -28,6 +30,43 @@ export class ImagesService {
       // This setup assumes ADC is configured and working for Firestore.
     }
     this.firestore = admin.firestore();
+  }
+
+  private async isUserAuthorizedForImage(imageId: string, user: AuthenticatedUser): Promise<boolean> {
+    const imageDoc = await this.firestore.collection('Images').doc(imageId).get();
+    if (!imageDoc.exists) {
+      throw new NotFoundException(`Image with ID ${imageId} not found.`);
+    }
+    const imageData = imageDoc.data();
+
+    if (user.roles.includes(Role.Admin)) {
+      return true;
+    }
+
+    if (user.roles.includes(Role.Patient)) {
+      return imageData.patientId === user.userId;
+    }
+
+    if (user.roles.includes(Role.Clinician)) {
+      if (imageData.clinicianId === user.userId) {
+        return true;
+      }
+      // Check if the patient associated with the image is assigned to this clinician
+      if (imageData.patientId) {
+        const assignment = await this.prisma.clinicianPatientAssignment.findUnique({
+          where: {
+            clinician_id_patient_id: {
+              clinician_id: user.userId,
+              patient_id: imageData.patientId,
+            },
+            // Optional: Add status checks for the assignment if applicable
+            // e.g., status: 'ACTIVE'
+          },
+        });
+        return !!assignment;
+      }
+    }
+    return false;
   }
 
   async createImageRecord(createImageDto: CreateImageDto, clinicianId: string): Promise<ImageResponseDto> {
@@ -117,10 +156,22 @@ export class ImagesService {
 
   async requestNewAnalysis(
     imageId: string,
-    initiatedByClinicianId: string,
+    initiatedByClinicianId: string, // This should be user.userId if initiated by a clinician
     requestAnalysisDto: RequestAnalysisDto,
+    user: AuthenticatedUser, // Added user parameter for authorization
   ): Promise<AnalysisRecordResponseDto> {
-    this.logger.log(`Request for new analysis on image ${imageId} by clinician ${initiatedByClinicianId}`);
+    this.logger.log(`Request for new analysis on image ${imageId} by clinician ${initiatedByClinicianId}, requested by user ${user.userId}`);
+
+    // Authorization: Check if the user is authorized to operate on this image
+    const isAuthorizedForImage = await this.isUserAuthorizedForImage(imageId, user);
+    if (!isAuthorizedForImage) {
+      throw new ForbiddenException(`User ${user.userId} is not authorized to request analysis for image ${imageId}.`);
+    }
+
+    // Authorization: Ensure the clinician initiating the analysis matches the authenticated user, unless admin
+    if (!user.roles.includes(Role.Admin) && initiatedByClinicianId !== user.userId) {
+        throw new ForbiddenException(`Authenticated user ${user.userId} cannot request analysis on behalf of clinician ${initiatedByClinicianId}.`);
+    }
 
     const imageRef = this.firestore.collection('Images').doc(imageId);
 
@@ -178,19 +229,18 @@ export class ImagesService {
     }
   }
 
-  async getAnalysesForImage(imageId: string): Promise<AnalysisRecordResponseDto[]> {
-    this.logger.log(`Fetching all analysis records for image ${imageId}`);
+  async getAnalysesForImage(imageId: string, user: AuthenticatedUser): Promise<AnalysisRecordResponseDto[]> {
+    this.logger.log(`Fetching all analysis records for image ${imageId} by user ${user.userId}`);
 
-    const imageRef = this.firestore.collection('Images').doc(imageId);
+    const isAuthorized = await this.isUserAuthorizedForImage(imageId, user);
+    if (!isAuthorized) {
+      throw new ForbiddenException(`User ${user.userId} is not authorized to access analyses for image ${imageId}.`);
+    }
+
+    // Image existence is checked in isUserAuthorizedForImage, so no need to re-check here.
     const analyses: AnalysisRecordResponseDto[] = [];
 
     try {
-      const imageDoc = await imageRef.get();
-      if (!imageDoc.exists) {
-        this.logger.warn(`Image with ID ${imageId} not found when fetching analysis history.`);
-        throw new NotFoundException(`Image with ID ${imageId} not found.`);
-      }
-
       const analysisRecordsSnapshot = await this.firestore
         .collection('AnalysisRecords')
         .where('imageId', '==', imageId)
@@ -232,8 +282,8 @@ export class ImagesService {
     }
   }
 
-  async getAnalysisById(analysisId: string): Promise<AnalysisRecordResponseDto> {
-    this.logger.log(`Fetching analysis record ${analysisId}`);
+  async getAnalysisById(analysisId: string, user: AuthenticatedUser): Promise<AnalysisRecordResponseDto> {
+    this.logger.log(`Fetching analysis record ${analysisId} by user ${user.userId}`);
     const analysisRecordRef = this.firestore.collection('AnalysisRecords').doc(analysisId);
 
     try {
@@ -244,6 +294,18 @@ export class ImagesService {
       }
 
       const data = doc.data();
+      const imageId = data.imageId;
+
+      if (!imageId) {
+        this.logger.error(`Analysis record ${analysisId} is missing imageId.`);
+        throw new InternalServerErrorException('Analysis record is incomplete.');
+      }
+
+      const isAuthorized = await this.isUserAuthorizedForImage(imageId, user);
+      if (!isAuthorized) {
+        throw new ForbiddenException(`User ${user.userId} is not authorized to access analysis record ${analysisId} (via image ${imageId}).`);
+      }
+
       return {
         analysisId: data.analysisId,
         imageId: data.imageId,
@@ -257,31 +319,32 @@ export class ImagesService {
         errorMessage: data.errorMessage,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof InternalServerErrorException) {
         throw error;
       }
       if (error instanceof Error) {
-        this.logger.error(`Failed to get analysis record ${analysisId}: ${error.message}`, error.stack);
+        this.logger.error(`Failed to get analysis record ${analysisId} for user ${user.userId}: ${error.message}`, error.stack);
       } else {
-        this.logger.error(`Failed to get analysis record ${analysisId}: An unknown error occurred`, error);
+        this.logger.error(`Failed to get analysis record ${analysisId} for user ${user.userId}: An unknown error occurred`, error);
       }
       throw new InternalServerErrorException(`Failed to get analysis record ${analysisId}.`);
     }
   }
 
-  async getImageWithHistory(imageId: string): Promise<ImageResponseDto> {
-    this.logger.log(`Fetching image ${imageId} with its analysis history`);
-    const imageRef = this.firestore.collection('Images').doc(imageId);
-
+  async getImageWithHistory(imageId: string, user: AuthenticatedUser): Promise<ImageResponseDto> {
+    this.logger.log(`Fetching image ${imageId} with its analysis history by user ${user.userId}`);
+    
     try {
-      const imageDoc = await imageRef.get();
-      if (!imageDoc.exists) {
-        this.logger.warn(`Image with ID ${imageId} not found when fetching details with history.`);
-        throw new NotFoundException(`Image with ID ${imageId} not found.`);
+      const isAuthorized = await this.isUserAuthorizedForImage(imageId, user);
+      if (!isAuthorized) {
+        throw new ForbiddenException(`User ${user.userId} is not authorized to access image ${imageId}.`);
       }
 
+      const imageRef = this.firestore.collection('Images').doc(imageId);
+      const imageDoc = await imageRef.get();
       const imageData = imageDoc.data();
-      const analyses = await this.getAnalysesForImage(imageId); // Reuse existing method
+
+      const analyses = await this.getAnalysesForImage(imageId, user);
 
       return {
         imageId: imageData.imageId,
@@ -295,15 +358,16 @@ export class ImagesService {
         analyses,
       };
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (error instanceof Error) {
+        this.logger.error(`Error in getImageWithHistory for image ${imageId} by user ${user.userId}. Error: ${error.message}`, error.stack);
+      } else {
+        this.logger.error(`Error in getImageWithHistory for image ${imageId} by user ${user.userId}. An unknown error occurred`, error);
+      }
+      
+      if (error instanceof NotFoundException || error instanceof ForbiddenException || error instanceof InternalServerErrorException) {
         throw error;
       }
-      if (error instanceof Error) {
-        this.logger.error(`Failed to get image ${imageId} with history: ${error.message}`, error.stack);
-      } else {
-        this.logger.error(`Failed to get image ${imageId} with history: An unknown error occurred`, error);
-      }
-      throw new InternalServerErrorException(`Failed to get image ${imageId} with history.`);
+      throw new InternalServerErrorException(`An unexpected error occurred while fetching image ${imageId} with history.`);
     }
   }
 }

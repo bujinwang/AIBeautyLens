@@ -10,13 +10,15 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
-    "@google-cloud/functions-framework": "^3.0.0",
     "@google-cloud/firestore": "^7.0.0",
-    "@google-cloud/storage": "^7.0.0",
+    "@google-cloud/functions-framework": "^3.0.0",
     "@google-cloud/pubsub": "^4.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "busboy": "^1.6.0",
     "sharp": "^0.33.2"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@types/node": "^20.3.1",
     "typescript": "^5.1.3"
   }

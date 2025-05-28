@@ -40,22 +40,29 @@
             *   DTOs with validation using class-validator.
             *   Role-based access control implemented on all endpoints.
             *   User-specific data scoping implemented for `findAll` and `findOne` methods.
+            *   **Comprehensive e2e tests implemented, including positive, RBAC, and error/edge case scenarios.**
         *   **Organizations Module:**
             *   Complete CRUD operations implemented and tested.
             *   DTOs with validation using class-validator.
             *   Role-based access control implemented on all endpoints.
             *   E2E tests scaffolded.
+            *   **Comprehensive e2e tests implemented, including positive, RBAC, and error/edge case scenarios.**
         *   **ClinicianPatientAssignments Module:**
             *   Implemented to manage relationships between clinicians and patients.
             *   Complete CRUD operations with proper validation.
             *   Endpoints for finding assignments by clinician or patient.
             *   Role-based access control implemented on all endpoints.
             *   User-specific data scoping implemented for `findAll`, `findOne`, `update`, and `remove` methods.
-            *   **Comprehensive e2e tests implemented, covering positive, RBAC, and error/edge case scenarios.**
+            *   **Comprehensive e2e tests implemented, including positive, RBAC, and error/edge case scenarios.**
         *   **Clinicians Module:**
             *   `findOne` and `findAll` logic implemented to find clinicians using Prisma, including related assignments.
             *   CRUD endpoints for clinicians are complete and functional.
             *   E2E tests scaffolded.
+            *   **Comprehensive e2e tests implemented, including positive, RBAC, and error/edge case scenarios.**
+        *   **Treatments Module:**
+            *   All CRUD endpoints and service logic for TreatmentType and TreatmentRecord are implemented.
+            *   DTOs and response DTOs in use, strict typing enforced.
+            *   **Comprehensive e2e tests implemented, including positive, RBAC, and error/edge case scenarios.**
     *   **Error Handling & Logging:**
         *   Global exception filter implemented for standardized error responses.
         *   Transform interceptor for consistent success response formatting.
@@ -81,16 +88,17 @@
 *   **Backend:**
     *   Full implementation of Users module (if still needed for other user types, or remove if clinicians are the only users).
     *   Full implementation of GCS module (successful signed URL generation).
-    *   Integration with AI models (Gemini or alternatives).
+    *   ~Integration with AI models (Gemini or alternatives).~ ✅
     *   Add pagination/filtering to existing endpoints.
     *   Additional testing (integration, e2e).
     *   ~Enhanced error handling and logging.~ ✅
     *   ~Password reset, email verification, JWT refresh token rotation, logout functionality.~ ✅
     *   ~Email service integration for verification and password reset.~ ✅
-    *   Implement Analysis History: Refactor Firestore data model for images and analysis records.
-    *   Implement Analysis History: Develop API endpoints for triggering specific analyses and retrieving analysis history.
+    *   ~Implement Analysis History: Refactor Firestore data model for images and analysis records.~ ✅
+    *   ~Implement Analysis History: Develop API endpoints for triggering specific analyses and retrieving analysis history.~ ✅
     *   Implement Treatment Record Management: Define Prisma schema for `TreatmentTypes` and `TreatmentRecords`.
-    *   Implement Treatment Record Management: Develop `TreatmentsModule` (DTOs, services, controllers) for managing treatment types and records.
+    *   ~Implement Treatment Record Management: Develop `TreatmentsModule` (DTOs, services, controllers) for managing treatment types and records.~ ✅
+    *   ~Develop `ImagesModule` backend logic (service implementation for Firestore, controller endpoints).~ ✅
 *   **Frontend:**
     *   Complete UI/UX for all screens.
     *   Image capture/selection flow.
@@ -107,9 +115,9 @@
     *   Implement UI for managing treatment types (admin).
     *   Implement UI for creating/viewing/updating treatment records.
 *   **Cloud Functions:**
-    *   Implementation of `gemini-analysis` and `image-processor` functions.
-    *   Deployment and integration with the backend.
-    *   Update `gemini-analysis` Cloud Function to trigger from `AnalysisRecords` collection and interact with the new data model.
+    *   ~Implementation of `gemini-analysis` and `image-processor` functions.~ ✅
+    *   Deployment blocked by organization IAM policy error; function code and build are correct.
+    *   Next: Resolve org policy/IAM issue to enable successful deployment and integration testing.
 *   **Shared Library:**
     *   Define all necessary shared types, constants, and utility functions.
 *   **Documentation:**
@@ -153,10 +161,15 @@
         *   Updating service and controller logic for all relevant modules (`PatientsModule`, `ClinicianPatientAssignmentsModule`)
         *   Adding/expanding tests for data isolation
     *   **E2E Tests:**
-        *   Scaffolded e2e tests for the `CliniciansModule`.
-        *   **Comprehensive e2e tests for the `ClinicianPatientAssignmentsModule` (positive, RBAC, and error/edge cases) are complete.**
-        *   Scaffolded e2e tests for the `OrganizationsModule`.
-        *   Scaffolded e2e tests for the `PatientsModule`.
+        *   Comprehensive e2e tests for the `CliniciansModule` are complete.
+        *   Comprehensive e2e tests for the `ClinicianPatientAssignmentsModule` are complete.
+        *   Comprehensive e2e tests for the `OrganizationsModule` are complete.
+        *   Comprehensive e2e tests for the `PatientsModule` are complete.
+        *   Comprehensive e2e tests for the `TreatmentsModule` are complete.
+    *   **Treatment Record Management Feature:** Fully implemented backend logic for `TreatmentsModule`, including service methods and controller endpoints with robust role-based access control and data scoping.
+    *   **Gemini Analysis Cloud Function:** Implemented the `gemini-analysis` Cloud Function to analyze images using the Gemini Vision API and store results in Firestore, including necessary imports and correct API usage.
+    *   **Images Module Backend Logic:** Implemented service methods and controller endpoints for the `ImagesModule`, including Firestore interactions for image records and analysis history, with proper authorization checks.
+    *   **Image Processor Cloud Function:** Fully implemented, build and type errors resolved, deployment blocked by org IAM policy error.
   *   **Actively working on:**
   *   Additional unit testing for new modules.
   *   Enhancing service methods to include relationship data in responses.
@@ -165,8 +178,6 @@
     *   Implement account lockout after failed login attempts
     *   Add rate limiting for sensitive endpoints
     *   Consider implementing soft delete for entities rather than hard delete.
-    *   Develop `TreatmentsModule` backend logic (service implementation, controller endpoints).
-    *   Develop `ImagesModule` backend logic (service implementation for Firestore, controller endpoints).
 *   **Next Steps (Frontend):**
     *   Complete API integration with the newly implemented error handling and security flows.
     *   Enhance user feedback for error states in all screens.
@@ -184,4 +195,4 @@
 *   **Data Validation:** While basic validation is in place, more comprehensive validation logic might be needed for domain-specific rules.
 
 ---
-*Last Updated: June 7, 2024*
+*Last Updated: May 27, 2025*

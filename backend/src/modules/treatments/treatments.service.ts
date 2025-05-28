@@ -148,13 +148,23 @@ export class TreatmentsService {
   async removeTreatmentRecord(id: string): Promise<void> {
     this.logger.log(`Deleting treatment record with id: ${id}`);
     try {
-      await this.prisma.treatmentRecord.delete({ where: { id } });
+    await this.prisma.treatmentRecord.delete({ where: { id } });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new NotFoundException(`Treatment record with ID "${id}" not found`);
       }
       throw error;
     }
+  }
+
+  async isPatientAssignedToClinician(patientId: string, clinicianId: string): Promise<boolean> {
+    const assignment = await this.prisma.clinicianPatientAssignment.findFirst({
+      where: {
+        patient_id: patientId,
+        clinician_id: clinicianId,
+      },
+    });
+    return !!assignment;
   }
 
   private toTreatmentRecordResponseDto = (record: any): TreatmentRecordResponseDto => ({

@@ -22,6 +22,7 @@
     "clean": "yarn workspaces run clean"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "@typescript-eslint/eslint-plugin": "^8.30.1",
     "@typescript-eslint/parser": "^8.30.1",
     "dotenv": "^16.5.0",
@@ -37,6 +38,7 @@
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
     "@nestjs/swagger": "^11.2.0",
+    "busboy": "^1.6.0",
     "swagger-ui-express": "^5.0.1"
   }
 }

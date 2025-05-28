@@ -4,12 +4,14 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { CliniciansService } from '../../clinicians/clinicians.service'; // Import CliniciansService
 import { Clinician } from '@prisma/client'; // Import Clinician type
+import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { Role } from '../enums/role.enum';
 
 // Define the expected shape of the JWT payload
 interface JwtPayload {
   email: string;
   sub: string; // This will be clinician_id
-  roles: string[];
+  roles: Role[]; // Changed from string[] to Role[] for type safety
   iat?: number;
   exp?: number;
 }
@@ -27,7 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<Omit<Clinician, 'hashed_password' | 'salt'>> {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     // payload.sub should contain the clinician_id
     const clinician = await this.cliniciansService.findOneById(payload.sub);
     if (!clinician) {
@@ -35,10 +37,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     // Optionally, you might want to check if the user is active or not banned, etc.
 
-    // Return the clinician object, excluding sensitive fields.
     // This object will be attached to the request as `req.user`.
-    // Also include roles from the payload, as they were signed into the token.
-    const safeClinician = this.cliniciansService.excludePasswordFields(clinician);
-    return { ...safeClinician, roles: payload.roles }; // Ensure roles from token are passed through
+    return {
+      userId: clinician.clinician_id, // payload.sub is clinician.clinician_id
+      email: clinician.email, // payload.email is clinician.email
+      roles: payload.roles, // Roles from the token payload
+    };
   }
 }

@@ -366,3 +366,4 @@ describe('ClinicianPatientAssignmentsController (e2e)', () => {
       .expect(403);
   });
 });
+ 

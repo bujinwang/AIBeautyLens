@@ -34,8 +34,13 @@ export class ClinicianPatientAssignmentsService {
     }
   }
 
-  async findAll() { // Add a findAll method for assignments
+  async findAll(clinicianId?: string) {
+      const where: Prisma.ClinicianPatientAssignmentWhereInput = {};
+      if (clinicianId) {
+          where.clinician_id = clinicianId;
+      }
       const assignments = await this.prisma.clinicianPatientAssignment.findMany({
+          where,
           include: { // Include related clinician and patient
               clinician: true,
               patient: true,
@@ -64,10 +69,14 @@ export class ClinicianPatientAssignmentsService {
      return assignments;
    }
 
-   async findOne(assignmentId: string) {
-      // Implement logic to find a single assignment by ID
+   async findOne(assignmentId: string, clinicianId?: string) {
+      const whereClause: Prisma.ClinicianPatientAssignmentWhereUniqueInput = { assignment_id: assignmentId };
+      if (clinicianId) {
+          whereClause.clinician_id = clinicianId;
+      }
+
       const assignment = await this.prisma.clinicianPatientAssignment.findUnique({
-        where: { assignment_id: assignmentId },
+        where: whereClause,
         include: { // Include related clinician and patient
             clinician: true,
             patient: true,
@@ -79,10 +88,14 @@ export class ClinicianPatientAssignmentsService {
       return assignment;
     }
 
-    async update(assignmentId: string, data: Prisma.ClinicianPatientAssignmentUpdateInput): Promise<ClinicianPatientAssignment> {
+    async update(assignmentId: string, data: Prisma.ClinicianPatientAssignmentUpdateInput, clinicianId?: string): Promise<ClinicianPatientAssignment> {
+        const whereClause: Prisma.ClinicianPatientAssignmentWhereUniqueInput = { assignment_id: assignmentId };
+        if (clinicianId) {
+            whereClause.clinician_id = clinicianId;
+        }
         try {
           const updatedAssignment = await this.prisma.clinicianPatientAssignment.update({
-            where: { assignment_id: assignmentId },
+            where: whereClause,
             data,
             include: { 
                 clinician: true,
@@ -100,11 +113,14 @@ export class ClinicianPatientAssignmentsService {
         }
       }
 
-   async remove(assignmentId: string) {
-       // Implement logic to delete an assignment by ID
+   async remove(assignmentId: string, clinicianId?: string) {
+       const whereClause: Prisma.ClinicianPatientAssignmentWhereUniqueInput = { assignment_id: assignmentId };
+       if (clinicianId) {
+           whereClause.clinician_id = clinicianId;
+       }
        try {
            const assignment = await this.prisma.clinicianPatientAssignment.delete({
-             where: { assignment_id: assignmentId },
+             where: whereClause,
            });
            return assignment; // Or return a success indicator
          } catch (error) {
@@ -116,4 +132,4 @@ export class ClinicianPatientAssignmentsService {
              throw error; // Re-throw other errors
            }
      }
-} 
+}

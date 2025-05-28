@@ -14,29 +14,66 @@ spec:
       labels:
         app: aibeautylens-backend
     spec:
-      serviceAccountName: aibeautylens-k8s-sa
+      serviceAccountName: aibeautylens-k8s-sa # Ensure this KSA is configured for Workload Identity
       containers:
       - name: aibeautylens-backend
-        image: gcr.io/shining-env-459701-v5/aibeautylens-backend:latest-direct-sign-amd64
-        imagePullPolicy: Always
+        # IMPORTANT: Update this image path to your pushed image
+        image: gcr.io/YOUR_GCP_PROJECT_ID/aibeautylens-backend:YOUR_TAG
+        imagePullPolicy: Always # Or IfNotPresent if using immutable tags
         ports:
-        - containerPort: 3000 # Port your NestJS app listens on
+        - containerPort: 3000
         env:
-        - name: GCS_BUCKET_NAME
-          value: "aimeifuphotobucket"
-        - name: GCS_PROJECT_ID
-          value: "shining-env-459701-v5"
-        - name: GCS_SIGNING_SERVICE_ACCOUNT_EMAIL
-          value: "aibeautylens-sa@shining-env-459701-v5.iam.gserviceaccount.com"
         - name: PORT
           value: "3000"
-        # You will need to create a .env file or manage secrets in GKE for sensitive data
-        # For now, we'll assume environment variables are set directly or via ConfigMaps/Secrets
-        # For GCS_SIGNING_SERVICE_ACCOUNT_EMAIL, ensure it's correctly configured.
-        # The GKE node service account will be used by default if the application code
-        # relies on Application Default Credentials (ADC) within the GKE pod.
-        # This node service account needs the 'Service Account Token Creator' role
-        # on the 'GCS_SIGNING_SERVICE_ACCOUNT_EMAIL' if that's how you've configured your gcs.service.ts
-        # Alternatively, you can assign the 'GCS_SIGNING_SERVICE_ACCOUNT_EMAIL' directly to the GKE nodes.
-        # For simplicity, ensure the GKE default node service account has the necessary permissions.
-        # Or, create a dedicated service account for the GKE nodes and grant it permissions.
+        - name: NODE_ENV
+          value: "production"
+        # GCS Configuration (consider if Workload Identity makes some of these redundant)
+        - name: GCS_BUCKET_NAME
+          value: "aimeifuphotobucket" # Or use ConfigMap
+        - name: GCS_PROJECT_ID
+          value: "shining-env-459701-v5" # Or use ConfigMap / Workload Identity
+        # - name: GCS_SIGNING_SERVICE_ACCOUNT_EMAIL # May not be needed if Workload Identity is correctly set up
+        #   value: "aibeautylens-sa@shining-env-459701-v5.iam.gserviceaccount.com"
+        
+        # Mount secrets as environment variables
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: aibeautylens-backend-secrets
+              key: DATABASE_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: aibeautylens-backend-secrets
+              key: JWT_SECRET
+        # Add other secrets like MAILJET_API_KEY, MAILJET_SECRET_KEY etc.
+        # - name: MAILJET_API_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: aibeautylens-backend-secrets
+        #       key: MAILJET_API_KEY
+
+        readinessProbe:
+          httpGet:
+            path: /api/health # Assuming /api is your global prefix and you have a /health endpoint
+            port: 3000
+          initialDelaySeconds: 30 # Time to wait before first probe
+          periodSeconds: 10    # How often to probe
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 60 # Longer delay for liveness
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        resources:
+          requests:
+            memory: "256Mi" # Adjust based on your app's needs
+            cpu: "100m"     # Adjust based on your app's needs
+          limits:
+            memory: "512Mi" # Adjust based on your app's needs
+            cpu: "500m"     # Adjust based on your app's needs

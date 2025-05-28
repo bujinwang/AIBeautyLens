@@ -39,15 +39,23 @@
             *   Complete CRUD operations implemented and tested.
             *   DTOs with validation using class-validator.
             *   Role-based access control implemented on all endpoints.
+            *   User-specific data scoping implemented for `findAll` and `findOne` methods.
         *   **Organizations Module:**
             *   Complete CRUD operations implemented and tested.
             *   DTOs with validation using class-validator.
             *   Role-based access control implemented on all endpoints.
+            *   E2E tests scaffolded.
         *   **ClinicianPatientAssignments Module:**
             *   Implemented to manage relationships between clinicians and patients.
             *   Complete CRUD operations with proper validation.
             *   Endpoints for finding assignments by clinician or patient.
             *   Role-based access control implemented on all endpoints.
+            *   User-specific data scoping implemented for `findAll`, `findOne`, `update`, and `remove` methods.
+            *   **Comprehensive e2e tests implemented, covering positive, RBAC, and error/edge case scenarios.**
+        *   **Clinicians Module:**
+            *   `findOne` and `findAll` logic implemented to find clinicians using Prisma, including related assignments.
+            *   CRUD endpoints for clinicians are complete and functional.
+            *   E2E tests scaffolded.
     *   **Error Handling & Logging:**
         *   Global exception filter implemented for standardized error responses.
         *   Transform interceptor for consistent success response formatting.
@@ -137,19 +145,26 @@
     *   **Email service integration:**
         *   Mailjet-based email service implemented and in use for verification and password reset
         *   Environment/configuration documented
-*   **Actively working on:** 
-    *   Additional unit testing for new modules.
-    *   Enhancing service methods to include relationship data in responses.
-    *   Further integration of error handling throughout the application.
+    *   **Clinicians Module:**
+        *   `findOne` and `findAll` logic implemented to find clinicians using Prisma, including related assignments.
+        *   CRUD endpoints for clinicians are complete and functional.
     *   **User-specific data scoping:**
         *   Enforcing that clinicians can only access patients and assignments assigned to them
-        *   Updating service and controller logic for all relevant modules
+        *   Updating service and controller logic for all relevant modules (`PatientsModule`, `ClinicianPatientAssignmentsModule`)
         *   Adding/expanding tests for data isolation
+    *   **E2E Tests:**
+        *   Scaffolded e2e tests for the `CliniciansModule`.
+        *   **Comprehensive e2e tests for the `ClinicianPatientAssignmentsModule` (positive, RBAC, and error/edge cases) are complete.**
+        *   Scaffolded e2e tests for the `OrganizationsModule`.
+        *   Scaffolded e2e tests for the `PatientsModule`.
+  *   **Actively working on:**
+  *   Additional unit testing for new modules.
+  *   Enhancing service methods to include relationship data in responses.
+    *   Further integration of error handling throughout the application.
 *   **Next Steps (Backend):**
     *   Implement account lockout after failed login attempts
     *   Add rate limiting for sensitive endpoints
     *   Consider implementing soft delete for entities rather than hard delete.
-    *   **Complete user-specific data scoping for all patient and assignment endpoints**
     *   Develop `TreatmentsModule` backend logic (service implementation, controller endpoints).
     *   Develop `ImagesModule` backend logic (service implementation for Firestore, controller endpoints).
 *   **Next Steps (Frontend):**
@@ -169,4 +184,4 @@
 *   **Data Validation:** While basic validation is in place, more comprehensive validation logic might be needed for domain-specific rules.
 
 ---
-*Last Updated: July 19, 2023*
+*Last Updated: June 7, 2024*

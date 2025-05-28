@@ -9,7 +9,6 @@ export class CliniciansService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.ClinicianCreateInput): Promise<Clinician> {
-    // TODO: Implement clinician creation logic using prisma.clinician.create
     const newClinician = await this.prisma.clinician.create({
         data: { 
             ...data,
@@ -20,14 +19,12 @@ export class CliniciansService {
   }
 
   async findOneByEmail(email: string): Promise<Clinician | null> {
-     // TODO: Implement finding clinician by email
      return this.prisma.clinician.findUnique({
          where: { email },
      });
   }
 
   async findOneById(id: string): Promise<Clinician | null> {
-      // TODO: Implement finding clinician by ID
       return this.prisma.clinician.findUnique({
           where: { clinician_id: id },
       });
@@ -52,7 +49,6 @@ export class CliniciansService {
   }
 
   async findOne(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
-    // TODO: Implement logic to find a single clinician by ID using prisma.clinician.findUnique
     const clinician = await this.prisma.clinician.findUnique({
       where: { clinician_id: id },
       include: { // Include related patient assignments
@@ -70,13 +66,17 @@ export class CliniciansService {
   }
 
   async findAll(): Promise<Omit<Clinician, 'hashed_password' | 'salt'>[]> {
-      // TODO: Implement logic to find all clinicians using prisma.clinician.findMany
-       const clinicians = await this.prisma.clinician.findMany({ }); // Consider including assignments here if needed
-       return clinicians.map(clinician => this.excludePasswordFields(clinician));
+      const clinicians = await this.prisma.clinician.findMany({
+          include: { // Include related patient assignments
+              patientAssignments: {
+                  include: { patient: true } // Include patient details in assignments
+              }
+          }
+      });
+      return clinicians.map(clinician => this.excludePasswordFields(clinician));
   }
 
   async update(id: string, data: Prisma.ClinicianUpdateInput): Promise<Omit<Clinician, 'hashed_password' | 'salt'>> {
-    // TODO: Implement logic to update a clinician by ID using prisma.clinician.update
     try {
       const updatedClinician = await this.prisma.clinician.update({
         where: { clinician_id: id },
@@ -94,7 +94,6 @@ export class CliniciansService {
   }
 
   async remove(id: string): Promise<Omit<Clinician, 'hashed_password' | 'salt'> | null> {
-    // TODO: Implement logic to delete a clinician by ID using prisma.clinician.delete
     try {
         const deletedClinician = await this.prisma.clinician.delete({
         where: { clinician_id: id },

@@ -17,8 +17,8 @@ export class PatientsService {
     return patient;
   }
 
-  async findAll(filterPatientDto: FilterPatientDto): Promise<PageDto<Patient>> {
-    const pageOptions = filterPatientDto as PageOptionsDto; // Cast to PageOptionsDto to access inherited properties/getters
+  async findAll(filterPatientDto: FilterPatientDto, clinicianId?: string): Promise<PageDto<Patient>> {
+    const pageOptions = filterPatientDto as PageOptionsDto;
     const { fullName, email, organizationId } = filterPatientDto;
 
     const where: Prisma.PatientWhereInput = {};
@@ -35,6 +35,14 @@ export class PatientsService {
           clinician: {
             organization_id: organizationId,
           },
+        },
+      };
+    }
+
+    if (clinicianId) {
+      where.clinicianAssignments = {
+        some: {
+          clinician_id: clinicianId,
         },
       };
     }
@@ -58,11 +66,19 @@ export class PatientsService {
     return new PageDto(patients, pageMetaDto);
   }
 
-  async findOne(id: string) {
-    // Implement logic to find a single patient by ID using prisma.patient.findUnique
-    // console.log('Finding patient with id:', id);
+  async findOne(id: string, clinicianId?: string) {
+    const whereClause: Prisma.PatientWhereUniqueInput = { patient_id: id };
+
+    if (clinicianId) {
+      whereClause.clinicianAssignments = {
+        some: {
+          clinician_id: clinicianId,
+        },
+      };
+    }
+
     const patient = await this.prisma.patient.findUnique({
-      where: { patient_id: id },
+      where: whereClause,
       include: {
         clinicianAssignments: {
           include: { clinician: true }

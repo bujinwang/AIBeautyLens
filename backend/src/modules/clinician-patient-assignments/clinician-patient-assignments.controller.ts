@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Delete, Body, Patch, ParseUUIDPipe, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Delete, Body, Patch, ParseUUIDPipe, HttpCode, HttpStatus, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { ClinicianPatientAssignmentsService } from './clinician-patient-assignments.service';
 import { CreateClinicianPatientAssignmentDto } from './dto/create-clinician-patient-assignment.dto';
 import { UpdateClinicianPatientAssignmentDto } from './dto/update-clinician-patient-assignment.dto';
@@ -15,8 +15,10 @@ export class ClinicianPatientAssignmentsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to create assignments
-  create(@Body() createAssignmentDto: CreateClinicianPatientAssignmentDto) {
-    // Map DTO to Prisma CreateInput format
+  async create(@Body() createAssignmentDto: CreateClinicianPatientAssignmentDto, @Request() req) {
+    if (req.user.roles.includes(Role.Clinician) && req.user.userId !== createAssignmentDto.clinician_id) {
+      throw new ForbiddenException('Clinicians can only create assignments for themselves.');
+    }
     const data: any = { 
         clinician: { connect: { clinician_id: createAssignmentDto.clinician_id } },
         patient: { connect: { patient_id: createAssignmentDto.patient_id } },
@@ -27,49 +29,58 @@ export class ClinicianPatientAssignmentsController {
   }
 
   @Get()
-  @Roles(Role.Admin) // Only Admin can view all assignments
-  findAll() {
-      return this.assignmentsService.findAll();
+  @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view all assignments (scoped by clinician)
+  findAll(@Request() req) {
+      const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
+      return this.assignmentsService.findAll(clinicianId);
   }
 
   @Get('clinician/:clinicianId')
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view assignments for a clinician
-  findForClinician(@Param('clinicianId', ParseUUIDPipe) clinicianId: string) {
-    // TODO: Implement logic to ensure the requesting clinician is authorized to view these assignments
+  findForClinician(@Param('clinicianId', ParseUUIDPipe) clinicianId: string, @Request() req) {
+    if (req.user.roles.includes(Role.Clinician) && req.user.userId !== clinicianId) {
+      throw new ForbiddenException('Clinicians can only view their own assignments.');
+    }
     return this.assignmentsService.findAssignmentsForClinician(clinicianId);
   }
 
   @Get('patient/:patientId')
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view assignments for a patient
-  findForPatient(@Param('patientId', ParseUUIDPipe) patientId: string) {
-     // TODO: Implement logic to ensure the requesting clinician is authorized to view these assignments
+  async findForPatient(@Param('patientId', ParseUUIDPipe) patientId: string, @Request() req) {
+     if (req.user.roles.includes(Role.Clinician)) {
+       const assignments = await this.assignmentsService.findAssignmentsForPatient(patientId);
+       const isAssignedToClinician = assignments.some(assignment => assignment.clinician_id === req.user.userId);
+       if (!isAssignedToClinician) {
+         throw new ForbiddenException('Clinician is not assigned to this patient.');
+       }
+     }
     return this.assignmentsService.findAssignmentsForPatient(patientId);
   }
 
   @Get(':assignmentId')
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view a specific assignment
-  findOne(@Param('assignmentId', ParseUUIDPipe) assignmentId: string) {
-      // TODO: Implement logic to ensure the requesting clinician is authorized to view this assignment
-      return this.assignmentsService.findOne(assignmentId);
+  findOne(@Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Request() req) {
+      const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
+      return this.assignmentsService.findOne(assignmentId, clinicianId);
   }
 
    @Patch(':assignmentId')
    @HttpCode(HttpStatus.OK) 
-   @Roles(Role.Admin) // Only Admin can update assignments (refine scope later)
-   update(@Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Body() updateAssignmentDto: UpdateClinicianPatientAssignmentDto) {
-       // Map DTO to Prisma UpdateInput format
+   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to update assignments (scoped by clinician)
+   update(@Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Body() updateAssignmentDto: UpdateClinicianPatientAssignmentDto, @Request() req) {
+       const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
        const data: any = { 
            ...(updateAssignmentDto.assignment_date && { assignment_date: new Date(updateAssignmentDto.assignment_date) }), 
            ...(updateAssignmentDto.status && { status: updateAssignmentDto.status }),
          };
-       // TODO: Implement logic to ensure the requesting clinician is authorized to update this assignment
-       return this.assignmentsService.update(assignmentId, data);
+       return this.assignmentsService.update(assignmentId, data, clinicianId);
    }
 
   @Delete(':assignmentId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @Roles(Role.Admin) // Only Admin can delete assignments
-  remove(@Param('assignmentId', ParseUUIDPipe) assignmentId: string) {
-      return this.assignmentsService.remove(assignmentId);
+  @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to delete assignments (scoped by clinician)
+  remove(@Param('assignmentId', ParseUUIDPipe) assignmentId: string, @Request() req) {
+      const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
+      return this.assignmentsService.remove(assignmentId, clinicianId);
   }
-} 
+}

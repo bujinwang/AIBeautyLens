@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, HttpCode, HttpStatus, UseGuards, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, HttpCode, HttpStatus, UseGuards, Query, UsePipes, ValidationPipe, Request } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
@@ -26,14 +26,16 @@ export class PatientsController {
   @Get()
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view all patients (consider scope later)
   @UsePipes(new ValidationPipe({ transform: true }))
-  findAll(@Query() filterPatientDto: FilterPatientDto): Promise<PageDto<Patient>> {
-    return this.patientsService.findAll(filterPatientDto);
+  findAll(@Query() filterPatientDto: FilterPatientDto, @Request() req): Promise<PageDto<Patient>> {
+    const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
+    return this.patientsService.findAll(filterPatientDto, clinicianId);
   }
 
   @Get(':id')
   @Roles(Role.Admin, Role.Clinician) // Allow Admin and Clinician to view a specific patient (consider scope later)
-  findOne(@Param('id', ParseUUIDPipe) id: string) { // Use ParseUUIDPipe for UUID IDs
-    return this.patientsService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) { // Use ParseUUIDPipe for UUID IDs
+    const clinicianId = req.user.roles.includes(Role.Admin) ? undefined : req.user.userId;
+    return this.patientsService.findOne(id, clinicianId);
   }
 
   @Patch(':id')

@@ -6,13 +6,28 @@ export interface EmailOptions {
   html: string;
 }
 
-const mailjet = Mailjet.apiConnect(
-  process.env.MJ_APIKEY_PUBLIC || '',
-  process.env.MJ_APIKEY_PRIVATE || ''
-);
+// Initialize mailjet with conditional check for dummy keys
+const MJ_APIKEY_PUBLIC = process.env.MJ_APIKEY_PUBLIC || '';
+const MJ_APIKEY_PRIVATE = process.env.MJ_APIKEY_PRIVATE || '';
+const isDummyKeys = MJ_APIKEY_PUBLIC === 'dummy_key' || MJ_APIKEY_PRIVATE === 'dummy_key';
+
+// Only initialize mailjet if not using dummy keys
+const mailjet = !isDummyKeys ? Mailjet.apiConnect(
+  MJ_APIKEY_PUBLIC,
+  MJ_APIKEY_PRIVATE
+) : null;
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
+    // If using dummy keys, log the email details but don't actually send
+    if (isDummyKeys) {
+      console.log('EMAIL SENDING SKIPPED (using dummy keys):', {
+        to: options.to,
+        subject: options.subject,
+      });
+      return true;
+    }
+    
     await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [
         {

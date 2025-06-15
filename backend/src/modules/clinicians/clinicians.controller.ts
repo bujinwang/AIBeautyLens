@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe, UsePipes, ValidationPipe, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe, UsePipes, ValidationPipe, Request, Query } from '@nestjs/common'; // Added Query
 import { CliniciansService } from './clinicians.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { Prisma } from '@prisma/client';
+import { FilterClinicianDto } from './dto/filter-clinician.dto'; // Import FilterClinicianDto
 
 @Controller('clinicians')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -20,8 +21,9 @@ export class CliniciansController {
 
   @Get()
   @Roles(Role.Admin)
-  findAll() {
-    return this.cliniciansService.findAll();
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) // Added UsePipes and ValidationPipe
+  findAll(@Query() filterClinicianDto: FilterClinicianDto) { // Added @Query() filterClinicianDto
+    return this.cliniciansService.findAll(filterClinicianDto); // Pass filterClinicianDto
   }
 
   @Get('me')

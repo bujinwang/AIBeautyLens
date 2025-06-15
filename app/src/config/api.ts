@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 export const API_KEY_STORAGE_KEY = 'gemini_api_key';
 
 // Environment variable or fallback key
-export const FALLBACK_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyCF5JIUoRuuqb5Cd6D31_aSjsZ7Wm_85-w';
+export const FALLBACK_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyCtO46zpt7unoWMCfIiVtUzfiiy3xClhbs';
 
 // API timeout in milliseconds
 export const API_TIMEOUT = 180000;

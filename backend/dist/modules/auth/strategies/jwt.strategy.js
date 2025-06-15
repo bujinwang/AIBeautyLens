@@ -14,29 +14,32 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
 const config_1 = require("@nestjs/config");
-const clinicians_service_1 = require("../../clinicians/clinicians.service");
+const prisma_service_1 = require("../../../prisma/prisma.service");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
-    constructor(configService, cliniciansService) {
+    constructor(configService, prisma) {
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
             secretOrKey: configService.get('JWT_SECRET'),
         });
         this.configService = configService;
-        this.cliniciansService = cliniciansService;
+        this.prisma = prisma;
     }
     async validate(payload) {
-        const clinician = await this.cliniciansService.findOneById(payload.sub);
-        if (!clinician) {
+        const user = await this.prisma.user.findUnique({ where: { user_id: payload.sub, is_deleted: false } });
+        if (!user) {
             throw new common_1.UnauthorizedException('User not found or invalid token.');
         }
-        const safeClinician = this.cliniciansService.excludePasswordFields(clinician);
-        return { ...safeClinician, roles: payload.roles };
+        return {
+            userId: user.user_id,
+            email: user.email,
+            roles: payload.roles,
+        };
     }
 };
 exports.JwtStrategy = JwtStrategy;
 exports.JwtStrategy = JwtStrategy = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
-        clinicians_service_1.CliniciansService])
+        prisma_service_1.PrismaService])
 ], JwtStrategy);

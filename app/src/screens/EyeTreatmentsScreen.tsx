@@ -37,12 +37,22 @@ const EyeTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [allTreatments, setAllTreatments] = useState<Treatment[]>([]);
   const [recommendedEyeTreatments, setRecommendedEyeTreatments] = useState<Treatment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load localized treatments
   useEffect(() => {
     const loadTreatments = async () => {
-      const localizedTreatments = await getLocalizedTreatments();
-      setAllTreatments(localizedTreatments);
+      setLoading(true);
+      setError(null);
+      try {
+        const localizedTreatments = await getLocalizedTreatments();
+        setAllTreatments(localizedTreatments);
+      } catch (err) {
+        setError(t('failedToLoadTreatments'));
+      } finally {
+        setLoading(false);
+      }
     };
     loadTreatments();
   }, []);
@@ -167,10 +177,14 @@ const EyeTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
         </View>
 
         <View style={styles.treatmentsContainer}>
-          {recommendedEyeTreatments.length > 0 ? (
+          {loading ? (
+            <Text style={styles.loadingText}>{t('loading')}...</Text>
+          ) : error ? (
+            <Text style={styles.loadingText}>{error}</Text>
+          ) : recommendedEyeTreatments.length > 0 ? (
             recommendedEyeTreatments.map(treatment => renderTreatmentCard(treatment))
           ) : (
-            <Text style={styles.loadingText}>{t('noTreatmentsAvailable')}</Text> // Add new i18n key
+            <Text style={styles.loadingText}>{t('noTreatmentsAvailable')}</Text>
           )}
         </View>
       </ScrollView>

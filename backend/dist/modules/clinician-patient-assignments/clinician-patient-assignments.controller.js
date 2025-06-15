@@ -25,7 +25,10 @@ let ClinicianPatientAssignmentsController = class ClinicianPatientAssignmentsCon
     constructor(assignmentsService) {
         this.assignmentsService = assignmentsService;
     }
-    create(createAssignmentDto) {
+    async create(createAssignmentDto, req) {
+        if (req.user.roles.includes(role_enum_1.Role.Clinician) && req.user.userId !== createAssignmentDto.clinician_id) {
+            throw new common_1.ForbiddenException('Clinicians can only create assignments for themselves.');
+        }
         const data = {
             clinician: { connect: { clinician_id: createAssignmentDto.clinician_id } },
             patient: { connect: { patient_id: createAssignmentDto.patient_id } },
@@ -34,27 +37,41 @@ let ClinicianPatientAssignmentsController = class ClinicianPatientAssignmentsCon
         };
         return this.assignmentsService.create(data);
     }
-    findAll() {
-        return this.assignmentsService.findAll();
+    findAll(req) {
+        const clinicianId = req.user.roles.includes(role_enum_1.Role.Admin) ? undefined : req.user.userId;
+        return this.assignmentsService.findAll(clinicianId);
     }
-    findForClinician(clinicianId) {
+    findForClinician(clinicianId, req) {
+        if (req.user.roles.includes(role_enum_1.Role.Clinician) && req.user.userId !== clinicianId) {
+            throw new common_1.ForbiddenException('Clinicians can only view their own assignments.');
+        }
         return this.assignmentsService.findAssignmentsForClinician(clinicianId);
     }
-    findForPatient(patientId) {
+    async findForPatient(patientId, req) {
+        if (req.user.roles.includes(role_enum_1.Role.Clinician)) {
+            const assignments = await this.assignmentsService.findAssignmentsForPatient(patientId);
+            const isAssignedToClinician = assignments.some(assignment => assignment.clinician_id === req.user.userId);
+            if (!isAssignedToClinician) {
+                throw new common_1.ForbiddenException('Clinician is not assigned to this patient.');
+            }
+        }
         return this.assignmentsService.findAssignmentsForPatient(patientId);
     }
-    findOne(assignmentId) {
-        return this.assignmentsService.findOne(assignmentId);
+    findOne(assignmentId, req) {
+        const clinicianId = req.user.roles.includes(role_enum_1.Role.Admin) ? undefined : req.user.userId;
+        return this.assignmentsService.findOne(assignmentId, clinicianId);
     }
-    update(assignmentId, updateAssignmentDto) {
+    update(assignmentId, updateAssignmentDto, req) {
+        const clinicianId = req.user.roles.includes(role_enum_1.Role.Admin) ? undefined : req.user.userId;
         const data = {
             ...(updateAssignmentDto.assignment_date && { assignment_date: new Date(updateAssignmentDto.assignment_date) }),
             ...(updateAssignmentDto.status && { status: updateAssignmentDto.status }),
         };
-        return this.assignmentsService.update(assignmentId, data);
+        return this.assignmentsService.update(assignmentId, data, clinicianId);
     }
-    remove(assignmentId) {
-        return this.assignmentsService.remove(assignmentId);
+    remove(assignmentId, req) {
+        const clinicianId = req.user.roles.includes(role_enum_1.Role.Admin) ? undefined : req.user.userId;
+        return this.assignmentsService.remove(assignmentId, clinicianId);
     }
 };
 exports.ClinicianPatientAssignmentsController = ClinicianPatientAssignmentsController;
@@ -63,58 +80,65 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_clinician_patient_assignment_dto_1.CreateClinicianPatientAssignmentDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [create_clinician_patient_assignment_dto_1.CreateClinicianPatientAssignmentDto, Object]),
+    __metadata("design:returntype", Promise)
 ], ClinicianPatientAssignmentsController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ClinicianPatientAssignmentsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('clinician/:clinicianId'),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Param)('clinicianId', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ClinicianPatientAssignmentsController.prototype, "findForClinician", null);
 __decorate([
     (0, common_1.Get)('patient/:patientId'),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Param)('patientId', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
 ], ClinicianPatientAssignmentsController.prototype, "findForPatient", null);
 __decorate([
     (0, common_1.Get)(':assignmentId'),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Param)('assignmentId', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ClinicianPatientAssignmentsController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':assignmentId'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Param)('assignmentId', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_clinician_patient_assignment_dto_1.UpdateClinicianPatientAssignmentDto]),
+    __metadata("design:paramtypes", [String, update_clinician_patient_assignment_dto_1.UpdateClinicianPatientAssignmentDto, Object]),
     __metadata("design:returntype", void 0)
 ], ClinicianPatientAssignmentsController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':assignmentId'),
     (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin, role_enum_1.Role.Clinician),
     __param(0, (0, common_1.Param)('assignmentId', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ClinicianPatientAssignmentsController.prototype, "remove", null);
 exports.ClinicianPatientAssignmentsController = ClinicianPatientAssignmentsController = __decorate([

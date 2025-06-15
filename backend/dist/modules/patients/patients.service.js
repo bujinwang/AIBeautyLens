@@ -26,22 +26,50 @@ let PatientsService = class PatientsService {
         });
         return patient;
     }
-    async findAll(filterPatientDto) {
+    async createPatientByClinician(dto, clinicianId) {
+        const patient = await this.prisma.patient.create({
+            data: {
+                full_name: dto.full_name,
+                contact_info: dto.contact_info,
+                additional_phi_details: dto.additional_phi_details,
+            },
+        });
+        await this.prisma.clinicianPatientAssignment.create({
+            data: {
+                clinician_id: clinicianId,
+                patient_id: patient.patient_id,
+                status: 'active',
+            },
+        });
+        return patient;
+    }
+    async findAll(filterPatientDto, clinicianId) {
         const pageOptions = filterPatientDto;
         const { fullName, email, organizationId } = filterPatientDto;
-        const where = {};
+        const where = {
+            is_deleted: false,
+        };
         if (fullName) {
             where.full_name = { contains: fullName, mode: 'insensitive' };
         }
         if (email) {
-            where.contact_info = { contains: email, mode: 'insensitive' };
+            where.user = { email: { contains: email, mode: 'insensitive' } };
         }
         if (organizationId) {
             where.clinicianAssignments = {
                 some: {
                     clinician: {
                         organization_id: organizationId,
+                        is_deleted: false,
                     },
+                },
+            };
+        }
+        if (clinicianId) {
+            where.clinicianAssignments = {
+                some: {
+                    clinician_id: clinicianId,
+                    is_deleted: false,
                 },
             };
         }
@@ -54,19 +82,30 @@ let PatientsService = class PatientsService {
                 skip: pageOptions.skip,
                 take: pageOptions.limit,
                 orderBy,
+                include: { user: true },
             }),
             this.prisma.patient.count({ where }),
         ]);
         const pageMetaDto = new page_meta_dto_1.PageMetaDto({ itemCount, pageOptionsDto: pageOptions });
         return new page_dto_1.PageDto(patients, pageMetaDto);
     }
-    async findOne(id) {
-        const patient = await this.prisma.patient.findUnique({
-            where: { patient_id: id },
+    async findOne(id, clinicianId) {
+        const whereClause = { patient_id: id, is_deleted: false };
+        if (clinicianId) {
+            whereClause.clinicianAssignments = {
+                some: {
+                    clinician_id: clinicianId,
+                    is_deleted: false,
+                },
+            };
+        }
+        const patient = await this.prisma.patient.findFirst({
+            where: whereClause,
             include: {
                 clinicianAssignments: {
                     include: { clinician: true }
-                }
+                },
+                user: true,
             }
         });
         if (!patient) {
@@ -93,10 +132,14 @@ let PatientsService = class PatientsService {
     }
     async remove(id) {
         try {
-            const patient = await this.prisma.patient.delete({
+            const softDeletedPatient = await this.prisma.patient.update({
                 where: { patient_id: id },
+                data: {
+                    is_deleted: true,
+                    deleted_at: new Date(),
+                },
             });
-            return patient;
+            return softDeletedPatient;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
@@ -106,6 +149,14 @@ let PatientsService = class PatientsService {
             }
             throw error;
         }
+    }
+    excludeUserPasswordFields(patient) {
+        if (!patient.user) {
+            return patient;
+        }
+        const { user, ...rest } = patient;
+        const { hashed_password, salt, ...userRest } = user;
+        return { ...rest, user: userRest };
     }
 };
 exports.PatientsService = PatientsService;

@@ -111,8 +111,11 @@ export class TreatmentsService {
     if (patientId) where.patientId = patientId;
     if (clinicianId) where.clinicianId = clinicianId;
     const records = await this.prisma.treatmentRecord.findMany({
-      where,
-      include: { treatmentType: { where: { is_deleted: false } } }, // Ensure treatment type is not deleted
+      where: {
+        ...where,
+        treatmentType: { is_deleted: false } // Filter by related treatmentType's is_deleted status
+      },
+      include: { treatmentType: true },
       orderBy: { date: 'desc' },
     });
     return records.map(this.toTreatmentRecordResponseDto);
@@ -121,8 +124,8 @@ export class TreatmentsService {
   async findOneTreatmentRecord(id: string): Promise<TreatmentRecordResponseDto> {
     this.logger.log(`Fetching treatment record with id: ${id}`);
     const record = await this.prisma.treatmentRecord.findUnique({
-      where: { id, is_deleted: false },
-      include: { treatmentType: { where: { is_deleted: false } } },
+      where: { id, is_deleted: false, treatmentType: { is_deleted: false } }, // Filter by related treatmentType's is_deleted status
+      include: { treatmentType: true },
     });
     if (!record) {
       throw new NotFoundException(`Treatment record with ID "${id}" not found`);

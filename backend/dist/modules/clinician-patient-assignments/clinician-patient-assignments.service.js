@@ -40,8 +40,15 @@ let ClinicianPatientAssignmentsService = class ClinicianPatientAssignmentsServic
             throw error;
         }
     }
-    async findAll() {
+    async findAll(clinicianId) {
+        const where = {
+            is_deleted: false,
+        };
+        if (clinicianId) {
+            where.clinician_id = clinicianId;
+        }
         const assignments = await this.prisma.clinicianPatientAssignment.findMany({
+            where,
             include: {
                 clinician: true,
                 patient: true,
@@ -51,21 +58,30 @@ let ClinicianPatientAssignmentsService = class ClinicianPatientAssignmentsServic
     }
     async findAssignmentsForClinician(clinicianId) {
         const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-            where: { clinician_id: clinicianId },
+            where: { clinician_id: clinicianId, is_deleted: false, patient: { is_deleted: false } },
             include: { patient: true },
         });
         return assignments;
     }
     async findAssignmentsForPatient(patientId) {
         const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-            where: { patient_id: patientId },
+            where: { patient_id: patientId, is_deleted: false, clinician: { is_deleted: false } },
             include: { clinician: true },
         });
         return assignments;
     }
-    async findOne(assignmentId) {
-        const assignment = await this.prisma.clinicianPatientAssignment.findUnique({
-            where: { assignment_id: assignmentId },
+    async findOne(assignmentId, clinicianId) {
+        const whereClause = {
+            assignment_id: assignmentId,
+            is_deleted: false,
+            clinician: { is_deleted: false },
+            patient: { is_deleted: false }
+        };
+        if (clinicianId) {
+            whereClause.clinician_id = clinicianId;
+        }
+        const assignment = await this.prisma.clinicianPatientAssignment.findFirst({
+            where: whereClause,
             include: {
                 clinician: true,
                 patient: true,
@@ -76,10 +92,14 @@ let ClinicianPatientAssignmentsService = class ClinicianPatientAssignmentsServic
         }
         return assignment;
     }
-    async update(assignmentId, data) {
+    async update(assignmentId, data, clinicianId) {
+        const whereClause = { assignment_id: assignmentId };
+        if (clinicianId) {
+            whereClause.clinician_id = clinicianId;
+        }
         try {
             const updatedAssignment = await this.prisma.clinicianPatientAssignment.update({
-                where: { assignment_id: assignmentId },
+                where: whereClause,
                 data,
                 include: {
                     clinician: true,
@@ -97,12 +117,20 @@ let ClinicianPatientAssignmentsService = class ClinicianPatientAssignmentsServic
             throw error;
         }
     }
-    async remove(assignmentId) {
+    async remove(assignmentId, clinicianId) {
+        const whereClause = { assignment_id: assignmentId };
+        if (clinicianId) {
+            whereClause.clinician_id = clinicianId;
+        }
         try {
-            const assignment = await this.prisma.clinicianPatientAssignment.delete({
-                where: { assignment_id: assignmentId },
+            const softDeletedAssignment = await this.prisma.clinicianPatientAssignment.update({
+                where: whereClause,
+                data: {
+                    is_deleted: true,
+                    deleted_at: new Date(),
+                },
             });
-            return assignment;
+            return softDeletedAssignment;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {

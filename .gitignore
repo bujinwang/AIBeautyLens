@@ -2513,3 +2513,29 @@ app/.expo/web/cache/development/babel-loader/ffd4ea5cbfe4235100431cc268856d71dda
 app/.expo/web/cache/production/images/favicon/favicon-67134a4057aa197165d938336d6236bcc2589d454d8d76a54888db6a1c469944-contain-transparent/favicon-16.png
 app/.expo/web/cache/production/images/favicon/favicon-67134a4057aa197165d938336d6236bcc2589d454d8d76a54888db6a1c469944-contain-transparent/favicon-32.png
 app/.expo/web/cache/production/images/favicon/favicon-67134a4057aa197165d938336d6236bcc2589d454d8d76a54888db6a1c469944-contain-transparent/favicon-48.png
+
+# Added by Task Master AI
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.env
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+.DS_Store
+# Task files
+tasks.json
+tasks/ 

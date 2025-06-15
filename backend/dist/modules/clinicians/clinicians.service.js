@@ -13,70 +13,106 @@ exports.CliniciansService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const client_1 = require("@prisma/client");
-const role_enum_1 = require("../auth/enums/role.enum");
+const page_dto_1 = require("../../common/dto/page.dto");
+const page_meta_dto_1 = require("../../common/dto/page-meta.dto");
+const page_options_dto_1 = require("../../common/dto/page-options.dto");
 let CliniciansService = class CliniciansService {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async create(data) {
-        const newClinician = await this.prisma.clinician.create({
-            data: {
-                ...data,
-                roles: data.roles || [role_enum_1.Role.Clinician],
-            }
+        const clinician = await this.prisma.clinician.create({
+            data,
         });
-        return newClinician;
+        return clinician;
     }
-    async findOneByEmail(email) {
-        return this.prisma.clinician.findUnique({
-            where: { email },
-        });
-    }
-    async findOneById(id) {
-        return this.prisma.clinician.findUnique({
-            where: { clinician_id: id },
-        });
-    }
-    async findOneByVerificationToken(token) {
-        return this.prisma.clinician.findUnique({
-            where: { verification_token: token },
-        });
-    }
-    async findOneByResetToken(token) {
-        return this.prisma.clinician.findUnique({
-            where: { password_reset_token: token },
-        });
-    }
-    async findOneByRefreshToken(token) {
-        return this.prisma.clinician.findUnique({
-            where: { refresh_token: token },
-        });
+    async findAll(filterClinicianDto) {
+        const pageOptions = filterClinicianDto;
+        const { name, email, specialty, organizationId } = filterClinicianDto;
+        const where = {
+            is_deleted: false,
+        };
+        if (name) {
+            where.name = { contains: name, mode: 'insensitive' };
+        }
+        if (email) {
+            where.user = { email: { contains: email, mode: 'insensitive' } };
+        }
+        if (specialty) {
+            where.specialty = { contains: specialty, mode: 'insensitive' };
+        }
+        if (organizationId) {
+            where.organization_id = organizationId;
+        }
+        const orderBy = {
+            [pageOptions.sortBy || 'created_at']: pageOptions.sortOrder === page_options_dto_1.Order.DESC ? 'desc' : 'asc',
+        };
+        const [clinicians, itemCount] = await this.prisma.$transaction([
+            this.prisma.clinician.findMany({
+                where,
+                skip: pageOptions.skip,
+                take: pageOptions.limit,
+                orderBy,
+                include: { user: true },
+            }),
+            this.prisma.clinician.count({ where }),
+        ]);
+        const pageMetaDto = new page_meta_dto_1.PageMetaDto({ itemCount, pageOptionsDto: pageOptions });
+        return new page_dto_1.PageDto(clinicians, pageMetaDto);
     }
     async findOne(id) {
         const clinician = await this.prisma.clinician.findUnique({
-            where: { clinician_id: id },
-            include: {
-                patientAssignments: {
-                    include: { patient: true }
-                }
-            }
+            where: { clinician_id: id, is_deleted: false },
+            include: { user: true },
         });
         if (!clinician) {
             throw new common_1.NotFoundException(`Clinician with ID ${id} not found`);
         }
-        return this.excludePasswordFields(clinician);
+        return clinician;
     }
-    async findAll() {
-        const clinicians = await this.prisma.clinician.findMany({});
-        return clinicians.map(clinician => this.excludePasswordFields(clinician));
+    async findOneByEmail(email) {
+        return this.prisma.clinician.findFirst({
+            where: {
+                user: { email, is_deleted: false },
+                is_deleted: false,
+            },
+            include: { user: true },
+        });
+    }
+    async findOneByVerificationToken(token) {
+        return this.prisma.clinician.findFirst({
+            where: {
+                user: { verification_token: token, is_deleted: false },
+                is_deleted: false,
+            },
+            include: { user: true },
+        });
+    }
+    async findOneByResetToken(token) {
+        return this.prisma.clinician.findFirst({
+            where: {
+                user: { password_reset_token: token, is_deleted: false },
+                is_deleted: false,
+            },
+            include: { user: true },
+        });
+    }
+    async findOneByRefreshToken(token) {
+        return this.prisma.clinician.findFirst({
+            where: {
+                user: { refresh_token: token, is_deleted: false },
+                is_deleted: false,
+            },
+            include: { user: true },
+        });
     }
     async update(id, data) {
         try {
-            const updatedClinician = await this.prisma.clinician.update({
+            const clinician = await this.prisma.clinician.update({
                 where: { clinician_id: id },
                 data,
             });
-            return this.excludePasswordFields(updatedClinician);
+            return clinician;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
@@ -89,10 +125,14 @@ let CliniciansService = class CliniciansService {
     }
     async remove(id) {
         try {
-            const deletedClinician = await this.prisma.clinician.delete({
+            const softDeletedClinician = await this.prisma.clinician.update({
                 where: { clinician_id: id },
+                data: {
+                    is_deleted: true,
+                    deleted_at: new Date(),
+                },
             });
-            return this.excludePasswordFields(deletedClinician);
+            return softDeletedClinician;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
@@ -103,9 +143,10 @@ let CliniciansService = class CliniciansService {
             throw error;
         }
     }
-    excludePasswordFields(clinician) {
-        const { hashed_password, salt, ...result } = clinician;
-        return result;
+    excludeUserPasswordFields(clinician) {
+        const { user, ...rest } = clinician;
+        const { hashed_password, salt, ...userRest } = user;
+        return { ...rest, user: userRest };
     }
 };
 exports.CliniciansService = CliniciansService;

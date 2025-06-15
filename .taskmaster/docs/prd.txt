@@ -1,0 +1,76 @@
+# AIBeautyLens MVP Product Requirements Document
+
+## Product Overview
+AIBeautyLens is a standalone iOS app for aesthetic treatment analysis and simulation. The app allows users to capture photos, analyze facial features using AI, recommend appropriate treatments, simulate treatment results, and generate reports.
+
+## Target Users
+- Aesthetic clinics and practitioners
+- Potential clients seeking aesthetic treatments
+- Beauty enthusiasts exploring treatment options
+
+## Core MVP Features
+
+### 1. Photo Capture
+- Native iOS camera integration
+- Photo storage on device only
+- Basic face framing guides
+- Gallery selection option
+
+### 2. Local LLM Integration
+- Direct API calls to OpenAI from the iOS app
+- Analyze facial features using GPT-4o Vision
+- Age estimation included in analysis
+- Treatment recommendations based on analysis
+
+### 3. Hardcoded Treatment Database
+- Predefined treatment list stored in the app
+- No remote database or management needed
+- Static pricing and descriptions
+- Categorized treatments (Laser, Radiofrequency, Injection, Special)
+
+### 4. Treatment Simulation
+- Direct API calls to DALL-E from the iOS app
+- Before/after comparison views
+- Simple image caching for performance
+- Multiple treatment simulation options
+
+### 5. Basic Treatment Report
+- On-device PDF generation
+- Share via standard iOS share sheet
+- Treatment details and simulated results
+- Pricing and recommendation information
+
+## Technical Requirements
+
+### App Structure
+- React Native with Expo SDK
+- TypeScript for type safety
+- Component-based architecture
+- Screen-based navigation
+
+### API Integrations
+- OpenAI (GPT-4o Vision) for facial analysis
+- OpenAI (DALL-E 3) for treatment simulation
+
+### Data Management
+- Local storage for user photos
+- Hardcoded treatment database
+- Simple caching mechanism for API responses
+
+### Security Considerations
+- Environment variables for API keys
+- Key obfuscation and Apple Keychain integration
+- User privacy terms and photo handling policies
+
+## Development Timeline (4 Weeks)
+- Week 1: Core App Setup (camera, navigation, hardcoded data)
+- Week 2: Analysis Implementation (OpenAI API, facial analysis, recommendations)
+- Week 3: Simulation Features (DALL-E API, before/after UI, selection, caching)
+- Week 4: Report Generation & Polish (PDF, sharing, UI polish, testing)
+
+## Success Metrics
+- Successful photo capture and analysis
+- Accurate treatment recommendations
+- Realistic treatment simulations
+- Professional-looking reports
+- Smooth user experience with minimal loading times 

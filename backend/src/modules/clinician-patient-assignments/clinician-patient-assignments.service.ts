@@ -44,8 +44,8 @@ export class ClinicianPatientAssignmentsService {
       const assignments = await this.prisma.clinicianPatientAssignment.findMany({
           where,
           include: { // Include related clinician and patient
-              clinician: { where: { is_deleted: false } }, // Ensure clinician is not deleted
-              patient: { where: { is_deleted: false } }, // Ensure patient is not deleted
+              clinician: true,
+              patient: true,
             },
       });
       return assignments;
@@ -53,31 +53,36 @@ export class ClinicianPatientAssignmentsService {
 
   async findAssignmentsForClinician(clinicianId: string) {
     const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-      where: { clinician_id: clinicianId, is_deleted: false },
-      include: { patient: { where: { is_deleted: false } } }, // Include patient details, ensure patient is not deleted
+      where: { clinician_id: clinicianId, is_deleted: false, patient: { is_deleted: false } }, // Filter out soft-deleted patients
+      include: { patient: true },
     });
     return assignments;
   }
 
   async findAssignmentsForPatient(patientId: string) {
      const assignments = await this.prisma.clinicianPatientAssignment.findMany({
-       where: { patient_id: patientId, is_deleted: false },
-       include: { clinician: { where: { is_deleted: false } } }, // Include clinician details, ensure clinician is not deleted
+       where: { patient_id: patientId, is_deleted: false, clinician: { is_deleted: false } }, // Filter out soft-deleted clinicians
+       include: { clinician: true },
      });
      return assignments;
    }
 
    async findOne(assignmentId: string, clinicianId?: string) {
-      const whereClause: Prisma.ClinicianPatientAssignmentWhereInput = { assignment_id: assignmentId, is_deleted: false };
+      const whereClause: Prisma.ClinicianPatientAssignmentWhereInput = {
+        assignment_id: assignmentId,
+        is_deleted: false,
+        clinician: { is_deleted: false }, // Ensure clinician is not deleted
+        patient: { is_deleted: false } // Ensure patient is not deleted
+      };
       if (clinicianId) {
           whereClause.clinician_id = clinicianId;
       }
 
       const assignment = await this.prisma.clinicianPatientAssignment.findFirst({
         where: whereClause,
-        include: { // Include related clinician and patient
-            clinician: { where: { is_deleted: false } },
-            patient: { where: { is_deleted: false } },
+        include: {
+            clinician: true,
+            patient: true,
           },
       });
       if (!assignment) {

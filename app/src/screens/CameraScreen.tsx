@@ -13,7 +13,9 @@ import { COLORS } from '../constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalization } from '../i18n/localizationContext';
-import { analyzeEyeArea, analyzeHairScalpImages } from '../services/geminiService'; // Added import
+import { apiClient } from '../services/api';
+import { useApi } from '../hooks/useApi';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 type CameraScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Camera'>;
 type CameraScreenRouteProp = RouteProp<RootStackParamList, 'Camera'>;
@@ -23,20 +25,38 @@ type Props = {
   route: CameraScreenRouteProp;
 };
 
+// Define a type that includes size for FileInfo
+interface FileInfoWithSize extends FileSystem.FileInfo {
+  size?: number;
+}
+
 const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
   const { t, currentLanguage } = useLocalization();
   const [permission, requestPermission] = useCameraPermissions();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [facing, setFacing] = useState('front');
-  const [previewVisible, setPreviewVisible] = useState(false);
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+  const [previewVisible, setPreviewVisible] = useState<boolean>(false);
   const [capturedImage, setCapturedImage] = useState<any>(null);
   const [visitPurpose, setVisitPurpose] = useState<string>('');
-  const [isEyeAnalyzing, setIsEyeAnalyzing] = useState(false);
+  const [isEyeAnalyzing, setIsEyeAnalyzing] = useState<boolean>(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [hairScalpImages, setHairScalpImages] = useState<any[]>([]);
   const [isHairScalpAnalyzing, setIsHairScalpAnalyzing] = useState(false);
-  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const cameraRef = useRef<CameraView>(null);
   const currentMode: 'facial' | 'eye' | 'hairScalp' | 'beforeAfter' = route?.params?.mode || 'facial';
+
+  const {
+    data: analysisResult,
+    error: analysisError,
+    loading: analysisLoading,
+    execute: executeAnalysis
+  } = useApi(
+    'post',
+    '/gemini/analyze-eye',
+    null,
+    { skipInitialFetch: true }
+  );
 
   // Function to handle barcode scanning (empty implementation to prevent crash)
   const handleBarcodeScanned = () => {
@@ -213,71 +233,94 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
     setPreviewVisible(false);
   };
 
-  const handleAnalyze = async () => {
-    if (!capturedImage || !capturedImage.uri) return;
-
+  const compressImage = async (uri: string): Promise<string | null> => {
     try {
-      let base64Data = capturedImage.base64 || '';
-      if (!base64Data && capturedImage.uri) {
-        try {
-          base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          console.log('Successfully loaded base64 data from image file');
-        } catch (readError) {
-          console.error('Error reading image as base64:', readError);
+      // Get image info to determine size
+      const fileInfo = await FileSystem.getInfoAsync(uri) as FileInfoWithSize;
+      console.log(`Original image size: ${fileInfo.size ? Math.round(fileInfo.size/1024) + 'KB' : 'unknown'}`);
+      
+      // Default compression parameters
+      let width = 800;
+      let quality = 0.5;
+      
+      // Adjust parameters based on file size if available
+      if (fileInfo.size) {
+        // More aggressive compression for larger images
+        if (fileInfo.size > 5000000) { // > 5MB
+          width = 600;
+          quality = 0.3;
+        } else if (fileInfo.size > 2000000) { // > 2MB
+          width = 700;
+          quality = 0.4;
         }
       }
-
-      if (currentMode === 'eye') {
-        setIsEyeAnalyzing(true);
-        try {
-          const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
-          if (analysisResult) {
-            navigation.navigate('Report', {
-              analysisType: 'eye',
-              imageUri: capturedImage.uri,
-              eyeAnalysisResult: analysisResult,
-              visitPurpose: visitPurpose,
-            });
-          } else {
-            Alert.alert(t('error'), t('eyeAnalysisFailed'));
-          }
-        } catch (error: any) {
-          console.error('Error during eye analysis process:', error);
-          const errorMessage = error?.message || t('eyeAnalysisFailed');
-          Alert.alert(t('error'), errorMessage);
-        } finally {
-          setIsEyeAnalyzing(false);
-        }
-      } else if (currentMode === 'hairScalp') {
-        setIsHairScalpAnalyzing(true);
-        try {
-          const analysisResult = await analyzeHairScalpImages([capturedImage.uri], visitPurpose, currentLanguage);
-          if (analysisResult) {
-            navigation.navigate('HairScalpAnalysis', {
-              imageUris: [capturedImage.uri],
-              hairScalpAnalysisResult: analysisResult,
-            });
-          } else {
-            Alert.alert(t('error'), t('hairScalpAnalysisFailed'));
-          }
-        } catch (error: any) {
-          console.error('Error during hair & scalp analysis process:', error);
-          const errorMessage = error?.message || t('hairScalpAnalysisFailed');
-          Alert.alert(t('error'), errorMessage);
-        } finally {
-          setIsHairScalpAnalyzing(false);
-        }
-      } else {
-        navigation.navigate('Analysis', {
-          imageUri: capturedImage.uri,
-          base64Image: base64Data,
-          visitPurpose: visitPurpose,
-        });
+      
+      console.log(`Compressing image with width=${width}px, quality=${quality}`);
+      
+      // Compress the image to reduce size
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width } }], // Resize to a reasonable width while maintaining aspect ratio
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      
+      // If the image is still large, compress again
+      if (manipResult.base64 && manipResult.base64.length > 1500000) {
+        console.log(`Image still large after first compression: ${Math.round(manipResult.base64.length/1024)}KB`);
+        console.log('Performing second compression pass');
+        
+        // Create a temporary file for the second compression
+        const tempUri = FileSystem.cacheDirectory + 'temp_compressed.jpg';
+        await FileSystem.writeAsStringAsync(tempUri, manipResult.base64, { encoding: FileSystem.EncodingType.Base64 });
+        
+        // Apply more aggressive compression
+        const secondResult = await ImageManipulator.manipulateAsync(
+          tempUri,
+          [{ resize: { width: Math.min(width, 500) } }],
+          { compress: Math.min(quality, 0.3), format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        
+        // Clean up temp file
+        await FileSystem.deleteAsync(tempUri, { idempotent: true });
+        
+        console.log(`Final image size: ${secondResult.base64 ? Math.round(secondResult.base64.length/1024) + 'KB' : 'unknown'}`);
+        return secondResult.base64;
       }
+      
+      console.log(`Compressed image size: ${manipResult.base64 ? Math.round(manipResult.base64.length/1024) + 'KB' : 'unknown'}`);
+      return manipResult.base64;
     } catch (error) {
-      console.error('Error preparing image for analysis:', error);
+      console.error('Error compressing image:', error);
+      return null;
+    }
+  };
+
+  const handleAnalyze = async () => {
+    if (capturedImage?.uri) {
+      setIsAnalyzing(true);
+      try {
+        // Compress the image before sending to API
+        const compressedBase64 = await compressImage(capturedImage.uri);
+        
+        if (compressedBase64) {
+          executeAnalysis({ imageBase64: compressedBase64 });
+        } else {
+          Alert.alert(
+            t('errorTitle') || 'Error',
+            t('imageCompressionFailed') || 'Failed to compress image. Please try again.',
+            [{ text: t('ok') || 'OK' }]
+          );
+        }
+      } catch (error) {
+        console.error('Analysis error:', error);
+        Alert.alert(
+          t('errorTitle') || 'Error',
+          t('analysisErrorMessage') || 'An error occurred during analysis. Please try again.',
+          [{ text: t('ok') || 'OK' }]
+        );
+      } finally {
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -286,25 +329,15 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
     setIsEyeAnalyzing(true); // Start loading
 
     try {
-      // If capturedImage already has base64, use it
-      let base64Data = capturedImage.base64 || '';
+      // Compress the image before sending to API
+      const compressedBase64 = await compressImage(capturedImage.uri);
       
-      // If no base64 data, try to read it from the file
-      if (!base64Data && capturedImage.uri) {
-        try {
-          base64Data = await FileSystem.readAsStringAsync(capturedImage.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-          console.log('Successfully loaded base64 data for eye analysis');
-        } catch (readError) {
-          console.error('Error reading image as base64 for eye analysis:', readError);
-          // Optionally show an error to the user
-          return; 
-        }
+      if (!compressedBase64) {
+        throw new Error('Failed to compress image');
       }
-
-      // Call the actual eye analysis service
-      const analysisResult = await analyzeEyeArea(capturedImage.uri, visitPurpose);
+      
+      // Now use the compressed base64 data instead
+      executeAnalysis({ imageBase64: compressedBase64 });
 
       // Check if analysis was successful before navigating
       if (analysisResult) {
@@ -312,7 +345,7 @@ const CameraScreen: React.FC<Props> = ({ navigation, route }) => {
         navigation.navigate('Report', {
           analysisType: 'eye', // Indicate this is an eye analysis report
           imageUri: capturedImage.uri,
-          // base64Image: base64Data, // ReportScreen might not need base64
+          // base64Image: compressedBase64, // ReportScreen might not need base64
           eyeAnalysisResult: analysisResult, // Pass the eye results
           // Pass other relevant params if ReportScreen needs them for eye context
           visitPurpose: visitPurpose,

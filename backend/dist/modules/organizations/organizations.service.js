@@ -29,7 +29,9 @@ let OrganizationsService = class OrganizationsService {
     async findAll(filterOrganizationDto) {
         const pageOptions = filterOrganizationDto;
         const { name, address } = filterOrganizationDto;
-        const where = {};
+        const where = {
+            is_deleted: false,
+        };
         if (name) {
             where.name = { contains: name, mode: 'insensitive' };
         }
@@ -53,7 +55,7 @@ let OrganizationsService = class OrganizationsService {
     }
     async findOne(id) {
         const organization = await this.prisma.organization.findUnique({
-            where: { organization_id: id },
+            where: { organization_id: id, is_deleted: false },
         });
         if (!organization) {
             throw new common_1.NotFoundException(`Organization with ID ${id} not found`);
@@ -79,10 +81,14 @@ let OrganizationsService = class OrganizationsService {
     }
     async remove(id) {
         try {
-            const organization = await this.prisma.organization.delete({
+            const softDeletedOrganization = await this.prisma.organization.update({
                 where: { organization_id: id },
+                data: {
+                    is_deleted: true,
+                    deleted_at: new Date(),
+                },
             });
-            return organization;
+            return softDeletedOrganization;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {

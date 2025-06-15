@@ -7,9 +7,19 @@ exports.sendEmail = void 0;
 exports.sendVerificationEmail = sendVerificationEmail;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 const node_mailjet_1 = __importDefault(require("node-mailjet"));
-const mailjet = node_mailjet_1.default.apiConnect(process.env.MJ_APIKEY_PUBLIC || '', process.env.MJ_APIKEY_PRIVATE || '');
+const MJ_APIKEY_PUBLIC = process.env.MJ_APIKEY_PUBLIC || '';
+const MJ_APIKEY_PRIVATE = process.env.MJ_APIKEY_PRIVATE || '';
+const isDummyKeys = MJ_APIKEY_PUBLIC === 'dummy_key' || MJ_APIKEY_PRIVATE === 'dummy_key';
+const mailjet = !isDummyKeys ? node_mailjet_1.default.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE) : null;
 const sendEmail = async (options) => {
     try {
+        if (isDummyKeys) {
+            console.log('EMAIL SENDING SKIPPED (using dummy keys):', {
+                to: options.to,
+                subject: options.subject,
+            });
+            return true;
+        }
         await mailjet.post('send', { version: 'v3.1' }).request({
             Messages: [
                 {

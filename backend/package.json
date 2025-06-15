@@ -20,6 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "clean": "rm -rf dist node_modules"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@aibeautylens/shared": "*",
     "@google-cloud/firestore": "^7.0.0",

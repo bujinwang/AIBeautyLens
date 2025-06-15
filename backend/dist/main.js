@@ -42,14 +42,42 @@ const path = __importStar(require("path"));
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 const logging_service_1 = require("./common/services/logging.service");
+const admin = __importStar(require("firebase-admin"));
+const bodyParser = __importStar(require("body-parser"));
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 async function bootstrap() {
+    try {
+        try {
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault()
+            });
+            console.log('[Bootstrap] Firebase Admin SDK initialized successfully with application default credentials.');
+        }
+        catch (defaultCredError) {
+            console.log('[Bootstrap] Failed to initialize with application default credentials, trying default initialization...');
+            admin.initializeApp();
+            console.log('[Bootstrap] Firebase Admin SDK initialized successfully with default configuration.');
+        }
+    }
+    catch (error) {
+        console.error('[Bootstrap] Error initializing Firebase Admin SDK:', error);
+        if (error instanceof Error) {
+            console.error('[Bootstrap] Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
+        }
+        console.log('[Bootstrap] Continuing without Firebase Admin SDK - using default prompts.');
+    }
     const logger = new logging_service_1.AppLoggerService();
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: logger,
         bufferLogs: true,
     });
     app.useLogger(logger);
+    app.use(bodyParser.json({ limit: '50mb' }));
+    app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
     const configService = app.get(config_1.ConfigService);
     app.enableCors({
         origin: configService.get('CORS_ORIGIN', '*'),

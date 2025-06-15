@@ -2,6 +2,7 @@ import { BASE_TREATMENTS, BASE_CATEGORIES } from './treatmentData';
 import { TREATMENT_TRANSLATIONS_EN, CATEGORY_TRANSLATIONS_EN } from './translations/treatmentTranslations_en';
 import { Treatment, TreatmentCategory, SupportedLanguage } from './treatmentTypes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTreatments } from '../services/api';
 
 // Function to get the current language from AsyncStorage
 const getCurrentLanguage = async (): Promise<SupportedLanguage> => {
@@ -14,20 +15,14 @@ const getCurrentLanguage = async (): Promise<SupportedLanguage> => {
   }
 };
 
-// Function to get localized treatments
+// Function to get treatments from API
 export const getLocalizedTreatments = async (): Promise<Treatment[]> => {
-  const currentLanguage = await getCurrentLanguage();
-  
-  return BASE_TREATMENTS.map(baseTreatment => {
-    const translations = TREATMENT_TRANSLATIONS_EN[baseTreatment.id];
-    const translation = translations[currentLanguage] || translations.en;
-    
-    return {
-      ...baseTreatment,
-      name: translation.name,
-      description: translation.description
-    };
-  });
+  try {
+    return await getTreatments();
+  } catch (error) {
+    console.error('Failed to fetch treatments from API:', error);
+    return [];
+  }
 };
 
 // Function to get localized categories

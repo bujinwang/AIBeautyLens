@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, InternalServerErrorException, ConflictException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Firestore } from '@google-cloud/firestore';
 import { CreatePromptTemplateDto, UpdatePromptTemplateDto, PromptType } from './dto/prompt-template.dto';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,18 +9,34 @@ export class PromptTemplateService {
   private firestore: Firestore;
   private collectionName = 'promptTemplates';
   private readonly logger = new Logger(PromptTemplateService.name);
+  private gcpProjectId: string;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     try {
-      this.firestore = new Firestore();
-      this.logger.log('Firestore connection initialized for prompt templates');
+      const projectIdFromConfig = this.configService.get<string>('GCS_PROJECT_ID'); // Corrected variable name
+      this.logger.debug(`Attempting to retrieve GCS_PROJECT_ID from ConfigService. Value: '${projectIdFromConfig}'`);
+      this.gcpProjectId = projectIdFromConfig;
+      if (!this.gcpProjectId) {
+        this.logger.error('GCS_PROJECT_ID is not configured in the environment variables or is empty.');
+        throw new InternalServerErrorException('GCS_PROJECT_ID is not configured. Firestore cannot be initialized.');
+      }
+      this.firestore = new Firestore({ projectId: this.gcpProjectId });
+      this.logger.log(`Firestore connection initialized for prompt templates with projectId: ${this.gcpProjectId}`);
     } catch (error) {
       this.logger.error('Failed to initialize Firestore connection', error);
       throw new InternalServerErrorException('Failed to connect to Firestore');
     }
   }
 
+  private ensureFirestoreInitialized(): void {
+    if (!this.firestore) {
+      this.logger.error('Firestore client is not initialized. This might be due to an error during service construction.');
+      throw new InternalServerErrorException('Firestore client is not initialized. Cannot process prompt template requests.');
+    }
+  }
+
   async getPrompt(type: string, customId?: string): Promise<string> {
+    this.ensureFirestoreInitialized();
     try {
       let query = this.firestore.collection(this.collectionName).where('type', '==', type);
       
@@ -40,12 +57,15 @@ export class PromptTemplateService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error retrieving prompt template for type '${type}'`, error);
-      throw new InternalServerErrorException('Failed to retrieve prompt template');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error retrieving prompt template for type '${type}': ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to retrieve prompt template. Original error: ${originalErrorMessage}`);
     }
   }
 
   async getAllPromptTemplates(): Promise<any[]> {
+    this.ensureFirestoreInitialized();
     try {
       const snapshot = await this.firestore.collection(this.collectionName).get();
       return snapshot.docs.map(doc => ({
@@ -53,12 +73,15 @@ export class PromptTemplateService {
         ...doc.data()
       }));
     } catch (error) {
-      this.logger.error('Error retrieving all prompt templates', error);
-      throw new InternalServerErrorException('Failed to retrieve prompt templates');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error retrieving all prompt templates: ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to retrieve all prompt templates. Original error: ${originalErrorMessage}`);
     }
   }
 
   async getPromptTemplatesByType(type: PromptType): Promise<any[]> {
+    this.ensureFirestoreInitialized();
     try {
       const snapshot = await this.firestore.collection(this.collectionName)
         .where('type', '==', type)
@@ -69,12 +92,15 @@ export class PromptTemplateService {
         ...doc.data()
       }));
     } catch (error) {
-      this.logger.error(`Error retrieving prompt templates for type '${type}'`, error);
-      throw new InternalServerErrorException('Failed to retrieve prompt templates');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error retrieving prompt templates for type '${type}': ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to retrieve prompt templates for type '${type}'. Original error: ${originalErrorMessage}`);
     }
   }
 
   async getPromptTemplateById(id: string): Promise<any> {
+    this.ensureFirestoreInitialized();
     try {
       const docRef = this.firestore.collection(this.collectionName).doc(id);
       const doc = await docRef.get();
@@ -91,12 +117,15 @@ export class PromptTemplateService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error retrieving prompt template with ID '${id}'`, error);
-      throw new InternalServerErrorException('Failed to retrieve prompt template');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error retrieving prompt template with ID '${id}': ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to retrieve prompt template with ID '${id}'. Original error: ${originalErrorMessage}`);
     }
   }
 
   async createPromptTemplate(createPromptDto: CreatePromptTemplateDto): Promise<any> {
+    this.ensureFirestoreInitialized();
     try {
       // Check if a template with the same name already exists
       const nameSnapshot = await this.firestore.collection(this.collectionName)
@@ -123,12 +152,15 @@ export class PromptTemplateService {
       if (error instanceof ConflictException) {
         throw error;
       }
-      this.logger.error('Error creating prompt template', error);
-      throw new InternalServerErrorException('Failed to create prompt template');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error creating prompt template: ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to create prompt template. Original error: ${originalErrorMessage}`);
     }
   }
 
   async updatePromptTemplate(id: string, updatePromptDto: UpdatePromptTemplateDto): Promise<any> {
+    this.ensureFirestoreInitialized();
     try {
       const docRef = this.firestore.collection(this.collectionName).doc(id);
       const doc = await docRef.get();
@@ -165,12 +197,15 @@ export class PromptTemplateService {
       if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
-      this.logger.error(`Error updating prompt template with ID '${id}'`, error);
-      throw new InternalServerErrorException('Failed to update prompt template');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error updating prompt template with ID '${id}': ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to update prompt template with ID '${id}'. Original error: ${originalErrorMessage}`);
     }
   }
 
   async deletePromptTemplate(id: string): Promise<void> {
+    this.ensureFirestoreInitialized();
     try {
       const docRef = this.firestore.collection(this.collectionName).doc(id);
       const doc = await docRef.get();
@@ -184,8 +219,10 @@ export class PromptTemplateService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      this.logger.error(`Error deleting prompt template with ID '${id}'`, error);
-      throw new InternalServerErrorException('Failed to delete prompt template');
+      const originalErrorMessage = error instanceof Error ? error.message : String(error);
+      const stackTrace = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error deleting prompt template with ID '${id}': ${originalErrorMessage}`, stackTrace);
+      throw new InternalServerErrorException(`Failed to delete prompt template with ID '${id}'. Original error: ${originalErrorMessage}`);
     }
   }
-} 
+}

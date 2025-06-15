@@ -10,6 +10,7 @@ import ScreenWrapper from './components/ScreenWrapper';
 import { withFeedbackButton } from './components/withFeedbackButton';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ErrorProvider } from './contexts/ErrorContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Import our screens
 import CameraScreen from './screens/CameraScreen';
@@ -241,33 +242,35 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ErrorProvider>
-        <SafeAreaProvider>
-          <LocalizationProvider>
-            <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
-              <StatusBar style="light" />
-              <Stack.Navigator
-                initialRouteName="Home"
-                screenOptions={screenOptions}
-              >
-                <Stack.Screen name="Home" component={WrappedHomeScreen} />
-                <Stack.Screen name="Camera" component={WrappedCameraScreen} />
-                <Stack.Screen name="Analysis" component={WrappedAnalysisScreen} />
-                <Stack.Screen name="Treatment" component={WrappedTreatmentScreen} />
-                <Stack.Screen name="RecommendedTreatments" component={WrappedRecommendedTreatmentsScreen} />
-                <Stack.Screen name="Report" component={WrappedReportScreen} />
-                <Stack.Screen name="LogoGenerator" component={WrappedLogoGenerator} />
-                <Stack.Screen name="PrivacyPolicy" component={WrappedPrivacyPolicyScreen} />
-                <Stack.Screen name="Settings" component={WrappedSettingsScreen} />
-                <Stack.Screen name="EyeAnalysis" component={WrappedEyeAnalysisScreen} />
-                <Stack.Screen name="BeforeAfterAnalysis" component={WrappedBeforeAfterAnalysisScreen} />
-                <Stack.Screen name="BeforeAfterComparisonReport" component={WrappedBeforeAfterComparisonReportScreen} />
-                <Stack.Screen name="EyeTreatments" component={WrappedEyeTreatmentsScreen} />
-                <Stack.Screen name="HairScalpAnalysis" component={WrappedHairScalpAnalysisScreen} />
-                <Stack.Screen name="HairTreatments" component={WrappedHairTreatmentsScreen} />
-              </Stack.Navigator>
-            </NavigationContainer>
-          </LocalizationProvider>
-        </SafeAreaProvider>
+        <AuthProvider>
+          <SafeAreaProvider>
+            <LocalizationProvider>
+              <NavigationContainer ref={navigationRef} onStateChange={onNavigationStateChange}>
+                <StatusBar style="light" />
+                <Stack.Navigator
+                  initialRouteName="Home"
+                  screenOptions={screenOptions}
+                >
+                  <Stack.Screen name="Home" component={WrappedHomeScreen} />
+                  <Stack.Screen name="Camera" component={WrappedCameraScreen} />
+                  <Stack.Screen name="Analysis" component={WrappedAnalysisScreen} />
+                  <Stack.Screen name="Treatment" component={WrappedTreatmentScreen} />
+                  <Stack.Screen name="RecommendedTreatments" component={WrappedRecommendedTreatmentsScreen} />
+                  <Stack.Screen name="Report" component={WrappedReportScreen} />
+                  <Stack.Screen name="LogoGenerator" component={WrappedLogoGenerator} />
+                  <Stack.Screen name="PrivacyPolicy" component={WrappedPrivacyPolicyScreen} />
+                  <Stack.Screen name="Settings" component={WrappedSettingsScreen} />
+                  <Stack.Screen name="EyeAnalysis" component={WrappedEyeAnalysisScreen} />
+                  <Stack.Screen name="BeforeAfterAnalysis" component={WrappedBeforeAfterAnalysisScreen} />
+                  <Stack.Screen name="BeforeAfterComparisonReport" component={WrappedBeforeAfterComparisonReportScreen} />
+                  <Stack.Screen name="EyeTreatments" component={WrappedEyeTreatmentsScreen} />
+                  <Stack.Screen name="HairScalpAnalysis" component={WrappedHairScalpAnalysisScreen} />
+                  <Stack.Screen name="HairTreatments" component={WrappedHairTreatmentsScreen} />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </LocalizationProvider>
+          </SafeAreaProvider>
+        </AuthProvider>
       </ErrorProvider>
     </ErrorBoundary>
   );

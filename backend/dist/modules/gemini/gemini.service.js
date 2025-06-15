@@ -25,11 +25,17 @@ let GeminiService = GeminiService_1 = class GeminiService {
         this.configService = configService;
         this.promptTemplateService = promptTemplateService;
         this.logger = new common_1.Logger(GeminiService_1.name);
+        this.useMockData = true;
         this.bucketName = this.configService.get('GCS_BUCKET_NAME');
         this.storage = new storage_1.Storage();
+        this.useMockData = this.configService.get('USE_MOCK_DATA') !== 'false';
+        this.logger.log(`GeminiService initialized with useMockData: ${this.useMockData}`);
     }
     async analyzeFacialImage(imageBase64) {
         try {
+            if (this.useMockData) {
+                return this.getMockFacialAnalysisResult();
+            }
             const prompt = await this.promptTemplateService.getPrompt(prompt_template_dto_1.PromptType.FACIAL);
             return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
         }
@@ -39,6 +45,9 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async analyzeEyeImage(imageBase64) {
         try {
+            if (this.useMockData) {
+                return this.getMockEyeAnalysisResult();
+            }
             const prompt = await this.promptTemplateService.getPrompt(prompt_template_dto_1.PromptType.EYE);
             return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
         }
@@ -48,6 +57,9 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async analyzeBeforeAfter(beforeImageBase64, afterImageBase64) {
         try {
+            if (this.useMockData) {
+                return this.getMockBeforeAfterAnalysisResult();
+            }
             const prompt = await this.promptTemplateService.getPrompt(prompt_template_dto_1.PromptType.BEFORE_AFTER);
             return await this.sendGeminiRequest([
                 { mimeType: 'image/jpeg', data: beforeImageBase64 },
@@ -60,6 +72,9 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async analyzeHairScalp(imageBase64) {
         try {
+            if (this.useMockData) {
+                return this.getMockHairScalpAnalysisResult();
+            }
             const prompt = await this.promptTemplateService.getPrompt(prompt_template_dto_1.PromptType.HAIR_SCALP);
             return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
         }
@@ -69,6 +84,9 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async analyzeGcsImage(gcsObjectName, promptType, customPromptId) {
         try {
+            if (this.useMockData) {
+                return this.getMockDataForPromptType(promptType);
+            }
             const imageBase64 = await this.downloadImageFromGcs(gcsObjectName);
             const prompt = await this.promptTemplateService.getPrompt(promptType, customPromptId);
             return await this.sendGeminiRequest([{ mimeType: this.getMimeType(gcsObjectName), data: imageBase64 }], prompt);
@@ -79,6 +97,9 @@ let GeminiService = GeminiService_1 = class GeminiService {
     }
     async analyzeBeforeAfterGcs(beforeImageGcsName, afterImageGcsName, promptType = prompt_template_dto_1.PromptType.BEFORE_AFTER, customPromptId) {
         try {
+            if (this.useMockData) {
+                return this.getMockBeforeAfterAnalysisResult();
+            }
             const beforeImageBase64 = await this.downloadImageFromGcs(beforeImageGcsName);
             const afterImageBase64 = await this.downloadImageFromGcs(afterImageGcsName);
             const prompt = await this.promptTemplateService.getPrompt(promptType, customPromptId);
@@ -162,8 +183,8 @@ let GeminiService = GeminiService_1 = class GeminiService {
             typeof err.message === 'string' ? err.message : 'Unknown error';
         throw new common_1.InternalServerErrorException(`Failed to analyze image: ${errorMessage}`);
     }
-    async sendGeminiRequest(images, prompt, options = { timeout: 30000, retries: 2 }) {
-        let retries = options.retries || 2;
+    async sendGeminiRequest(images, prompt, options = { timeout: 90000, retries: 3 }) {
+        let retries = options.retries || 3;
         let lastError;
         while (retries >= 0) {
             try {
@@ -180,7 +201,7 @@ let GeminiService = GeminiService_1 = class GeminiService {
                             ] },
                     ],
                 };
-                const requestTimeout = options.timeout || 30000;
+                const requestTimeout = options.timeout || 90000;
                 const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(`${apiUrl}?key=${apiKey}`, body, {
                     headers: { 'Content-Type': 'application/json' },
                 }).pipe((0, operators_1.timeout)(requestTimeout), (0, operators_1.catchError)((error) => {
@@ -198,6 +219,92 @@ let GeminiService = GeminiService_1 = class GeminiService {
             }
         }
         throw lastError;
+    }
+    getMockFacialAnalysisResult() {
+        return {
+            estimatedAge: "30-35",
+            gender: "Female",
+            genderConfidence: 0.95,
+            skinType: "Combination",
+            features: [
+                { description: "Fine lines around eyes", severity: 2 },
+                { description: "Mild hyperpigmentation on cheeks", severity: 3 },
+                { description: "Slight uneven skin tone", severity: 2 }
+            ],
+            recommendations: [
+                { treatmentId: "hydrafacial", reason: "To improve skin texture and tone" },
+                { treatmentId: "chemical-peel", reason: "To address hyperpigmentation" },
+                { treatmentId: "botox", reason: "To minimize fine lines around eyes" }
+            ],
+            skinConcerns: ["dryness", "fine_lines", "uneven_tone"],
+            analysisNotes: "The skin shows signs of early aging and sun damage. Hydration and sun protection would be beneficial."
+        };
+    }
+    getMockEyeAnalysisResult() {
+        return {
+            concerns: [
+                { name: "Fine lines", severity: 2, location: "Outer corners" },
+                { name: "Mild puffiness", severity: 2, location: "Under eyes" },
+                { name: "Slight dark circles", severity: 2, location: "Under eyes" }
+            ],
+            recommendations: [
+                { name: "Eye-specific retinol", reason: "To address fine lines" },
+                { name: "Caffeine eye serum", reason: "To reduce puffiness and dark circles" },
+                { name: "Regular hydration", reason: "To maintain skin elasticity" }
+            ],
+            generalAdvice: "Maintain a consistent skincare routine and ensure adequate sleep to reduce puffiness. Consider using sunglasses in bright conditions to prevent squinting which contributes to fine lines."
+        };
+    }
+    getMockBeforeAfterAnalysisResult() {
+        return {
+            improvement: "Significant improvement observed",
+            skinToneChange: "More even and brighter skin tone",
+            textureChange: "Smoother texture with reduced roughness",
+            wrinkleReduction: "Approximately 30% reduction in fine lines",
+            moistureLevel: "Improved hydration visible in skin plumpness",
+            recommendations: [
+                "Continue with current regimen focusing on hydration",
+                "Add a weekly exfoliation treatment for enhanced results",
+                "Maintain consistent sunscreen application"
+            ]
+        };
+    }
+    getMockHairScalpAnalysisResult() {
+        return {
+            scalpCondition: {
+                dryness: "Moderate",
+                inflammation: "Minimal",
+                scaliness: "Slight",
+                oiliness: "Normal"
+            },
+            hairCondition: {
+                density: "Medium",
+                breakage: "Minimal",
+                thinning: "Slight at temples",
+                texture: "Medium"
+            },
+            diagnosis: "Mild androgenetic alopecia with some dryness",
+            recommendations: [
+                "Ketoconazole-based shampoo twice weekly",
+                "Daily scalp massage to improve circulation",
+                "Topical minoxidil 5% for thinning areas",
+                "Biotin supplement"
+            ]
+        };
+    }
+    getMockDataForPromptType(promptType) {
+        switch (promptType) {
+            case prompt_template_dto_1.PromptType.FACIAL:
+                return this.getMockFacialAnalysisResult();
+            case prompt_template_dto_1.PromptType.EYE:
+                return this.getMockEyeAnalysisResult();
+            case prompt_template_dto_1.PromptType.BEFORE_AFTER:
+                return this.getMockBeforeAfterAnalysisResult();
+            case prompt_template_dto_1.PromptType.HAIR_SCALP:
+                return this.getMockHairScalpAnalysisResult();
+            default:
+                return this.getMockFacialAnalysisResult();
+        }
     }
 };
 exports.GeminiService = GeminiService;

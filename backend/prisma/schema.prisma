@@ -10,27 +10,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Clinician {
-  clinician_id             String    @id @default(uuid())
-  name                     String
+model User {
+  user_id                  String    @id @default(uuid())
   email                    String    @unique
   hashed_password          String
   salt                     String
-  specialty                String?
-  organization_id          String?   // Foreign key to Organization
   roles                    String[]  @default([])
   created_at               DateTime  @default(now())
   updated_at               DateTime  @updatedAt
-  
+
   // Email verification
   email_verified           Boolean   @default(false)
   verification_token       String?   @unique
   verification_token_expires DateTime?
-  
+
   // Password reset
   password_reset_token     String?   @unique
   password_reset_expires   DateTime?
-  
+
   // Refresh token
   refresh_token            String?   @unique
   refresh_token_expires    DateTime?
@@ -43,15 +40,35 @@ model Clinician {
   // Soft delete
   is_deleted               Boolean   @default(false)
   deleted_at               DateTime?
-  
+
+  // Relations to Clinician and Patient
+  clinician                Clinician?
+  patient                  Patient?
+}
+
+model Clinician {
+  clinician_id             String    @id @default(uuid())
+  user_id                  String    @unique // Link to User model
+  name                     String
+  specialty                String?
+  organization_id          String?   // Foreign key to Organization
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+
+  // Soft delete
+  is_deleted               Boolean   @default(false)
+  deleted_at               DateTime?
+
   // Relations
+  user                     User          @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   organization             Organization? @relation(fields: [organization_id], references: [organization_id])
   patientAssignments       ClinicianPatientAssignment[]
-  treatmentRecords         TreatmentRecord[] // Added back-relation
+  treatmentRecords         TreatmentRecord[]
 }
 
 model Patient {
   patient_id            String    @id @default(uuid())
+  user_id               String?   @unique // Optional link to User model for self-registered patients
   full_name             String    // Consider encryption for PII at application level if needed
   date_of_birth         DateTime? // Consider encryption for PII
   gender                String?
@@ -62,8 +79,11 @@ model Patient {
   // Soft delete
   is_deleted            Boolean   @default(false)
   deleted_at            DateTime?
+
+  // Relations
+  user                  User?     @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
   clinicianAssignments  ClinicianPatientAssignment[]
-  treatmentRecords      TreatmentRecord[] // Added back-relation
+  treatmentRecords      TreatmentRecord[]
 }
 
 model Organization {
@@ -98,16 +118,22 @@ model ClinicianPatientAssignment {
 }
 
 model TreatmentType {
-  id               String            @id @default(uuid())
-  name             String            @unique // e.g., "Microdermabrasion", "Chemical Peel Level 1"
-  description      String?
-  isActive         Boolean           @default(true) // To allow soft-deleting or disabling types
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  // Soft delete
-  is_deleted       Boolean           @default(false)
-  deleted_at       DateTime?
-  treatmentRecords TreatmentRecord[] // Relation to TreatmentRecord model
+  id                String                        @id @default(uuid())
+  name              String                        @unique // Default or fallback name
+  description       String?
+  category          String?                       // e.g., "Facial", "Hair", etc.
+  area              String?                       // e.g., "Face", "Scalp", etc.
+  price             Decimal?                      // Base price
+  currency          String?                       // ISO 4217, e.g., "USD"
+  contraindications String?                       // Comma-separated or JSON string
+  restrictions      String?                       // Comma-separated or JSON string
+  isActive          Boolean                       @default(true)
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+  is_deleted        Boolean                       @default(false)
+  deleted_at        DateTime?
+  treatmentRecords  TreatmentRecord[]
+  translations      TreatmentTypeTranslation[]    // Relation to translation table
 }
 
 model TreatmentRecord {
@@ -128,4 +154,22 @@ model TreatmentRecord {
   // Soft delete
   is_deleted                Boolean   @default(false)
   deleted_at                DateTime?
+}
+
+model TreatmentTypeTranslation {
+  id              String        @id @default(uuid())
+  treatmentTypeId String
+  language        String        // e.g., "en", "fr", "zh"
+  name            String
+  description     String?
+  category        String?
+  area            String?
+  contraindications String?
+  restrictions    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  treatmentType   TreatmentType @relation(fields: [treatmentTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([treatmentTypeId, language])
 }

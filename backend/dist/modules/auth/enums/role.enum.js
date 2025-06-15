@@ -5,4 +5,5 @@ var Role;
 (function (Role) {
     Role["Clinician"] = "clinician";
     Role["Admin"] = "admin";
+    Role["Patient"] = "patient";
 })(Role || (exports.Role = Role = {}));

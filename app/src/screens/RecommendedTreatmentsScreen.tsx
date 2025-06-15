@@ -43,12 +43,22 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [treatments, setTreatments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load localized treatments
   useEffect(() => {
     const loadTreatments = async () => {
-      const localizedTreatments = await getLocalizedTreatments();
-      setTreatments(localizedTreatments);
+      setLoading(true);
+      setError(null);
+      try {
+        const localizedTreatments = await getLocalizedTreatments();
+        setTreatments(localizedTreatments);
+      } catch (err) {
+        setError(t('failedToLoadTreatments'));
+      } finally {
+        setLoading(false);
+      }
     };
     loadTreatments();
   }, []);
@@ -161,10 +171,14 @@ const RecommendedTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => 
         </View>
 
         <View style={styles.treatmentsContainer}>
-          {treatments.length > 0 ? (
+          {loading ? (
+            <Text style={styles.loadingText}>{t('loading')}...</Text>
+          ) : error ? (
+            <Text style={styles.loadingText}>{error}</Text>
+          ) : treatments.length > 0 ? (
             recommendedTreatments.map(treatmentId => renderTreatmentCard(treatmentId))
           ) : (
-            <Text style={styles.loadingText}>{t('loading')}...</Text>
+            <Text style={styles.loadingText}>{t('noTreatmentsAvailable')}</Text>
           )}
         </View>
       </ScrollView>

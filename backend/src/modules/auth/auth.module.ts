@@ -7,11 +7,13 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { CliniciansModule } from '../clinicians/clinicians.module';
+import { PatientsModule } from '../patients/patients.module'; // Import PatientsModule
 
 @Module({
-  imports: [
-    CliniciansModule, // Replace UsersModule with CliniciansModule
-    PassportModule,
+ imports: [
+   CliniciansModule, // Replace UsersModule with CliniciansModule
+   PatientsModule, // Add PatientsModule
+   PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule], // Ensures ConfigService is available for this factory
       useFactory: async (configService: ConfigService) => {

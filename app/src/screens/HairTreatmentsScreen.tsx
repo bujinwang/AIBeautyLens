@@ -34,17 +34,18 @@ const HairTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
   const [allTreatments, setAllTreatments] = useState<Treatment[]>([]);
   const [recommendedHairTreatments, setRecommendedHairTreatments] = useState<Treatment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load localized treatments
   useEffect(() => {
     const loadTreatments = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const localizedTreatments = await getLocalizedTreatments();
         setAllTreatments(localizedTreatments);
-      } catch (error) {
-        console.error('Error loading treatments:', error);
-        Alert.alert(t('error'), t('failedToLoadTreatments'));
+      } catch (err) {
+        setError(t('failedToLoadTreatments'));
       } finally {
         setIsLoading(false);
       }
@@ -283,11 +284,13 @@ const HairTreatmentsScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.treatmentsContainer}>
           {isLoading ? (
-            <Text style={styles.loadingText}>{t('loadingTreatments')}</Text>
+            <Text style={styles.loadingText}>{t('loading')}...</Text>
+          ) : error ? (
+            <Text style={styles.loadingText}>{error}</Text>
           ) : recommendedHairTreatments.length > 0 ? (
             recommendedHairTreatments.map(treatment => renderTreatmentCard(treatment))
           ) : (
-            <Text style={styles.loadingText}>{t('noHairTreatmentsAvailable')}</Text>
+            <Text style={styles.loadingText}>{t('noTreatmentsAvailable')}</Text>
           )}
         </View>
       </ScrollView>

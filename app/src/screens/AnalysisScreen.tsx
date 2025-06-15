@@ -5,7 +5,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../App';
 import { AnalysisResult } from '../types';
-import { analyzeFacialImage, analyzeEyeArea } from '../services/geminiService';
+import { apiClient } from '../services/api';
+import { useApi } from '../hooks/useApi';
 import GenderConfidenceDisplay from '../components/GenderConfidenceDisplay';
 import FeatureSeverityRating from '../components/FeatureSeverityRating';
 import SkinMatrixHeader from '../components/SkinMatrixHeader';
@@ -19,6 +20,13 @@ import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY, SHADOWS } from '../constant
 import { LinearGradient } from 'expo-linear-gradient';
 import { TREATMENTS } from '../constants/treatments';
 import { useLocalization } from '../i18n/localizationContext';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
+
+// Define a type that includes size for FileInfo
+interface FileInfoWithSize extends FileSystem.FileInfo {
+  size?: number;
+}
 
 type AnalysisScreenRouteProp = RouteProp<RootStackParamList, 'Analysis'>;
 type AnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Analysis'>;
@@ -41,9 +49,94 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   const [isEyeAnalysis, setIsEyeAnalysis] = useState<boolean>(false);
   const isIPad = Platform.OS === 'ios' && Platform.isPad;
 
+  const {
+    data: facialAnalysisResult,
+    error: facialError,
+    loading: facialLoading,
+    execute: executeFacialAnalysis
+  } = useApi(
+    'post',
+    '/gemini/analyze',
+    null,
+    { skipInitialFetch: true }
+  );
+  const {
+    data: apiEyeAnalysisData, // Renamed to avoid conflict
+    error: eyeError,
+    loading: eyeLoading,
+    execute: executeEyeAnalysis
+  } = useApi(
+    'post',
+    '/gemini/analyze-eye',
+    null,
+    { skipInitialFetch: true }
+  );
+
   // Replace SKIN_CONCERNS and toggleConcern with update function for visitPurpose
   const updateVisitPurpose = (text: string) => {
     setVisitPurpose(text);
+  };
+
+  const compressImage = async (uri: string): Promise<string | null> => {
+    try {
+      // Get image info to determine size
+      const fileInfo = await FileSystem.getInfoAsync(uri) as FileInfoWithSize;
+      console.log(`Original image size: ${fileInfo.size ? Math.round(fileInfo.size/1024) + 'KB' : 'unknown'}`);
+      
+      // Default compression parameters
+      let width = 800;
+      let quality = 0.5;
+      
+      // Adjust parameters based on file size if available
+      if (fileInfo.size) {
+        // More aggressive compression for larger images
+        if (fileInfo.size > 5000000) { // > 5MB
+          width = 600;
+          quality = 0.3;
+        } else if (fileInfo.size > 2000000) { // > 2MB
+          width = 700;
+          quality = 0.4;
+        }
+      }
+      
+      console.log(`Compressing image with width=${width}px, quality=${quality}`);
+      
+      // Compress the image to reduce size
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width } }], // Resize to a reasonable width while maintaining aspect ratio
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      
+      // If the image is still large, compress again
+      if (manipResult.base64 && manipResult.base64.length > 1500000) {
+        console.log(`Image still large after first compression: ${Math.round(manipResult.base64.length/1024)}KB`);
+        console.log('Performing second compression pass');
+        
+        // Create a temporary file for the second compression
+        const tempUri = FileSystem.cacheDirectory + 'temp_compressed.jpg';
+        await FileSystem.writeAsStringAsync(tempUri, manipResult.base64, { encoding: FileSystem.EncodingType.Base64 });
+        
+        // Apply more aggressive compression
+        const secondResult = await ImageManipulator.manipulateAsync(
+          tempUri,
+          [{ resize: { width: Math.min(width, 500) } }],
+          { compress: Math.min(quality, 0.3), format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        
+        // Clean up temp file
+        await FileSystem.deleteAsync(tempUri, { idempotent: true });
+        
+        console.log(`Final image size: ${secondResult.base64 ? Math.round(secondResult.base64.length/1024) + 'KB' : 'unknown'}`);
+        return secondResult.base64;
+      }
+      
+      console.log(`Compressed image size: ${manipResult.base64 ? Math.round(manipResult.base64.length/1024) + 'KB' : 'unknown'}`);
+      return manipResult.base64;
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -72,32 +165,52 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsIpadError(false);
       setIsEyeAnalysis(type === 'eye');
       
-      if (type === 'facial') {
-        const result = await analyzeFacialImage(base64Image, visitPurpose);
-        setAnalysisResult(result);
-      } else {
-        const result = await analyzeEyeArea(base64Image, visitPurpose);
-        setEyeAnalysisResult(result);
+      if (!imageUri) {
+        setError('No image selected');
+        return;
       }
-    } catch (error) {
-      console.error('Error in analysis:', error);
-      if (error instanceof Error) {
-        if (error.message.includes('API_QUOTA_EXCEEDED')) {
-          setIsQuotaError(true);
-          setError('You have reached your API quota limit.');
-        } else if (isIPad && (
-          error.message.includes('iPad') ||
-          error.message.includes('timeout') ||
-          error.message.includes('large') ||
-          error.message.includes('too large') ||
-          error.message.includes('reduce'))) {
-          setIsIpadError(true);
-          setError(error.message);
-        } else {
-          setError('Failed to analyze image. Please try again.');
-        }
+      
+      // Compress the image before sending
+      const compressedBase64 = await compressImage(imageUri);
+      
+      if (!compressedBase64) {
+        setError(t('imageCompressionFailed') || 'Failed to compress image');
+        return;
+      }
+
+      let result;
+      if (type === 'facial') {
+        result = await executeFacialAnalysis({ imageBase64: compressedBase64, visitPurpose });
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        result = await executeEyeAnalysis({ imageBase64: compressedBase64, visitPurpose });
+      }
+      
+      if (result) {
+        // Set the analysis result state
+        if (type === 'facial') {
+          setAnalysisResult(result);
+        } else {
+          setEyeAnalysisResult(result);
+        }
+        
+        // Navigate to the report screen with the result
+        navigation.navigate('Report', {
+          analysisType: type === 'facial' ? 'fullFace' : 'eye',
+          imageUri: imageUri,
+          analysisResult: type === 'facial' ? result : undefined,
+          eyeAnalysisResult: type === 'eye' ? result : undefined
+        });
+      }
+    } catch (err: any) {
+      console.error(`Error in ${type} analysis:`, err);
+      
+      // Handle specific error types
+      if (err.message?.includes('quota') || err.response?.data?.message?.includes('quota')) {
+          setIsQuotaError(true);
+      } else if (err.message?.includes('iPad') || (err.response?.data?.message || '').includes('iPad')) {
+          setIsIpadError(true);
+        } else {
+        setError(err.message || 'Unknown error occurred');
       }
     } finally {
       setLoading(false);
@@ -179,11 +292,11 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
   
   // Navigate to the EyeAnalysisScreen
   const handleEyeAnalysis = () => {
-    if (eyeAnalysisResult) {
+    if (apiEyeAnalysisData) { // Use the renamed variable
       navigation.navigate('EyeAnalysis', {
         imageUri,
         base64Image,
-        eyeAnalysisResult,
+        eyeAnalysisResult: apiEyeAnalysisData, // Pass the renamed variable
         visitPurpose,
       });
     }
@@ -466,7 +579,7 @@ const AnalysisScreen: React.FC<Props> = ({ route, navigation }) => {
         ) : null}
       </ScrollView>
 
-      {loading && (
+      {facialLoading || eyeLoading && (
         <ProcessingIndicator
           isAnalyzing={true}
           processingText={isEyeAnalysis ? t('analyzingEyeAreaDetailPoints') : t('analyzingFacialDetailPoints')}

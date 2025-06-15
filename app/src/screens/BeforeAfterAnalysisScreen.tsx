@@ -1,20 +1,31 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
 import { useLocalization } from '../i18n/localizationContext';
-import { analyzeBeforeAfterImages } from '../services/geminiService';
+import { apiClient } from '../services/api';
+import { useApi } from '../hooks/useApi';
 import ProcessingIndicator from '../components/ProcessingIndicator';
+import * as ImageManipulator from 'expo-image-manipulator';
+
+// Define a type that includes size for FileInfo
+interface FileInfoWithSize extends FileSystem.FileInfo {
+  size?: number;
+}
 
 type BeforeAfterAnalysisScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BeforeAfterAnalysis'>;
+type BeforeAfterAnalysisScreenRouteProp = RouteProp<RootStackParamList, 'BeforeAfterAnalysis'>;
 
 type Props = {
   navigation: BeforeAfterAnalysisScreenNavigationProp;
+  route: BeforeAfterAnalysisScreenRouteProp;
 };
 
 const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
@@ -165,50 +176,124 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
     setAnalysisResult(null);
   };
 
-  const analyzeImages = async () => {
-    if (!beforeImage?.base64 || !afterImage?.base64) {
-      Alert.alert(t('missingImagesTitle'), t('missingImagesMessage'));
-      return;
-    }
+  const {
+    data: apiAnalysisResult,
+    error: analysisError,
+    loading: analysisLoading,
+    execute: executeAnalysis
+  } = useApi(
+    'post', 
+    '/gemini/analyze-before-after',
+    null,
+    { skipInitialFetch: true }
+  );
 
-    setIsAnalyzing(true);
-    
+  const compressImage = async (uri: string): Promise<string | null> => {
     try {
-      console.log('Sending images to Gemini Vision API for analysis...');
+      // Get image info to determine size
+      const fileInfo = await FileSystem.getInfoAsync(uri) as FileInfoWithSize;
+      console.log(`Original image size: ${fileInfo.size ? Math.round(fileInfo.size/1024) + 'KB' : 'unknown'}`);
       
-      // Call the Gemini Vision API function with both images
-      const analysisResults = await analyzeBeforeAfterImages(
-        beforeImage.base64,
-        afterImage.base64
-      );
+      // Default compression parameters
+      let width = 800;
+      let quality = 0.5;
       
-      console.log('Analysis results received:', 
-        typeof analysisResults === 'object' ? 'Valid object' : 'Invalid format',
-        analysisResults ? 'Not null' : 'Null'
-      );
-      
-      if (!analysisResults || 
-          !analysisResults.analysisResults || 
-          !analysisResults.recommendations) {
-        console.warn('Received incomplete analysis results, but continuing with available data');
+      // Adjust parameters based on file size if available
+      if (fileInfo.size) {
+        // More aggressive compression for larger images
+        if (fileInfo.size > 5000000) { // > 5MB
+          width = 600;
+          quality = 0.3;
+        } else if (fileInfo.size > 2000000) { // > 2MB
+          width = 700;
+          quality = 0.4;
+        }
       }
       
-      // Navigate to the comparison report screen with the results
-      navigation.navigate('BeforeAfterComparisonReport', {
-        beforeImage: beforeImage.base64,
-        afterImage: afterImage.base64,
-        analysisResult: analysisResults
-      });
+      console.log(`Compressing image with width=${width}px, quality=${quality}`);
       
-    } catch (error) {
-      console.error('Error analyzing images:', error);
-      Alert.alert(
-        t('analysisFailedTitle'), 
-        t('analysisFailedMessage'),
-        [{ text: 'OK', onPress: () => {} }]
+      // Compress the image to reduce size
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width } }], // Resize to a reasonable width while maintaining aspect ratio
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
-    } finally {
-      setIsAnalyzing(false);
+      
+      // If the image is still large, compress again
+      if (manipResult.base64 && manipResult.base64.length > 1500000) {
+        console.log(`Image still large after first compression: ${Math.round(manipResult.base64.length/1024)}KB`);
+        console.log('Performing second compression pass');
+        
+        // Create a temporary file for the second compression
+        const tempUri = FileSystem.cacheDirectory + 'temp_compressed.jpg';
+        await FileSystem.writeAsStringAsync(tempUri, manipResult.base64, { encoding: FileSystem.EncodingType.Base64 });
+        
+        // Apply more aggressive compression
+        const secondResult = await ImageManipulator.manipulateAsync(
+          tempUri,
+          [{ resize: { width: Math.min(width, 500) } }],
+          { compress: Math.min(quality, 0.3), format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        
+        // Clean up temp file
+        await FileSystem.deleteAsync(tempUri, { idempotent: true });
+        
+        console.log(`Final image size: ${secondResult.base64 ? Math.round(secondResult.base64.length/1024) + 'KB' : 'unknown'}`);
+        return secondResult.base64;
+      }
+      
+      console.log(`Compressed image size: ${manipResult.base64 ? Math.round(manipResult.base64.length/1024) + 'KB' : 'unknown'}`);
+      return manipResult.base64;
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return null;
+    }
+  };
+
+  const analyzeImages = async () => {
+    if (beforeImage?.uri && afterImage?.uri) {
+      setIsAnalyzing(true);
+      
+      try {
+        // Compress both images before sending to API
+        const compressedBeforeBase64 = await compressImage(beforeImage.uri);
+        const compressedAfterBase64 = await compressImage(afterImage.uri);
+        
+        if (!compressedBeforeBase64 || !compressedAfterBase64) {
+          Alert.alert(
+            t('errorTitle') || 'Error',
+            t('imageCompressionFailed') || 'Failed to compress images. Please try again.',
+            [{ text: t('ok') || 'OK' }]
+          );
+          return;
+        }
+        
+        // Send compressed images to API
+        executeAnalysis({ 
+          beforeImageBase64: compressedBeforeBase64, 
+          afterImageBase64: compressedAfterBase64 
+        }).then((result) => {
+          if (result) {
+            setAnalysisResult(result);
+          }
+        }).catch((error) => {
+          console.error('Analysis error:', error);
+          Alert.alert(
+            t('errorTitle') || 'Error',
+            t('analysisErrorMessage') || 'An error occurred during analysis. Please try again.',
+            [{ text: t('ok') || 'OK' }]
+          );
+        });
+      } catch (error) {
+        console.error('Error preparing images:', error);
+        Alert.alert(
+          t('errorTitle') || 'Error',
+          t('generalErrorMessage') || 'An error occurred. Please try again.',
+          [{ text: t('ok') || 'OK' }]
+        );
+      } finally {
+        setIsAnalyzing(false);
+      }
     }
   };
 
@@ -262,7 +347,7 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const renderAnalysisResult = () => {
-    if (!analysisResult) return null;
+    if (!apiAnalysisResult) return null;
 
     return (
       <View style={styles.analysisResultContainer}>
@@ -270,31 +355,31 @@ const BeforeAfterAnalysisScreen: React.FC<Props> = ({ navigation }) => {
         
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Overall Improvement:</Text>
-          <Text style={styles.resultValue}>{analysisResult.improvement}</Text>
+          <Text style={styles.resultValue}>{apiAnalysisResult.improvement}</Text>
         </View>
         
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Skin Tone Change:</Text>
-          <Text style={styles.resultValue}>{analysisResult.skinToneChange}</Text>
+          <Text style={styles.resultValue}>{apiAnalysisResult.skinToneChange}</Text>
         </View>
         
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Texture Change:</Text>
-          <Text style={styles.resultValue}>{analysisResult.textureChange}</Text>
+          <Text style={styles.resultValue}>{apiAnalysisResult.textureChange}</Text>
         </View>
         
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Wrinkle Reduction:</Text>
-          <Text style={styles.resultValue}>{analysisResult.wrinkleReduction}</Text>
+          <Text style={styles.resultValue}>{apiAnalysisResult.wrinkleReduction}</Text>
         </View>
         
         <View style={styles.resultItem}>
           <Text style={styles.resultLabel}>Moisture Level:</Text>
-          <Text style={styles.resultValue}>{analysisResult.moistureLevel}</Text>
+          <Text style={styles.resultValue}>{apiAnalysisResult.moistureLevel}</Text>
         </View>
         
         <Text style={styles.recommendationsTitle}>Recommendations:</Text>
-        {analysisResult.recommendations.map((recommendation: string, index: number) => (
+        {apiAnalysisResult.recommendations.map((recommendation: string, index: number) => (
           <Text key={index} style={styles.recommendationItem}>• {recommendation}</Text>
         ))}
         

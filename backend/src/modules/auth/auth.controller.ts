@@ -24,45 +24,46 @@ import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RegisterPatientDto } from '../patients/dto/register-patient.dto'; // Import RegisterPatientDto
 import { JwtTokens } from './interfaces/jwt-tokens.interface';
-import { Clinician } from '@prisma/client'; // Import Clinician type for req.user
+import { User } from '@prisma/client'; // Import User type for req.user
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @Post('register')
+  @Post('register-clinician') // Renamed endpoint for clarity
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() registerClinicianDto: RegisterClinicianDto) {
-    // AuthService.register now expects an object matching Prisma.ClinicianCreateInput structure
-    // We need to map RegisterClinicianDto to this.
-    // The password will be hashed in the service.
-    // Roles will be defaulted in the service for now.
+  async registerClinician(@Body() registerClinicianDto: RegisterClinicianDto) {
     return this.authService.register({
       email: registerClinicianDto.email,
       name: registerClinicianDto.name,
-      password: registerClinicianDto.password, // Pass the raw password
+      password: registerClinicianDto.password,
       specialty: registerClinicianDto.specialty,
-      // roles: [Role.Clinician] // Default role is set in AuthService
     });
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('register-patient') // New endpoint for patient self-registration
+  @HttpCode(HttpStatus.CREATED)
+  async registerPatient(@Body() registerPatientDto: RegisterPatientDto) {
+    return this.authService.registerPatient(registerPatientDto);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  @HttpCode(HttpStatus.OK) // Explicitly set OK status for login
-  async login(@Body() loginDto: LoginDto, @NestRequest() req: Request & { user: Omit<Clinician, 'hashed_password' | 'salt'> }): Promise<JwtTokens> {
-    // LocalAuthGuard populates req.user after successful validation by LocalStrategy
-    // LoginDto is used by class-validator for the request body, but LocalStrategy handles the actual validation logic
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto, @NestRequest() req: Request & { user: Omit<User, 'hashed_password' | 'salt'> }): Promise<JwtTokens> {
     return this.authService.login(req.user);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard) // Apply RolesGuard after JwtAuthGuard
-  @Roles(Role.Clinician, Role.Admin) // Only users with Clinician or Admin role can access
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Clinician, Role.Admin, Role.Patient) // Allow Patient role to access profile
   @Get('profile')
   getProfile(@NestRequest() req: Request) {
-    return req.user; // req.user is populated by JwtStrategy
+    return req.user;
   }
 
   @Post('refresh-token')
@@ -101,13 +102,13 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@NestRequest() req: Request) {
-    const clinicianId = req.user['sub'] || (req.user as any).clinician_id;
+    const userId = req.user['sub'] || (req.user as any).user_id; // Use user_id from JWT
     
-    if (!clinicianId) {
+    if (!userId) {
       throw new UnauthorizedException('Invalid user information');
     }
     
-    await this.authService.logout(clinicianId);
+    await this.authService.logout(userId);
     return { message: 'Successfully logged out' };
   }
 

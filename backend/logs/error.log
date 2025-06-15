@@ -2,3 +2,312 @@
 [2025-05-27T17:32:06.920Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
 [2025-05-27T17:33:37.468Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
 [2025-05-27T18:15:00.949Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-05T23:41:09.348Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-05T23:46:47.315Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-05T23:55:09.170Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:02:18.263Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+PayloadTooLargeError: request entity too large
+    at readStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:163:17)
+    at getRawBody (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:116:12)
+    at read (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/read.js:79:3)
+    at jsonParser (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/types/json.js:138:5)
+    at Layer.handle [as handle_request] (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:328:13)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:280:10)
+    at cors (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/cors/lib/index.js:188:7)
+[2025-06-06T00:04:12.953Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:04:48.138Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+PayloadTooLargeError: request entity too large
+    at readStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:163:17)
+    at getRawBody (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:116:12)
+    at read (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/read.js:79:3)
+    at jsonParser (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/types/json.js:138:5)
+    at Layer.handle [as handle_request] (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:328:13)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:280:10)
+    at cors (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/cors/lib/index.js:188:7)
+[2025-06-06T00:07:33.384Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+PayloadTooLargeError: request entity too large
+    at readStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:163:17)
+    at getRawBody (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/raw-body/index.js:116:12)
+    at read (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/read.js:79:3)
+    at jsonParser (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/body-parser/lib/types/json.js:138:5)
+    at Layer.handle [as handle_request] (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:328:13)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:346:12)
+    at next (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/express/lib/router/index.js:280:10)
+    at cors (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/cors/lib/index.js:188:7)
+[2025-06-06T00:12:42.783Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:12:59.025Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+TypeError: this.throttlers is not iterable
+    at ThrottlerBehindProxyGuard.canActivate (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@nestjs/throttler/dist/throttler.guard.js:66:43)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T00:19:17.560Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:20:30.354Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+[2025-06-06T00:25:08.019Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:25:48.517Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye'
+Error: Unable to detect a Project Id in the current environment. 
+To learn more about authentication and Google APIs, visit: 
+https://cloud.google.com/docs/authentication/getting-started
+[2025-06-06T00:25:48.519Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:49:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:42:28)
+[2025-06-06T00:25:48.520Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:163:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:46:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T00:37:29.399Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:45:42.460Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:48:37.997Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye'
+Error: Unable to detect a Project Id in the current environment. 
+To learn more about authentication and Google APIs, visit: 
+https://cloud.google.com/docs/authentication/getting-started
+[2025-06-06T00:48:37.998Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:49:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T00:48:37.998Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T00:53:43.410Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:54:09.009Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye'
+Error: Unable to detect a Project Id in the current environment. 
+To learn more about authentication and Google APIs, visit: 
+https://cloud.google.com/docs/authentication/getting-started
+[2025-06-06T00:54:09.011Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:49:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T00:54:09.012Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T00:58:01.337Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:58:22.867Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T00:59:03.427Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye'
+Error: Unable to detect a Project Id in the current environment. 
+To learn more about authentication and Google APIs, visit: 
+https://cloud.google.com/docs/authentication/getting-started
+[2025-06-06T00:59:03.428Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:56:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T00:59:03.428Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T01:09:51.309Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T01:10:14.608Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye': 2 UNKNOWN: Getting metadata from plugin failed with error: {"error":"invalid_grant","error_description":"reauth related error (invalid_rapt)","error_uri":"https://support.google.com/a/answer/9368756","error_subtype":"invalid_rapt"}
+Error: 2 UNKNOWN: Getting metadata from plugin failed with error: {"error":"invalid_grant","error_description":"reauth related error (invalid_rapt)","error_uri":"https://support.google.com/a/answer/9368756","error_subtype":"invalid_rapt"}
+    at callErrorFromStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:324:181)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:237:29
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at Timeout.makeRequest [as _onTimeout] (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:159:28)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)
+[2025-06-06T01:10:14.608Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template. Original error: 2 UNKNOWN: Getting metadata from plugin failed with error: {"error":"invalid_grant","error_description":"reauth related error (invalid_rapt)","error_uri":"https://support.google.com/a/answer/9368756","error_subtype":"invalid_rapt"}
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:67:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T01:10:14.609Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template. Original error: 2 UNKNOWN: Getting metadata from plugin failed with error: {"error":"invalid_grant","error_description":"reauth related error (invalid_rapt)","error_uri":"https://support.google.com/a/answer/9368756","error_subtype":"invalid_rapt"}
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T01:11:20.831Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T01:11:56.392Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye': 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+Error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at callErrorFromStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:324:181)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:237:29
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)
+[2025-06-06T01:11:56.393Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:67:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T01:11:56.393Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T01:13:07.726Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T01:13:21.701Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye': 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+Error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at callErrorFromStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:324:181)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:237:29
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)
+[2025-06-06T01:13:21.702Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:67:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T01:13:21.703Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T17:21:31.543Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T17:22:28.280Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye': 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+Error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at callErrorFromStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:324:181)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:237:29
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)
+[2025-06-06T17:22:28.280Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:67:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T17:22:28.280Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T19:14:33.943Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.
+[2025-06-06T19:15:28.512Z] [ERROR] [PromptTemplateService] Error retrieving prompt template for type 'eye': 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+Error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at callErrorFromStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/call.js:32:19)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:359:73)
+    at Object.onReceiveStatus (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client-interceptors.js:324:181)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/client.js:342:32)
+    at ServiceClientImpl.<anonymous> (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@grpc/grpc-js/build/src/make-client.js:105:19)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/v1/firestore_client.js:237:29
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:38:28
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/normalCalls/timeout.js:44:16
+    at Object.request (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:234:40)
+    at makeRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:159:28)
+    at retryRequest (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/retry-request/index.js:119:5)
+    at StreamProxy.setStream (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streaming.js:225:37)
+    at StreamingApiCaller.call (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/google-gax/build/src/streamingCalls/streamingApiCaller.js:54:16)
+Caused by: Error
+    at QueryUtil._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query-util.js:44:23)
+    at Query._getResponse (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:784:32)
+    at Query._get (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:777:35)
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/reference/query.js:745:43
+    at /Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:110:30
+    at NoopContextManager.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/context/NoopContextManager.js:25:19)
+    at ContextAPI.with (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/api/context.js:60:46)
+    at NoopTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@opentelemetry/api/build/src/trace/ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (/Users/bujin/Documents/Projects/AIBeautyLens/node_modules/@google-cloud/firestore/build/src/telemetry/enabled-trace-util.js:102:28)
+[2025-06-06T19:15:28.513Z] [ERROR] [GeminiService] Error in analyzeEyeImage
+InternalServerErrorException: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at PromptTemplateService.getPrompt (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/prompt-template.service.js:67:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:51:28)
+[2025-06-06T19:15:28.513Z] [ERROR] [GlobalExceptionFilter] [POST] /api/gemini/analyze-eye - 500
+InternalServerErrorException: Failed to analyze image: Failed to retrieve prompt template. Original error: 7 PERMISSION_DENIED: Permission denied on resource project ashining-env-459701-v5.
+    at GeminiService.handleGeminiError (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:184:15)
+    at GeminiService.analyzeEyeImage (/Users/bujin/Documents/Projects/AIBeautyLens/backend/dist/modules/gemini/gemini.service.js:55:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[2025-06-06T19:16:57.256Z] [WARN] [GcsService] Resolved AuthClient does not have client_email and private_key. This is expected if using user Application Default Credentials (ADC) locally. Direct signing of URLs with user ADC is not supported by google-auth-library. Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has the "Service Account Token Creator" role on that service account for impersonation to work.

@@ -24,6 +24,8 @@ export class GeminiService {
   private readonly logger = new Logger(GeminiService.name);
   private storage: Storage;
   private bucketName: string;
+  // Flag to use mock data instead of calling real APIs
+  private useMockData = true;
 
   constructor(
     private readonly httpService: HttpService,
@@ -32,10 +34,17 @@ export class GeminiService {
   ) {
     this.bucketName = this.configService.get<string>('GCS_BUCKET_NAME')!;
     this.storage = new Storage();
+    // Set useMockData based on environment variable if available
+    this.useMockData = this.configService.get<string>('USE_MOCK_DATA') !== 'false';
+    this.logger.log(`GeminiService initialized with useMockData: ${this.useMockData}`);
   }
 
   async analyzeFacialImage(imageBase64: string): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockFacialAnalysisResult();
+      }
+      
       const prompt = await this.promptTemplateService.getPrompt(PromptType.FACIAL);
       return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
     } catch (error) {
@@ -45,6 +54,10 @@ export class GeminiService {
 
   async analyzeEyeImage(imageBase64: string): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockEyeAnalysisResult();
+      }
+      
       const prompt = await this.promptTemplateService.getPrompt(PromptType.EYE);
       return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
     } catch (error) {
@@ -54,6 +67,10 @@ export class GeminiService {
 
   async analyzeBeforeAfter(beforeImageBase64: string, afterImageBase64: string): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockBeforeAfterAnalysisResult();
+      }
+      
       const prompt = await this.promptTemplateService.getPrompt(PromptType.BEFORE_AFTER);
       return await this.sendGeminiRequest([
         { mimeType: 'image/jpeg', data: beforeImageBase64 },
@@ -66,6 +83,10 @@ export class GeminiService {
 
   async analyzeHairScalp(imageBase64: string): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockHairScalpAnalysisResult();
+      }
+      
       const prompt = await this.promptTemplateService.getPrompt(PromptType.HAIR_SCALP);
       return await this.sendGeminiRequest([{ mimeType: 'image/jpeg', data: imageBase64 }], prompt);
     } catch (error) {
@@ -75,6 +96,10 @@ export class GeminiService {
 
   async analyzeGcsImage(gcsObjectName: string, promptType: PromptType, customPromptId?: string): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockDataForPromptType(promptType);
+      }
+      
       // Download image from GCS
       const imageBase64 = await this.downloadImageFromGcs(gcsObjectName);
       
@@ -98,6 +123,10 @@ export class GeminiService {
     customPromptId?: string
   ): Promise<any> {
     try {
+      if (this.useMockData) {
+        return this.getMockBeforeAfterAnalysisResult();
+      }
+      
       // Download images from GCS
       const beforeImageBase64 = await this.downloadImageFromGcs(beforeImageGcsName);
       const afterImageBase64 = await this.downloadImageFromGcs(afterImageGcsName);
@@ -210,9 +239,9 @@ export class GeminiService {
   private async sendGeminiRequest(
     images: { mimeType: string; data: string }[], 
     prompt: string,
-    options: GeminiApiOptions = { timeout: 30000, retries: 2 }
+    options: GeminiApiOptions = { timeout: 90000, retries: 3 }
   ): Promise<any> {
-    let retries = options.retries || 2;
+    let retries = options.retries || 3;
     let lastError: any;
     
     while (retries >= 0) {
@@ -233,7 +262,7 @@ export class GeminiService {
           ],
         };
         
-        const requestTimeout = options.timeout || 30000;
+        const requestTimeout = options.timeout || 90000;
         
         const response = await firstValueFrom(
           this.httpService.post(`${apiUrl}?key=${apiKey}`, body, {
@@ -261,5 +290,98 @@ export class GeminiService {
     
     // If we reach here, all retries failed
     throw lastError;
+  }
+
+  // Add mock data helper methods
+  private getMockFacialAnalysisResult(): any {
+    return {
+      estimatedAge: "30-35",
+      gender: "Female",
+      genderConfidence: 0.95,
+      skinType: "Combination",
+      features: [
+        { description: "Fine lines around eyes", severity: 2 },
+        { description: "Mild hyperpigmentation on cheeks", severity: 3 },
+        { description: "Slight uneven skin tone", severity: 2 }
+      ],
+      recommendations: [
+        { treatmentId: "hydrafacial", reason: "To improve skin texture and tone" },
+        { treatmentId: "chemical-peel", reason: "To address hyperpigmentation" },
+        { treatmentId: "botox", reason: "To minimize fine lines around eyes" }
+      ],
+      skinConcerns: ["dryness", "fine_lines", "uneven_tone"],
+      analysisNotes: "The skin shows signs of early aging and sun damage. Hydration and sun protection would be beneficial."
+    };
+  }
+
+  private getMockEyeAnalysisResult(): any {
+    return {
+      concerns: [
+        { name: "Fine lines", severity: 2, location: "Outer corners" },
+        { name: "Mild puffiness", severity: 2, location: "Under eyes" },
+        { name: "Slight dark circles", severity: 2, location: "Under eyes" }
+      ],
+      recommendations: [
+        { name: "Eye-specific retinol", reason: "To address fine lines" },
+        { name: "Caffeine eye serum", reason: "To reduce puffiness and dark circles" },
+        { name: "Regular hydration", reason: "To maintain skin elasticity" }
+      ],
+      generalAdvice: "Maintain a consistent skincare routine and ensure adequate sleep to reduce puffiness. Consider using sunglasses in bright conditions to prevent squinting which contributes to fine lines."
+    };
+  }
+
+  private getMockBeforeAfterAnalysisResult(): any {
+    return {
+      improvement: "Significant improvement observed",
+      skinToneChange: "More even and brighter skin tone",
+      textureChange: "Smoother texture with reduced roughness",
+      wrinkleReduction: "Approximately 30% reduction in fine lines",
+      moistureLevel: "Improved hydration visible in skin plumpness",
+      recommendations: [
+        "Continue with current regimen focusing on hydration",
+        "Add a weekly exfoliation treatment for enhanced results",
+        "Maintain consistent sunscreen application"
+      ]
+    };
+  }
+
+  private getMockHairScalpAnalysisResult(): any {
+    return {
+      scalpCondition: {
+        dryness: "Moderate",
+        inflammation: "Minimal",
+        scaliness: "Slight",
+        oiliness: "Normal"
+      },
+      hairCondition: {
+        density: "Medium",
+        breakage: "Minimal",
+        thinning: "Slight at temples",
+        texture: "Medium"
+      },
+      diagnosis: "Mild androgenetic alopecia with some dryness",
+      recommendations: [
+        "Ketoconazole-based shampoo twice weekly",
+        "Daily scalp massage to improve circulation",
+        "Topical minoxidil 5% for thinning areas",
+        "Biotin supplement"
+      ]
+    };
+  }
+
+  // Helper method to get appropriate mock data based on prompt type
+  private getMockDataForPromptType(promptType: PromptType): any {
+    switch (promptType) {
+      case PromptType.FACIAL:
+        return this.getMockFacialAnalysisResult();
+      case PromptType.EYE:
+        return this.getMockEyeAnalysisResult();
+      case PromptType.BEFORE_AFTER:
+        return this.getMockBeforeAfterAnalysisResult();
+      case PromptType.HAIR_SCALP:
+        return this.getMockHairScalpAnalysisResult();
+      default:
+        return this.getMockFacialAnalysisResult();
+    }
   }
 } 

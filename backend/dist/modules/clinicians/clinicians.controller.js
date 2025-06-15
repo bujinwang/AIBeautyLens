@@ -20,6 +20,7 @@ const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const role_enum_1 = require("../auth/enums/role.enum");
 const client_1 = require("@prisma/client");
+const filter_clinician_dto_1 = require("./dto/filter-clinician.dto");
 let CliniciansController = class CliniciansController {
     constructor(cliniciansService) {
         this.cliniciansService = cliniciansService;
@@ -27,8 +28,8 @@ let CliniciansController = class CliniciansController {
     create(createClinicianDto) {
         return this.cliniciansService.create(createClinicianDto);
     }
-    findAll() {
-        return this.cliniciansService.findAll();
+    findAll(filterClinicianDto) {
+        return this.cliniciansService.findAll(filterClinicianDto);
     }
     async getMe(req) {
         return this.cliniciansService.findOne(req.user.userId);
@@ -56,8 +57,10 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [filter_clinician_dto_1.FilterClinicianDto]),
     __metadata("design:returntype", void 0)
 ], CliniciansController.prototype, "findAll", null);
 __decorate([

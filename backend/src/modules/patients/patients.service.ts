@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, Patient } from '@prisma/client';
+import { Prisma, Patient, User } from '@prisma/client'; // Import User
+import { CreatePatientByClinicianDto } from './dto/create-patient-by-clinician.dto'; // Import DTO
 import { FilterPatientDto } from './dto/filter-patient.dto';
 import { PageDto } from '../../common/dto/page.dto';
 import { PageMetaDto } from '../../common/dto/page-meta.dto';
@@ -17,7 +18,32 @@ export class PatientsService {
     return patient;
   }
 
-  async findAll(filterPatientDto: FilterPatientDto, clinicianId?: string): Promise<PageDto<Patient>> {
+  async createPatientByClinician(
+    dto: CreatePatientByClinicianDto,
+    clinicianId: string,
+  ): Promise<Patient> {
+    const patient = await this.prisma.patient.create({
+      data: {
+        full_name: dto.full_name,
+        contact_info: dto.contact_info,
+        additional_phi_details: dto.additional_phi_details,
+        // No user_id here as this patient is created by a clinician, not self-registered
+      },
+    });
+
+    // Assign the patient to the clinician who created them
+    await this.prisma.clinicianPatientAssignment.create({
+      data: {
+        clinician_id: clinicianId,
+        patient_id: patient.patient_id,
+        status: 'active',
+      },
+    });
+
+    return patient;
+  }
+
+  async findAll(filterPatientDto: FilterPatientDto, clinicianId?: string): Promise<PageDto<Patient & { user?: User }>> {
     const pageOptions = filterPatientDto as PageOptionsDto;
     const { fullName, email, organizationId } = filterPatientDto;
 
@@ -29,7 +55,7 @@ export class PatientsService {
       where.full_name = { contains: fullName, mode: 'insensitive' };
     }
     if (email) {
-      where.contact_info = { contains: email, mode: 'insensitive' };
+      where.user = { email: { contains: email, mode: 'insensitive' } }; // Search by user email
     }
     if (organizationId) {
       where.clinicianAssignments = {
@@ -61,6 +87,7 @@ export class PatientsService {
         skip: pageOptions.skip,
         take: pageOptions.limit,
         orderBy,
+        include: { user: true }, // Include user data
       }),
       this.prisma.patient.count({ where }),
     ]);
@@ -70,7 +97,7 @@ export class PatientsService {
     return new PageDto(patients, pageMetaDto);
   }
 
-  async findOne(id: string, clinicianId?: string) {
+  async findOne(id: string, clinicianId?: string): Promise<(Patient & { user?: User }) | null> {
     const whereClause: Prisma.PatientWhereInput = { patient_id: id, is_deleted: false };
 
     if (clinicianId) {
@@ -87,7 +114,8 @@ export class PatientsService {
       include: {
         clinicianAssignments: {
           include: { clinician: true }
-        }
+        },
+        user: true, // Include user data
       }
     });
 
@@ -98,7 +126,7 @@ export class PatientsService {
     return patient;
   }
 
-  async update(id: string, data: Prisma.PatientUpdateInput) {
+  async update(id: string, data: Prisma.PatientUpdateInput): Promise<Patient> {
     // Implement logic to update a patient by ID using prisma.patient.update
     // console.log('Updating patient with id:', id, 'with data:', data);
     try {
@@ -136,5 +164,17 @@ export class PatientsService {
       }
       throw error;
     }
+  }
+
+  // Utility to exclude sensitive fields from the User model
+  excludeUserPasswordFields<T extends { user?: { hashed_password?: string; salt?: string; verification_token?: string; password_reset_token?: string; refresh_token?: string } }>(
+    patient: T
+  ): Omit<T, 'user'> & { user?: Omit<NonNullable<T['user']>, 'hashed_password' | 'salt'> } {
+    if (!patient.user) {
+      return patient as Omit<T, 'user'> & { user?: Omit<NonNullable<T['user']>, 'hashed_password' | 'salt'> };
+    }
+    const { user, ...rest } = patient;
+    const { hashed_password, salt, ...userRest } = user;
+    return { ...rest, user: userRest } as Omit<T, 'user'> & { user?: Omit<NonNullable<T['user']>, 'hashed_password' | 'salt'> };
   }
 }

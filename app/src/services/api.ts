@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Treatment } from '../constants/treatmentTypes';
 
 // Error types
 export enum ErrorType {
@@ -41,7 +42,7 @@ export interface ApiResponse<T> {
 
 // Configuration
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
-const API_TIMEOUT = 15000; // 15 seconds
+const API_TIMEOUT = 180000; // 3 minutes - increased from 60 seconds to handle complex image processing
 
 class ApiClient {
   private api: AxiosInstance;
@@ -146,7 +147,7 @@ class ApiClient {
         throw new Error('No refresh token available');
       }
       
-      const response = await this.api.post('/auth/refresh', { refreshToken });
+      const response = await this.api.post('/auth/refresh-token', { refreshToken });
       const { accessToken, refreshToken: newRefreshToken } = response.data.data;
       
       // Store new tokens
@@ -272,4 +273,20 @@ class ApiClient {
 }
 
 // Export singleton instance
-export const apiClient = new ApiClient(); 
+export const apiClient = new ApiClient();
+
+export const getTreatments = async (): Promise<Treatment[]> => {
+  // Fetch from /treatment-types
+  const response = await apiClient.get<any[]>('/treatment-types');
+  // Map backend fields to frontend Treatment type
+  return response.map(item => ({
+    id: item.id,
+    name: item.name,
+    description: item.description || '',
+    category: item.category || '', // If backend adds category
+    area: item.area || '',         // If backend adds area
+    price: item.price || 0,        // If backend adds price
+    contraindications: item.contraindications || [], // If backend adds contraindications
+    restrictions: item.restrictions || undefined,    // If backend adds restrictions
+  }));
+}; 

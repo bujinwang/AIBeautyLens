@@ -53,8 +53,10 @@ let GcsService = GcsService_1 = class GcsService {
     constructor(configService) {
         this.configService = configService;
         this.logger = new common_1.Logger(GcsService_1.name);
+        this.useDummyStorage = false;
         this.bucketName = this.configService.get('GCS_BUCKET_NAME');
         this.signingServiceAccountEmail = this.configService.get('GCS_SIGNING_SERVICE_ACCOUNT_EMAIL');
+        this.isDevelopment = this.configService.get('NODE_ENV') !== 'production';
         this.rateLimiter = rateLimit.rateLimit({
             windowMs: 15 * 60 * 1000,
             max: 100,
@@ -73,29 +75,42 @@ let GcsService = GcsService_1 = class GcsService {
             this.logger.error('Missing required environment variables: GCS_BUCKET_NAME or GCS_PROJECT_ID');
             throw new common_1.InternalServerErrorException('Missing GCS_BUCKET_NAME or GCS_PROJECT_ID environment variables.');
         }
-        const auth = new google_auth_library_1.GoogleAuth({
-            scopes: ['https://www.googleapis.com/auth/devstorage.full_control'],
-            projectId,
-        });
-        const authClientInstance = await auth.getClient();
-        const authClientType = authClientInstance?.constructor?.name || 'unknown';
-        this.logger.log('AuthClient type resolved by auth.getClient():', authClientType);
-        const resolvedClientEmail = authClientInstance?.credentials?.client_email;
-        const resolvedPrivateKey = authClientInstance?.credentials?.private_key;
-        if (resolvedClientEmail && resolvedPrivateKey) {
-            this.logger.log('Resolved AuthClient email (for signing):', resolvedClientEmail);
+        try {
+            const auth = new google_auth_library_1.GoogleAuth({
+                scopes: ['https://www.googleapis.com/auth/devstorage.full_control'],
+                projectId,
+            });
+            const authClientInstance = await auth.getClient();
+            const authClientType = authClientInstance?.constructor?.name || 'unknown';
+            this.logger.log('AuthClient type resolved by auth.getClient():', authClientType);
+            const resolvedClientEmail = authClientInstance?.credentials?.client_email;
+            const resolvedPrivateKey = authClientInstance?.credentials?.private_key;
+            if (resolvedClientEmail && resolvedPrivateKey) {
+                this.logger.log('Resolved AuthClient email (for signing):', resolvedClientEmail);
+            }
+            else {
+                this.logger.warn('Resolved AuthClient does not have client_email and private_key. ' +
+                    'This is expected if using user Application Default Credentials (ADC) locally. ' +
+                    'Direct signing of URLs with user ADC is not supported by google-auth-library. ' +
+                    'Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has ' +
+                    'the "Service Account Token Creator" role on that service account for impersonation to work.');
+            }
+            this.storage = new storage_1.Storage({
+                projectId,
+            });
+            this.logger.log('Storage client initialized to use implicit Application Default Credentials.');
         }
-        else {
-            this.logger.warn('Resolved AuthClient does not have client_email and private_key. ' +
-                'This is expected if using user Application Default Credentials (ADC) locally. ' +
-                'Direct signing of URLs with user ADC is not supported by google-auth-library. ' +
-                'Ensure GCS_SIGNING_SERVICE_ACCOUNT_EMAIL is set and your user account has ' +
-                'the "Service Account Token Creator" role on that service account for impersonation to work.');
+        catch (error) {
+            if (this.isDevelopment) {
+                this.logger.warn('Failed to initialize GCS in development environment. Using dummy storage instead.');
+                this.logger.warn('Error was:', error);
+                this.useDummyStorage = true;
+                this.storage = new storage_1.Storage();
+            }
+            else {
+                throw error;
+            }
         }
-        this.storage = new storage_1.Storage({
-            projectId,
-        });
-        this.logger.log('Storage client initialized to use implicit Application Default Credentials.');
     }
     async applyRateLimit(ip) {
         const req = { ip };
@@ -121,6 +136,10 @@ let GcsService = GcsService_1 = class GcsService {
         catch (error) {
             this.logger.warn(`Rate limit exceeded for IP: ${ip}`);
             throw error;
+        }
+        if (this.useDummyStorage) {
+            this.logger.log(`Generating fake signed URL for ${filename}.${fileExtension} in development mode`);
+            return `https://storage.googleapis.com/${this.bucketName}/${filename}.${fileExtension}?fakeSignedUrl=true`;
         }
         if (expirationMinutes < 1 || expirationMinutes > 60) {
             this.logger.warn(`Invalid expiration time: ${expirationMinutes} minutes. Must be between 1 and 60.`);

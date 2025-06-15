@@ -68,6 +68,10 @@
         *   Transform interceptor for consistent success response formatting.
         *   Centralized logging service with file output and configurable log levels.
         *   Custom error classes and response interfaces for type safety.
+    *   **Treatments Localization:**
+        *   TreatmentType localization implemented using a translation table in the database (Prisma migration complete).
+        *   Comprehensive seed script with 20+ treatments and English/Chinese translations.
+        *   `/treatment-types` endpoint now supports a `lang` query parameter and returns localized names/descriptions.
 *   **Frontend Core:** 
     *   Basic React Native application structure with navigation.
     *   Screen components for core functionality.
@@ -77,6 +81,10 @@
         *   Robust API client with automatic token refresh and retry capabilities.
         *   useApi hook for components to easily handle API calls and errors.
         *   Sample ApiDataDisplay component demonstrating error handling patterns.
+    *   **Treatment Data Integration:**
+        *   All treatment fetching is now API-based, with the user language passed to the backend.
+        *   All local treatment constants and translation maps have been removed.
+        *   All treatment-related screens now show loading and error states and use the API for data.
 *   **Memory Bank:** Initial core files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`) have been created with placeholder content. All memory bank files updated to reflect Prisma switch and Auth module progress.
 *   **Architectural Plan:** `database_strategy_plan.md` created and updated to reflect Prisma usage.
 *   **Documentation:** 
@@ -169,6 +177,9 @@
     *   **Gemini Analysis Cloud Function:** Implemented the `gemini-analysis` Cloud Function to analyze images using the Gemini Vision API and store results in Firestore, including necessary imports and correct API usage.
     *   **Images Module Backend Logic:** Implemented service methods and controller endpoints for the `ImagesModule`, including Firestore interactions for image records and analysis history, with proper authorization checks.
     *   **Image Processor Cloud Function:** Fully implemented, build and type errors resolved, deployment blocked by org IAM policy error.
+    *   **TreatmentType Localization & API Integration:**
+        *   Backend: TreatmentType localization and translation table fully implemented, seeded with 20+ treatments and translations. `/treatment-types` endpoint supports `lang` param.
+        *   Frontend: All treatment fetching is API-based, language-aware, and all local constants have been removed. Treatment screens use API data and show loading/error states.
   *   **Actively working on:**
   *   Additional unit testing for new modules.
   *   Enhancing service methods to include relationship data in responses.
@@ -194,4 +205,4 @@
 *   **Data Validation:** While basic validation is in place, more comprehensive validation logic might be needed for domain-specific rules.
 
 ---
-*Last Updated: May 28, 2025*
+*Last Updated: June 3, 2025*

@@ -27,17 +27,21 @@ const request_password_reset_dto_1 = require("./dto/request-password-reset.dto")
 const reset_password_dto_1 = require("./dto/reset-password.dto");
 const verify_email_dto_1 = require("./dto/verify-email.dto");
 const refresh_token_dto_1 = require("./dto/refresh-token.dto");
+const register_patient_dto_1 = require("../patients/dto/register-patient.dto");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async register(registerClinicianDto) {
+    async registerClinician(registerClinicianDto) {
         return this.authService.register({
             email: registerClinicianDto.email,
             name: registerClinicianDto.name,
             password: registerClinicianDto.password,
             specialty: registerClinicianDto.specialty,
         });
+    }
+    async registerPatient(registerPatientDto) {
+        return this.authService.registerPatient(registerPatientDto);
     }
     async login(loginDto, req) {
         return this.authService.login(req.user);
@@ -61,11 +65,11 @@ let AuthController = class AuthController {
         return { message: 'Password successfully reset' };
     }
     async logout(req) {
-        const clinicianId = req.user['sub'] || req.user.clinician_id;
-        if (!clinicianId) {
+        const userId = req.user['sub'] || req.user.user_id;
+        if (!userId) {
             throw new common_1.UnauthorizedException('Invalid user information');
         }
-        await this.authService.logout(clinicianId);
+        await this.authService.logout(userId);
         return { message: 'Successfully logged out' };
     }
     async resendVerification(requestVerificationDto) {
@@ -76,13 +80,22 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
-    (0, common_1.Post)('register'),
+    (0, common_1.Post)('register-clinician'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [register_clinician_dto_1.RegisterClinicianDto]),
     __metadata("design:returntype", Promise)
-], AuthController.prototype, "register", null);
+], AuthController.prototype, "registerClinician", null);
+__decorate([
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
+    (0, common_1.Post)('register-patient'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [register_patient_dto_1.RegisterPatientDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerPatient", null);
 __decorate([
     (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60000 } }),
     (0, common_1.UseGuards)(local_auth_guard_1.LocalAuthGuard),
@@ -96,7 +109,7 @@ __decorate([
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.Clinician, role_enum_1.Role.Admin),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Clinician, role_enum_1.Role.Admin, role_enum_1.Role.Patient),
     (0, common_1.Get)('profile'),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),

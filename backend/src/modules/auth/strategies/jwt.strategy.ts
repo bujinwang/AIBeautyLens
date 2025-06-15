@@ -3,14 +3,15 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { CliniciansService } from '../../clinicians/clinicians.service'; // Import CliniciansService
-import { Clinician } from '@prisma/client'; // Import Clinician type
+import { User } from '@prisma/client'; // Import User type
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 import { Role } from '../enums/role.enum';
+import { PrismaService } from '../../../prisma/prisma.service'; // Corrected Import PrismaService
 
 // Define the expected shape of the JWT payload
 interface JwtPayload {
   email: string;
-  sub: string; // This will be clinician_id
+  sub: string; // This will be user_id
   roles: Role[]; // Changed from string[] to Role[] for type safety
   iat?: number;
   exp?: number;
@@ -20,7 +21,7 @@ interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    private cliniciansService: CliniciansService, // Inject CliniciansService
+    private prisma: PrismaService, // Inject PrismaService
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -30,17 +31,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    // payload.sub should contain the clinician_id
-    const clinician = await this.cliniciansService.findOneById(payload.sub);
-    if (!clinician) {
+    // payload.sub should contain the user_id
+    const user = await this.prisma.user.findUnique({ where: { user_id: payload.sub, is_deleted: false } });
+    if (!user) {
       throw new UnauthorizedException('User not found or invalid token.');
     }
     // Optionally, you might want to check if the user is active or not banned, etc.
 
     // This object will be attached to the request as `req.user`.
     return {
-      userId: clinician.clinician_id, // payload.sub is clinician.clinician_id
-      email: clinician.email, // payload.email is clinician.email
+      userId: user.user_id,
+      email: user.email,
       roles: payload.roles, // Roles from the token payload
     };
   }

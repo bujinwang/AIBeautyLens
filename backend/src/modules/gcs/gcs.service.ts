@@ -12,10 +12,13 @@ export class GcsService implements OnModuleInit {
   private signingServiceAccountEmail?: string;
   private readonly logger = new Logger(GcsService.name);
   private rateLimiter: any;
+  private isDevelopment: boolean;
+  private useDummyStorage: boolean = false;
 
   constructor(private configService: ConfigService) {
     this.bucketName = this.configService.get<string>('GCS_BUCKET_NAME')!;
     this.signingServiceAccountEmail = this.configService.get<string>('GCS_SIGNING_SERVICE_ACCOUNT_EMAIL');
+    this.isDevelopment = this.configService.get<string>('NODE_ENV') !== 'production';
     
     // Initialize rate limiter
     this.rateLimiter = rateLimit.rateLimit({
@@ -39,6 +42,7 @@ export class GcsService implements OnModuleInit {
       throw new InternalServerErrorException('Missing GCS_BUCKET_NAME or GCS_PROJECT_ID environment variables.');
     }
     
+    try {
     const auth = new GoogleAuth({
       scopes: ['https://www.googleapis.com/auth/devstorage.full_control'],
       projectId,
@@ -76,6 +80,17 @@ export class GcsService implements OnModuleInit {
       projectId,
     });
     this.logger.log('Storage client initialized to use implicit Application Default Credentials.');
+    } catch (error) {
+      if (this.isDevelopment) {
+        this.logger.warn('Failed to initialize GCS in development environment. Using dummy storage instead.');
+        this.logger.warn('Error was:', error);
+        this.useDummyStorage = true;
+        this.storage = new Storage(); // Create a dummy storage object
+      } else {
+        // In production, we want to fail if GCS can't be initialized
+        throw error;
+      }
+    }
   }
 
   /**
@@ -122,6 +137,12 @@ export class GcsService implements OnModuleInit {
     } catch (error) {
       this.logger.warn(`Rate limit exceeded for IP: ${ip}`);
       throw error;
+    }
+
+    // If we're using dummy storage in development, return a fake URL
+    if (this.useDummyStorage) {
+      this.logger.log(`Generating fake signed URL for ${filename}.${fileExtension} in development mode`);
+      return `https://storage.googleapis.com/${this.bucketName}/${filename}.${fileExtension}?fakeSignedUrl=true`;
     }
 
     // Validate expiration time
